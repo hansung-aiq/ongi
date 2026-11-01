@@ -41,3 +41,4 @@ app/ios/Pods/
 *.safetensors
 *.onnx
 *.wav
+*_검사결과.csv
