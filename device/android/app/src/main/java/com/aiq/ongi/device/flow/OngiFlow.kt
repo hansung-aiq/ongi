@@ -24,9 +24,9 @@ class OngiFlow(
     private val store: MessageStore,
     private val sync: ServerSync,
     private val log: (String) -> Unit = {},
+    private val safety: SafetyChecker = SafetyChecker(),
+    private val judge: KeywordJudge = KeywordJudge(),
 ) {
-    private val safety = SafetyChecker()
-    private val judge = KeywordJudge()
     private val responder = Responder(store)
     private val worker = Executors.newSingleThreadExecutor()
 
@@ -91,8 +91,15 @@ class OngiFlow(
         }
 
         // 4. 판단 (키워드 → 임베딩은 DEV-08)
-        val judged = judge.judge(text)
-        log("키워드 판단: ${judged ?: "없음"}")
+        val hits = judge.matches(text)
+        val judged = hits.firstOrNull()
+        log(
+            when {
+                hits.isEmpty() -> "키워드 판단: 없음"
+                hits.size == 1 -> "키워드 판단: $judged ${judge.nameOf(judged!!)}"
+                else -> "키워드 판단: $judged ${judge.nameOf(judged!!)} (걸린 상황 $hits, 우선순위로 선택)"
+            },
+        )
 
         // 5. LLM
         val raw = try { ai.infer(text) } catch (e: Exception) { log("LLM 호출 실패: ${e.message}"); null }

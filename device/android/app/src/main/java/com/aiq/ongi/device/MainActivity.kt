@@ -12,6 +12,9 @@ import androidx.core.widget.doAfterTextChanged
 import com.aiq.ongi.device.ai_client.FakeAiClient
 import com.aiq.ongi.device.bridge.SignalServer
 import com.aiq.ongi.device.flow.OngiFlow
+import com.aiq.ongi.device.judge.KeywordJudge
+import com.aiq.ongi.device.judge.SituationConfig
+import com.aiq.ongi.device.safety.SafetyChecker
 import com.aiq.ongi.device.store.MessageStore
 import com.aiq.ongi.device.sync.ServerSync
 
@@ -56,11 +59,28 @@ class MainActivity : AppCompatActivity() {
         }
         setContentView(root)
 
+        // 상황 키워드·위기 표현 읽기 (assets/situations.json, 못 읽으면 코드 안 기본값)
+        val cfg = try {
+            SituationConfig.parse(assets.open("situations.json").bufferedReader().use { it.readText() })
+        } catch (e: Exception) {
+            log("situations.json 읽기 실패 → 기본값 사용: ${e.message}")
+            null
+        }
+        cfg?.let { log("situations.json: ${it.version} / 상황 ${it.rules.size}개 / 위기 표현 ${it.crisis.size}개") }
+
         // 부품 조립: 신호 서버 ↔ 흐름
         val store = MessageStore()
         val sync = ServerSync(store, ::log)
         lateinit var srv: SignalServer
-        val f = OngiFlow(sink = { signal -> srv.send(signal) }, ai = FakeAiClient(), store = store, sync = sync, log = ::log)
+        val f = OngiFlow(
+            sink = { signal -> srv.send(signal) },
+            ai = FakeAiClient(),
+            store = store,
+            sync = sync,
+            log = ::log,
+            safety = cfg?.safetyChecker() ?: SafetyChecker(),
+            judge = cfg?.keywordJudge() ?: KeywordJudge(),
+        )
         srv = SignalServer(
             port = Config.PORT,
             onStartRequest = { text -> f.start(text ?: inputText) },   // 앱이 text를 안 보내면 화면 입력칸 글
