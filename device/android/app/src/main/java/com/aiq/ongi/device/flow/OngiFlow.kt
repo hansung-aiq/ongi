@@ -1,0 +1,143 @@
+package com.aiq.ongi.device.flow
+
+import com.aiq.ongi.device.Config
+import com.aiq.ongi.device.ai_client.AiClient
+import com.aiq.ongi.device.bridge.Signal
+import com.aiq.ongi.device.bridge.SignalSink
+import com.aiq.ongi.device.judge.KeywordJudge
+import com.aiq.ongi.device.respond.Decision
+import com.aiq.ongi.device.respond.InferParser
+import com.aiq.ongi.device.respond.Responder
+import com.aiq.ongi.device.safety.SafetyChecker
+import com.aiq.ongi.device.store.MessageStore
+import com.aiq.ongi.device.sync.ServerSync
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+
+/**
+ * 한 사이클 흐름: 듣기 → 받아쓰기 → 위기 확인 → 판단 → LLM → 재생 규칙 → 신호
+ * 신호 순서는 신호 규격서 4장. 모든 경우는 start로 시작해서 idle로 끝난다.
+ */
+class OngiFlow(
+    private val sink: SignalSink,
+    private val ai: AiClient,
+    private val store: MessageStore,
+    private val sync: ServerSync,
+    private val log: (String) -> Unit = {},
+) {
+    private val safety = SafetyChecker()
+    private val judge = KeywordJudge()
+    private val responder = Responder(store)
+    private val worker = Executors.newSingleThreadExecutor()
+
+    @Volatile private var running = false
+    private var task: Future<*>? = null
+
+    /** 앱의 start. testText는 시험 모드 입력(마이크 대신 글) */
+    @Synchronized
+    fun start(testText: String?) {
+        if (running) {
+            log("이미 진행 중 → start 무시")
+            return
+        }
+        running = true
+        task = worker.submit {
+            try {
+                runCycle(testText)
+            } catch (e: InterruptedException) {
+                log("멈춤")
+            } catch (e: Exception) {
+                log("오류: ${e.message}")
+                sink.send(Signal.Error("D-003"))
+            } finally {
+                sink.send(Signal.Idle)
+                running = false
+            }
+        }
+    }
+
+    /** 앱의 stop. 하던 일을 멈추고 idle */
+    @Synchronized
+    fun stop() {
+        if (!running) {
+            sink.send(Signal.Idle)
+            return
+        }
+        task?.cancel(true)      // runCycle 안의 sleep이 끊기고 finally에서 idle을 보냄
+    }
+
+    fun shutdown() {
+        worker.shutdownNow()
+    }
+
+    private fun runCycle(testText: String?) {
+        // 1. 듣기
+        sink.send(Signal.Listening)
+        val text = listen(testText) ?: return
+        if (text.isBlank()) {
+            sink.send(Signal.Error("D-002"))
+            return
+        }
+
+        // 2. 받아쓴 글
+        sink.send(Signal.Thinking(text))
+
+        // 3. 위기 표현 → 안전 응답 후 끝
+        if (safety.isCrisis(text)) {
+            log("위기 표현 → 안전 응답")
+            sink.send(Signal.Safety(SafetyChecker.SAFETY_TEXT))
+            pause(Config.NOTICE_MS)
+            return
+        }
+
+        // 4. 판단 (키워드 → 임베딩은 DEV-08)
+        val judged = judge.judge(text)
+        log("키워드 판단: ${judged ?: "없음"}")
+
+        // 5. LLM
+        val raw = try { ai.infer(text) } catch (e: Exception) { log("LLM 호출 실패: ${e.message}"); null }
+        val infer = InferParser.parse(raw)
+        log("LLM: ${if (infer == null) "없음/형식 깨짐" else "상황 ${infer.situation}, 기분 ${infer.feeling}"}")
+
+        // 6. 재생 규칙
+        val d = responder.decide(judged, infer)
+        log("결정: ${d.log}")
+
+        // 7. 신호 보내고 재생
+        when (d) {
+            is Decision.Play -> {
+                sink.send(Signal.Empathy(d.empathy, hasMessage = true, author = d.message.author))
+                pause(Config.EMPATHY_MS)     // TODO /tts 합성 후 재생
+                val m = d.message
+                sink.send(Signal.Playing(m.situationId, m.id, m.author, m.kind, m.text))
+                pause(Config.PLAY_MS)        // TODO 부모 메시지 wav 재생
+                sync.reportPlayed(m.id)
+            }
+            is Decision.EmpathyOnly -> {
+                sink.send(Signal.Empathy(d.empathy, hasMessage = false, author = null))
+                pause(Config.EMPATHY_MS)
+            }
+            is Decision.NotFound -> {
+                sink.send(Signal.NotFound(d.text))
+                pause(Config.NOTICE_MS)
+            }
+        }
+    }
+
+    /** 시험 모드면 글을 그대로, 아니면 마이크 → VAD → /stt (DEV-08) */
+    private fun listen(testText: String?): String? {
+        if (Config.testMode) {
+            pause(Config.LISTEN_MS)
+            if (testText == null) {
+                sink.send(Signal.Error("D-001"))
+                return null
+            }
+            return testText.trim()
+        }
+        // TODO DEV-08: 마이크 녹음 + VAD로 말 끝 감지 → wav → ai.stt(wav)
+        sink.send(Signal.Error("D-001"))
+        return null
+    }
+
+    private fun pause(ms: Long) = Thread.sleep(ms)
+}
