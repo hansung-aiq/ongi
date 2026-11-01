@@ -1,0 +1,43 @@
+# ---- 공통 ----
+.DS_Store
+*.log
+.env
+.env.*
+*.pem
+*.key
+
+# ---- Python (server/, ai/, device/mock) ----
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# ---- Android / Kotlin (device/android) ----
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+
+# ---- Flutter (app/) ----
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+app/build/
+app/ios/Pods/
+
+# ---- 모델·대용량 파일 (구글 드라이브에 둔다) ----
+*.bin
+*.gguf
+*.safetensors
+*.onnx
+*.wav
