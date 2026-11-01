@@ -27,7 +27,7 @@ class OngiFlow(
     private val safety: SafetyChecker = SafetyChecker(),
     private val judge: KeywordJudge = KeywordJudge(),
 ) {
-    private val responder = Responder(store)
+    private val responder = Responder(store) { id -> judge.rule(id)?.allowedFeelings ?: emptyList() }
     private val worker = Executors.newSingleThreadExecutor()
 
     @Volatile private var running = false

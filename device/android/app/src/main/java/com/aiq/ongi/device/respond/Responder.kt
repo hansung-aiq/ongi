@@ -29,7 +29,11 @@ sealed class Decision {
  *  LLM 없음·실패                   → 판단 결과대로 미리 쓴 공감 + 부모 메시지
  *  그 상황에 부모 메시지 없음      → 생성 공감만(생성 실패 시 받아주는 말)
  */
-class Responder(private val store: MessageStore) {
+class Responder(
+    private val store: MessageStore,
+    /** 상황 번호 → 허용 기분 (situations.json) */
+    private val allowedFeelings: (Int) -> List<Int> = { emptyList() },
+) {
 
     /**
      * @param judged 키워드·임베딩으로 판단한 상황 (없으면 null)
@@ -59,7 +63,7 @@ class Responder(private val store: MessageStore) {
             else Decision.NotFound(FallbackLines.acknowledge(), "상황 $judged 메시지 없음, ${gen.log} → 받아주는 말")
         }
 
-        val empathy = empathyText(infer, playing = msg != null)
+        val empathy = empathyText(infer, playing = msg != null, situation = judged)
         return if (msg != null) {
             Decision.Play(empathy.first, msg, "판단 $judged = LLM ${infer.situation} → 공감 + 메시지 (${empathy.second})")
         } else {
@@ -79,12 +83,13 @@ class Responder(private val store: MessageStore) {
     }
 
     /** 생성 공감을 쓰고, 어기면 미리 쓴 공감으로 대체. (문장, 로그) */
-    private fun empathyText(infer: InferResult, playing: Boolean): Pair<String, String> {
+    private fun empathyText(infer: InferResult, playing: Boolean, situation: Int?): Pair<String, String> {
         val gen = generated(infer)
         if (gen.text != null) return gen.text to gen.log
-        // 대체: 부모 메시지를 재생하고 기분이 있으면 짚는 말, 그 밖은 열어 두는 말
-        // TODO 상황별 허용 기분·기본 기분은 situations.json(석준) 받은 뒤 반영
-        val line = if (playing && infer.feeling != -1) FallbackLines.pointed(infer.feeling) else FallbackLines.open()
-        return line to gen.log
+        // 대체: 부모 메시지 재생 + LLM 기분이 그 상황 허용 기분 안 → 짚는 말
+        //       그 밖, 또는 기분 -1(기본 기분을 쓰는 경우) → 열어 두는 말
+        val pointed = playing && situation != null && infer.feeling in allowedFeelings(situation)
+        val line = if (pointed) FallbackLines.pointed(infer.feeling) else FallbackLines.open()
+        return line to "${gen.log}, ${if (pointed) "짚는 말" else "열어 두는 말"}"
     }
 }

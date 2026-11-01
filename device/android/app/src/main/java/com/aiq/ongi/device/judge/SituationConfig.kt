@@ -34,6 +34,10 @@ data class SituationConfig(
                         name = s.optString("name", "상황 ${s.getInt("id")}"),
                         keywords = strings(s.optJSONArray("keywords")),
                         exclude = strings(s.optJSONArray("exclude")),
+                        block = strings(s.optJSONArray("block")),
+                        allowedFeelings = s.optJSONArray("allowed_feelings")
+                            ?.let { a -> (0 until a.length()).map { a.getInt(it) } } ?: emptyList(),
+                        defaultFeeling = s.optInt("default_feeling", -1),
                     )
                 }
             }
