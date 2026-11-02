@@ -18,6 +18,7 @@ import com.aiq.ongi.device.judge.KeywordJudge
 import com.aiq.ongi.device.judge.SituationConfig
 import com.aiq.ongi.device.safety.SafetyChecker
 import com.aiq.ongi.device.store.MessageStore
+import com.aiq.ongi.device.store.OngiDb
 import com.aiq.ongi.device.sync.ServerSync
 
 /**
@@ -32,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scroll: ScrollView
     private var server: SignalServer? = null
     private var flow: OngiFlow? = null
+    private var sync: ServerSync? = null
 
     @Volatile private var inputText = "오늘 친구랑 싸웠어"
 
@@ -81,8 +83,9 @@ class MainActivity : AppCompatActivity() {
         embedJudge?.let { log("임베딩 판단: 기준 문장 ${it.size}개 / 차이 ${it.margin} / 점수 ${it.threshold}") }
 
         // 부품 조립: 신호 서버 ↔ 흐름
-        val store = MessageStore()
-        val sync = ServerSync(store, ::log)
+        val db = OngiDb(this)
+        val store = MessageStore(db)
+        val sync = ServerSync(store, db, java.io.File(filesDir, "audio"), ::log)
         lateinit var srv: SignalServer
         val f = OngiFlow(
             sink = { signal -> srv.send(signal) },
@@ -108,11 +111,13 @@ class MainActivity : AppCompatActivity() {
         stopBtn.setOnClickListener { f.stop() }
         clearBtn.setOnClickListener { logView.text = "" }
 
-        sync.syncOnce()
+        sync.start()
+        this.sync = sync
     }
 
     override fun onDestroy() {
         flow?.shutdown()
+        sync?.stop()
         try { server?.stop(500) } catch (_: Exception) {}
         super.onDestroy()
     }
