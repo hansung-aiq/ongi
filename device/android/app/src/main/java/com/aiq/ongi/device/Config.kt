@@ -8,6 +8,10 @@ object Config {
     /** generate: LLM 생성 공감(규칙 검사 후 사용) / select: 미리 쓴 공감만 */
     @Volatile var empathyMode = EmpathyMode.GENERATE
 
+    /** 모델 파일 폴더 이름. 실제 위치: /sdcard/Android/data/com.aiq.ongi.device/files/models
+     *  (adb push로 넣는다. Colab의 ongi_embed.zip을 풀어서 그대로) */
+    const val MODEL_DIR = "models"
+
     /** 시험 모드: 마이크 대신 글로 입력 (오디오 문제 해결 전까지 true) */
     @Volatile var testMode = true
 

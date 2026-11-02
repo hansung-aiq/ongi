@@ -4,6 +4,7 @@ import com.aiq.ongi.device.Config
 import com.aiq.ongi.device.ai_client.AiClient
 import com.aiq.ongi.device.bridge.Signal
 import com.aiq.ongi.device.bridge.SignalSink
+import com.aiq.ongi.device.judge.EmbeddingJudge
 import com.aiq.ongi.device.judge.KeywordJudge
 import com.aiq.ongi.device.respond.Decision
 import com.aiq.ongi.device.respond.InferParser
@@ -26,6 +27,8 @@ class OngiFlow(
     private val log: (String) -> Unit = {},
     private val safety: SafetyChecker = SafetyChecker(),
     private val judge: KeywordJudge = KeywordJudge(),
+    /** 임베딩 판단 (모델 파일이 없으면 null → 키워드만) */
+    private val embedJudge: EmbeddingJudge? = null,
 ) {
     private val responder = Responder(store) { id -> judge.rule(id)?.allowedFeelings ?: emptyList() }
     private val worker = Executors.newSingleThreadExecutor()
@@ -90,9 +93,9 @@ class OngiFlow(
             return
         }
 
-        // 4. 판단 (키워드 → 임베딩은 DEV-08)
+        // 4. 판단: 키워드 → (없으면) 임베딩
         val hits = judge.matches(text)
-        val judged = hits.firstOrNull()
+        var judged = hits.firstOrNull()
         log(
             when {
                 hits.isEmpty() -> "키워드 판단: 없음"
@@ -100,6 +103,20 @@ class OngiFlow(
                 else -> "키워드 판단: $judged ${judge.nameOf(judged!!)} (걸린 상황 $hits, 우선순위로 선택)"
             },
         )
+        if (judged == null && embedJudge != null) {
+            try {
+                val t0 = System.currentTimeMillis()
+                val r = embedJudge.judge(ai.embed(text))
+                judged = r.situation
+                val ms = System.currentTimeMillis() - t0
+                log(
+                    "임베딩 판단: ${if (judged != null) "$judged ${judge.nameOf(judged)}" else "없음"} " +
+                        "(가장 가까운 상황 문장 \"${r.nearestText}\" ${r.nearestId}번 ${"%.3f".format(r.score)} / 일반 문장 ${"%.3f".format(r.generalScore)}, 기준 차이 ${embedJudge.margin}·점수 ${embedJudge.threshold}, ${ms}ms)",
+                )
+            } catch (e: Exception) {
+                log("임베딩 판단 실패: ${e.message}")
+            }
+        }
 
         // 5. LLM
         val raw = try { ai.infer(text) } catch (e: Exception) { log("LLM 호출 실패: ${e.message}"); null }
