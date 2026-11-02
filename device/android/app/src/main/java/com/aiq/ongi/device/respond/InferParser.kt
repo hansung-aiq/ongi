@@ -10,10 +10,12 @@ data class InferResult(
 
 /**
  * /infer 답 파싱. 모양이 깨지면 null(= LLM 실패로 처리).
- * <maum_(\d)>\((.*?)\)(?:<maum_sep>(.*?))?<maum_end>
+ * <maum_(\d)>\((.*?)\)(?:<maum_sep>(.*?))?(<maum_end>|끝)
+ * Genie는 eos 토큰(<maum_end>, id 128265)에서 멈추고 그 토큰을 출력에 넣지 않는다 → <maum_end> 없이 끝나도 허용.
+ * 보드 시험(11/2): 예제 모델 출력 "<maum_1>()" (끝 토큰 없음)
  */
 object InferParser {
-    private val SHAPE = Regex("<maum_(\\d)>\\((.*?)\\)(?:<maum_sep>(.*?))?<maum_end>", RegexOption.DOT_MATCHES_ALL)
+    private val SHAPE = Regex("<maum_(\\d)>\\((.*?)\\)(?:<maum_sep>(.*?))?(?:<maum_end>|<\\|eot_id\\|>|<\\|end_of_text\\|>|$)", RegexOption.DOT_MATCHES_ALL)
     private val SITUATION = Regex("situation\\s*=\\s*(-?\\d+)")
     private val FEELING = Regex("feeling\\s*=\\s*(-?\\d+)")
 

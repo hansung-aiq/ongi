@@ -32,6 +32,11 @@ android {
     }
 }
 
+android {
+    // Genie·QNN 라이브러리를 압축하지 않고 풀어 둠(libGenie가 libQnnHtp.so 등을 이름으로 찾음)
+    packaging { jniLibs { useLegacyPackaging = true } }
+}
+
 dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.7")
     // DEV-08 임베딩 판단: MiniLM(ONNX). 토크나이저는 앱 안 UnigramTokenizer로 직접 계산

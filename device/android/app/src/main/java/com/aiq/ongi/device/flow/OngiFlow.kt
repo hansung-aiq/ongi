@@ -121,7 +121,7 @@ class OngiFlow(
         // 5. LLM
         val raw = try { ai.infer(text) } catch (e: Exception) { log("LLM 호출 실패: ${e.message}"); null }
         val infer = InferParser.parse(raw)
-        log("LLM: ${if (infer == null) "없음/형식 깨짐" else "상황 ${infer.situation}, 기분 ${infer.feeling}"}")
+        log("LLM: ${when { infer == null -> "형식 깨짐(실패)"; infer.general -> "일반 대화(maum_1)"; else -> "상황 ${infer.situation}, 기분 ${infer.feeling}" }}")
 
         // 6. 재생 규칙
         val d = responder.decide(judged, infer, text)
