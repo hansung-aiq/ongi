@@ -45,3 +45,7 @@ app/ios/Pods/
 
 # 키워드 측정 결과 (measure_keywords.py)
 keyword_결과.csv
+
+# 임베딩 기준 벡터·Colab 결과 묶음 (anchors_meta.json만 올림)
+*.f32
+ongi_embed*.zip

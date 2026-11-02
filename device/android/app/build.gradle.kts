@@ -34,6 +34,8 @@ android {
 
 dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.7")
+    // DEV-08 임베딩 판단: MiniLM(ONNX). 토크나이저는 앱 안 UnigramTokenizer로 직접 계산
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.20.0")
 
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
