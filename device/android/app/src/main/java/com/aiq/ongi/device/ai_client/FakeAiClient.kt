@@ -7,9 +7,13 @@ package com.aiq.ongi.device.ai_client
 class FakeAiClient : AiClient {
 
     private val fixed = mapOf(
-        "오늘 친구랑 싸웠어" to "<maum_0>(situation=4, feeling=-1)<maum_sep>친구랑 무슨 일이 있었구나<maum_end>",
-        "엄마 보고 싶어" to "<maum_0>(situation=10, feeling=-1)<maum_sep>많이 보고 싶었구나<maum_end>",
-        "나 오늘 상 받았어" to "<maum_0>(situation=11, feeling=-1)<maum_sep>상 받았구나 정말 대단하다<maum_end>",
+        // 시연 문장 (v3.5.1 학습 정답과 같은 답)
+        "오늘 친구랑 싸웠어" to "<maum_0>(situation=4, feeling=-1)<maum_sep>오늘 친구랑 싸웠구나<maum_end>",
+        "엄마 보고 싶어" to "<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 보고 싶구나<maum_end>",   // 아이가 말한 호칭 → 허용
+        "나 오늘 상 받았어" to "<maum_0>(situation=11, feeling=-1)<maum_sep>오늘 상을 받았구나<maum_end>",
+        // 11/2 규칙 시험: 아이가 말하지 않은 호칭 → 대체 / 물음표 → 대체
+        "선생님한테 혼났어" to "<maum_0>(situation=2, feeling=-1)<maum_sep>엄마한테 혼났구나<maum_end>",
+        "물음표 시험" to "<maum_0>(situation=3, feeling=-1)<maum_sep>어떤 문제가 어려웠어?<maum_end>",
         "배고파" to "<maum_1>()<maum_end>",
         // 규칙 위반 시험용(TC-22): 기분 -1인데 감정 단어 → 기기가 대체 문장으로 바꿔야 함
         "친구랑 싸워서 학교 가기 싫어" to "<maum_0>(situation=4, feeling=-1)<maum_sep>많이 속상했구나<maum_end>",

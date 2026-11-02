@@ -4,10 +4,11 @@ package com.aiq.ongi.device.respond
  * 생성 공감 규칙 검사 (판단 규칙 ⑥). ai/tools/check_empathy.py와 같은 규칙.
  * 하나라도 어기면 미리 쓴 공감으로 대체한다.
  * 목록은 ai/tools/empathy_rules.json 임시본과 같다. 최종본(석준 11/4)이 오면 assets에서 읽도록 바꾼다.
+ * 11/2: 물음표 금지(온기는 되묻고 다시 듣는 흐름이 없음), 부모 호칭은 아이 말에 같은 호칭이 있을 때만 허용.
  */
 object EmpathyChecker {
     private const val MAX_LENGTH = 25
-    private val ALLOWED = Regex("^[가-힣 ]+\\??$")
+    private val ALLOWED = Regex("^[가-힣 ]+$")
 
     private val HONORIFIC = listOf("요\\??$", "니다\\??$", "세요", "습니까", "십시오").map { Regex(it) }
     private val ADVICE = listOf(
@@ -23,8 +24,8 @@ object EmpathyChecker {
         "마음이\\s?무거", "마음이\\s?아프", "울적", "쓸쓸", "좋았", "즐거",
     ).map { Regex(it) }
 
-    /** 어긴 규칙 목록. 빈 목록이면 통과 */
-    fun check(text: String?, feeling: Int): List<String> {
+    /** 어긴 규칙 목록. 빈 목록이면 통과. childText = 아이 말(부모 호칭 허용 판단용, 기기 밖으로 보내지 않음) */
+    fun check(text: String?, feeling: Int, childText: String = ""): List<String> {
         val t = text?.trim().orEmpty()
         if (t.isEmpty()) return listOf("빈 문장")
         val reasons = mutableListOf<String>()
@@ -33,9 +34,20 @@ object EmpathyChecker {
         hit(HONORIFIC, t)?.let { reasons += "존댓말($it)" }
         hit(ADVICE, t)?.let { reasons += "조언·지시($it)" }
         hit(PROMISE, t)?.let { reasons += "약속($it)" }
-        hit(PARENT, t)?.let { reasons += "부모 호칭($it)" }
+        parentHit(t, childText)?.let { reasons += "부모 호칭($it)" }
         if (feeling == -1) hit(EMOTION, t)?.let { reasons += "기분 -1인데 감정 단어($it)" }
         return reasons
+    }
+
+    /** 부모 호칭: 아이가 먼저 말한 호칭이면 허용 */
+    private fun parentHit(text: String, childText: String): String? {
+        val child = childText.replace(" ", "")
+        val nospace = text.replace(" ", "")
+        for (p in PARENT) {
+            val m = p.find(text) ?: p.find(nospace) ?: continue
+            if (!child.contains(m.value.trim())) return m.value.trim()
+        }
+        return null
     }
 
     private fun hit(patterns: List<Regex>, text: String): String? {

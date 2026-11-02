@@ -7,9 +7,9 @@
 
 규칙
   1. 한 문장, 공백 포함 25자 이내
-  2. 한글·공백만 (끝 물음표 하나 허용)
+  2. 한글·공백만 (물음표 금지, 11/2)
   3. 반말 (존댓말 끝맺음 금지)
-  4. 조언·지시 / 약속 / 부모 호칭 금지
+  4. 조언·지시 / 약속 금지, 부모 호칭은 아이 말에 같은 호칭이 있을 때만 허용(11/2)
   5. 기분 -1이면 감정 단어 금지
   6. 같은 상황·같은 기분 안에서 같은 문장은 3번까지
 
@@ -17,6 +17,7 @@
 
 실행
   문장 하나:  python check_empathy.py --text "친구랑 무슨 일이 있었구나" --feeling -1
+              python check_empathy.py --text "아빠한테 혼났구나" --feeling -1 --query "아빠한테 혼났어"
   파일 전체:  python check_empathy.py 데이터.xlsx          (csv도 됨, xlsx는 pip install openpyxl)
               python check_empathy.py 데이터.xlsx --sheet 학습 --text-col 공감 --feeling-col 기분 --situation-col 상황
   결과:       화면에 요약, 같은 폴더에 <파일이름>_검사결과.csv (어긴 문장만)
@@ -31,12 +32,13 @@ from collections import Counter
 from pathlib import Path
 
 RULES_PATH = Path(__file__).with_name("empathy_rules.json")
-ALLOWED = re.compile(r"^[가-힣 ]+\??$")
+ALLOWED = re.compile(r"^[가-힣 ]+$")
 
 # 열 이름을 따로 안 주면 이 이름들 중 먼저 보이는 것을 쓴다
 TEXT_COLS = ["공감", "공감 문장", "공감문장", "empathy", "공감 한마디"]
 FEELING_COLS = ["기분", "feeling", "감정"]
 SITUATION_COLS = ["상황", "situation", "상황 번호", "situation_id"]
+QUERY_COLS = ["아이 말", "아이말", "Query(한글)", "query"]
 
 
 def load_rules(path=RULES_PATH):
@@ -57,8 +59,19 @@ def _hit(patterns, text):
     return None
 
 
-def check(text, feeling, rules):
-    """어긴 규칙 목록을 돌려준다. 빈 목록이면 통과."""
+def _parent_hit(patterns, text, query):
+    """부모 호칭. 아이 말(query)에 같은 호칭이 있으면 허용(11/2)."""
+    q = (query or "").replace(" ", "")
+    nospace = text.replace(" ", "")
+    for p in patterns:
+        m = p.search(text) or p.search(nospace)
+        if m and m.group(0).strip() not in q:
+            return m.group(0).strip()
+    return None
+
+
+def check(text, feeling, rules, query=""):
+    """어긴 규칙 목록을 돌려준다. 빈 목록이면 통과. query = 아이 말(부모 호칭 허용 판단용)"""
     reasons = []
     t = (text or "").strip()
     if not t:
@@ -68,11 +81,13 @@ def check(text, feeling, rules):
     if not ALLOWED.match(t):
         bad = sorted(set(ch for ch in t if not re.match(r"[가-힣 ]", ch)))
         reasons.append("허용 안 되는 문자 " + " ".join(repr(c) for c in bad))
-    for key, name in (("honorific", "존댓말"), ("advice", "조언·지시"),
-                      ("promise", "약속"), ("parent", "부모 호칭")):
+    for key, name in (("honorific", "존댓말"), ("advice", "조언·지시"), ("promise", "약속")):
         w = _hit(rules[key], t)
         if w:
             reasons.append(f"{name}({w})")
+    w = _parent_hit(rules["parent"], t, query) if rules.get("parent_echo_allowed", True) else _hit(rules["parent"], t)
+    if w:
+        reasons.append(f"부모 호칭({w})")
     if str(feeling).strip() in ("-1", "-1.0"):
         w = _hit(rules["emotion"], t)
         if w:
@@ -124,10 +139,12 @@ def check_file(args, rules):
     tcol = _pick(header, TEXT_COLS, args.text_col)
     fcol = _pick(header, FEELING_COLS, args.feeling_col)
     scol = _pick(header, SITUATION_COLS, args.situation_col)
+    qcol = _pick(header, QUERY_COLS, args.query_col)
     if not tcol:
         sys.exit(f"공감 문장 열을 못 찾았습니다. --text-col로 알려 주세요. 있는 열: {header}")
     ti, fi = header.index(tcol), (header.index(fcol) if fcol else None)
     si = header.index(scol) if scol else None
+    qi = header.index(qcol) if qcol else None
     print(f"열: 공감={tcol} / 기분={fcol or '(없음, 감정 단어 검사 안 함)'} / 상황={scol or '(없음, 중복 검사는 기분만으로)'}")
 
     seen = Counter()
@@ -140,7 +157,8 @@ def check_file(args, rules):
         total += 1
         feeling = r[fi] if fi is not None and fi < len(r) else ""
         situation = r[si] if si is not None and si < len(r) else ""
-        reasons = check(text, feeling, rules)
+        query = r[qi] if qi is not None and qi < len(r) else ""
+        reasons = check(text, feeling, rules, query)
         key = (situation, feeling, text)
         seen[key] += 1
         if seen[key] > rules["max_same_sentence"]:
@@ -173,12 +191,14 @@ def main():
     ap.add_argument("--text-col")
     ap.add_argument("--feeling-col")
     ap.add_argument("--situation-col")
+    ap.add_argument("--query-col", help="아이 말 열(부모 호칭 허용 판단)")
+    ap.add_argument("--query", default="", help="--text와 함께: 아이 말")
     ap.add_argument("--rules", default=str(RULES_PATH), help="목록 파일 경로")
     args = ap.parse_args()
     rules = load_rules(args.rules)
 
     if args.text is not None:
-        reasons = check(args.text, args.feeling, rules)
+        reasons = check(args.text, args.feeling, rules, args.query)
         print("통과" if not reasons else "위반: " + " / ".join(reasons))
         sys.exit(0 if not reasons else 1)
     if not args.file:

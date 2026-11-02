@@ -42,3 +42,6 @@ app/ios/Pods/
 *.onnx
 *.wav
 *_검사결과.csv
+
+# 키워드 측정 결과 (measure_keywords.py)
+keyword_결과.csv

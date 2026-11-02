@@ -38,8 +38,9 @@ class Responder(
     /**
      * @param judged 키워드·임베딩으로 판단한 상황 (없으면 null)
      * @param infer  LLM 결과 (없거나 형식이 깨졌으면 null)
+     * @param childText 아이 말 (공감 규칙의 부모 호칭 허용 판단에만 씀)
      */
-    fun decide(judged: Int?, infer: InferResult?): Decision {
+    fun decide(judged: Int?, infer: InferResult?, childText: String = ""): Decision {
         // LLM 없음·실패 → 판단 결과대로
         if (infer == null) {
             if (judged == null) return Decision.NotFound(FallbackLines.acknowledge(), "LLM 실패, 판단 없음 → 받아주는 말")
@@ -58,12 +59,12 @@ class Responder(
 
         if (agree && msg == null) {
             // 그 상황에 부모 메시지 없음 → 생성 공감만, 생성 실패 시 받아주는 말
-            val gen = generated(infer)
+            val gen = generated(infer, childText)
             return if (gen.text != null) Decision.EmpathyOnly(gen.text, "상황 $judged 메시지 없음 → ${gen.log}")
             else Decision.NotFound(FallbackLines.acknowledge(), "상황 $judged 메시지 없음, ${gen.log} → 받아주는 말")
         }
 
-        val empathy = empathyText(infer, playing = msg != null, situation = judged)
+        val empathy = empathyText(infer, playing = msg != null, situation = judged, childText = childText)
         return if (msg != null) {
             Decision.Play(empathy.first, msg, "판단 $judged = LLM ${infer.situation} → 공감 + 메시지 (${empathy.second})")
         } else {
@@ -75,16 +76,16 @@ class Responder(
     private class Gen(val text: String?, val log: String)
 
     /** 생성 공감 검사. 통과하면 그 문장, 아니면 null + 이유 */
-    private fun generated(infer: InferResult): Gen {
+    private fun generated(infer: InferResult, childText: String): Gen {
         if (Config.empathyMode == EmpathyMode.SELECT) return Gen(null, "select 모드")
-        val reasons = EmpathyChecker.check(infer.empathy, infer.feeling)
+        val reasons = EmpathyChecker.check(infer.empathy, infer.feeling, childText)
         return if (reasons.isEmpty()) Gen(infer.empathy, "생성")
         else Gen(null, "대체(${reasons.joinToString(", ")})")
     }
 
     /** 생성 공감을 쓰고, 어기면 미리 쓴 공감으로 대체. (문장, 로그) */
-    private fun empathyText(infer: InferResult, playing: Boolean, situation: Int?): Pair<String, String> {
-        val gen = generated(infer)
+    private fun empathyText(infer: InferResult, playing: Boolean, situation: Int?, childText: String): Pair<String, String> {
+        val gen = generated(infer, childText)
         if (gen.text != null) return gen.text to gen.log
         // 대체: 부모 메시지 재생 + LLM 기분이 그 상황 허용 기분 안 → 짚는 말
         //       그 밖, 또는 기분 -1(기본 기분을 쓰는 경우) → 열어 두는 말

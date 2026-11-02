@@ -47,44 +47,34 @@ class KeywordJudge(
     private fun squash(s: String) = s.replace(" ", "")
 
     companion object {
-        /** assets를 못 읽을 때 쓰는 기본값 (situations.json 임시본과 같음) */
+        /** assets를 못 읽을 때 쓰는 기본값 (situations.json 임시본 11/2와 같음) */
         val PRIORITY = listOf(12, 2, 3, 4, 5, 6, 11, 10, 1, 7, 8, 9)
 
         val TEMP_RULES: List<SituationRule> = listOf(
-            SituationRule(1, "학교 가기 싫은 날",
-                listOf("학교 가기 싫", "학교 가는 게 싫", "학교 안 가고 싶", "학교 쉬고 싶", "학교 안 가면"),
+            SituationRule(1, "학교 가기 싫은 날", listOf("학교 가기 싫", "학교 가는 게 싫", "학교 안 가고 싶", "학교 쉬고 싶", "학교 안 가면"),
                 allowedFeelings = listOf(2, 3, 4), defaultFeeling = 4),
             SituationRule(2, "실수해서 혼났을 때", listOf("혼났", "혼나", "혼내", "혼냈", "야단맞", "꾸중"),
-                block = listOf("동생이 엄마", "동생이 아빠", "동생이 선생님", "짝꿍이", "형이", "누나가", "언니가", "오빠가", "만화에서", "영화에서", "떠든 애들", "안 혼났", "동생 꾸중"),
+                block = listOf("동생이 엄마", "동생이 아빠", "동생이 선생님", "짝꿍이", "형이", "누나가", "언니가", "오빠가", "만화에서", "영화에서", "떠든 애들", "안 혼났", "동생 꾸중", "혼났대", "혼났다던데"), allowedFeelings = listOf(1, 2, 3), defaultFeeling = 1),
+            SituationRule(3, "시험을 망친 날", listOf("시험 망", "시험을 망", "시험 완전 망", "시험 못 봤", "시험 못 쳤", "빵점", "점수 낮게", "점수가 낮", "받아쓰기 망", "단원평가 망", "떨어졌"),
+                block = listOf("동생이 시험", "형이", "누나가", "언니가", "오빠가", "망쳤대"), allowedFeelings = listOf(1, 2, 3, 4), defaultFeeling = 1),
+            SituationRule(4, "친구와 싸운 날", listOf("싸웠", "싸워", "싸움", "다퉜", "다퉈"), listOf("눈싸움", "베개싸움", "물싸움", "닭싸움"),
+                block = listOf("만화에서", "영화에서", "싸웠대", "들끼리 싸", "들이 싸웠", "들이 싸워"), allowedFeelings = listOf(1, 2), defaultFeeling = 1),
+            SituationRule(5, "친구가 날 싫어하는 것 같을 때", listOf("나만 빼고", "나랑 안 놀", "안 끼워", "따돌", "왕따", "뒷담", "나 무시", "날 싫어", "나를 싫어", "나 싫어하"),
                 allowedFeelings = listOf(1, 2, 3), defaultFeeling = 1),
-            SituationRule(3, "시험을 망친 날",
-                listOf("시험 망", "시험을 망", "시험 완전 망", "시험 못 봤", "시험 못 쳤", "빵점"),
-                block = listOf("동생이 시험", "형이", "누나가", "언니가", "오빠가", "망쳤대"),
-                allowedFeelings = listOf(1, 2, 3, 4), defaultFeeling = 1),
-            SituationRule(4, "친구와 싸운 날", listOf("싸웠", "싸워", "싸움", "다퉜", "다퉈"),
-                listOf("눈싸움", "베개싸움", "물싸움", "닭싸움"),
-                block = listOf("만화에서", "영화에서"),
+            SituationRule(6, "남들과 비교될 때", listOf("비교", "누구는 잘하는데", "누구는 하는데", "부러", "나만 없", "나만 못 ", "비교당", "비교돼"),
                 allowedFeelings = listOf(1, 2), defaultFeeling = 1),
-            SituationRule(5, "친구가 날 싫어하는 것 같을 때",
-                listOf("나만 빼고", "나랑 안 놀", "안 끼워", "따돌", "왕따", "뒷담", "나 무시", "날 싫어", "나를 싫어", "나 싫어하"),
-                allowedFeelings = listOf(1, 2, 3), defaultFeeling = 1),
-            SituationRule(6, "남들과 비교될 때", listOf("비교", "누구는 잘하는데", "누구는 하는데"),
-                allowedFeelings = listOf(1, 2), defaultFeeling = 1),
-            SituationRule(7, "울고 싶은 날", listOf("울었", "눈물", "울고 싶", "울 것 같"),
-                block = listOf("양파", "웃겨서", "하품", "매운", "동생이 울", "만화에서", "영화에서"),
-                allowedFeelings = listOf(1, 2), defaultFeeling = 1),
-            SituationRule(8, "아무것도 하기 싫은 날", listOf("아무것도 하기 싫", "아무것도 안 하고 싶", "다 하기 싫", "의욕"),
-                allowedFeelings = listOf(2, 4), defaultFeeling = 4),
-            SituationRule(9, "잠이 안 오는 밤", listOf("잠이 안", "못 자", "잠 안 와", "무서운 꿈"),
-                allowedFeelings = listOf(2, 3), defaultFeeling = 3),
-            SituationRule(10, "부모님이 보고 싶을 때", listOf("보고 싶", "보고싶"),
+            SituationRule(7, "울고 싶은 날", listOf("울었", "눈물", "울고 싶", "울 것 같", "울컥"),
+                block = listOf("양파", "웃겨서", "하품", "매운", "동생이 울", "만화에서", "영화에서", "만화 보", "드라마 보", "영화 보"), allowedFeelings = listOf(1, 2), defaultFeeling = 1),
+            SituationRule(8, "아무것도 하기 싫은 날", listOf("아무것도 하기 싫", "아무것도 안 하고 싶", "다 하기 싫", "의욕", "귀찮아", "귀찮다", "귀찮거든", "귀찮잖", "지쳤", "기운이 없"),
+                block = listOf("귀찮게"), allowedFeelings = listOf(2, 4), defaultFeeling = 4),
+            SituationRule(9, "잠이 안 오는 밤", listOf("잠이 안", "못 자", "잠 안 와", "무서운 꿈", "뒤척", "잠이 하나도", "잠이 안 온"),
+                block = listOf("안 온대", "못 잔대", "못 잤대"), allowedFeelings = listOf(2, 3), defaultFeeling = 3),
+            SituationRule(10, "부모님이 보고 싶을 때", listOf("보고 싶", "보고싶", "그리워", "그립", "목소리 듣고 싶", "안기고 싶"),
                 allowedFeelings = listOf(5), defaultFeeling = 5),
-            SituationRule(11, "자랑하고 싶은 날", listOf("상 받", "상받", "칭찬 받", "칭찬받", "1등", "백점", "100점"),
-                listOf("동생이 칭찬", "친구가 상", "동생이 상"),
-                allowedFeelings = listOf(6), defaultFeeling = 6),
+            SituationRule(11, "자랑하고 싶은 날", listOf("상 받", "상받", "칭찬 받", "칭찬받", "1등", "백점", "100점", "합격했", "합격이", "반장 됐", "반장이 됐", "일등 했", "백 점 맞", "대표로 뽑"), listOf("동생이 칭찬", "친구가 상", "동생이 상"),
+                block = listOf("했대", "받았대", "됐대", "맞았대", "뽑혔대", "친구가", "짝꿍이", "동생이", "형이", "누나가", "언니가", "오빠가"), allowedFeelings = listOf(6), defaultFeeling = 6),
             SituationRule(12, "생일", listOf("생일"), listOf("생일 선물 사러", "친구 생일", "동생 생일"),
-                block = listOf("엄마 생일", "아빠 생일", "짝꿍 생일", "형 생일", "누나 생일", "언니 생일", "오빠 생일", "생일 파티 초대", "생일이 언제"),
-                allowedFeelings = listOf(5, 6), defaultFeeling = 6),
+                block = listOf("엄마 생일", "아빠 생일", "짝꿍 생일", "형 생일", "누나 생일", "언니 생일", "오빠 생일", "생일 파티 초대", "생일이 언제", "생일이래", "생일이라던데"), allowedFeelings = listOf(5, 6), defaultFeeling = 6),
         )
     }
 }
