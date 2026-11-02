@@ -9,6 +9,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
+import com.aiq.ongi.device.ai_client.GenieLlm
 import com.aiq.ongi.device.ai_client.LocalAiClient
 import com.aiq.ongi.device.ai_client.OnnxEmbedder
 import com.aiq.ongi.device.judge.EmbeddingJudge
@@ -34,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private var server: SignalServer? = null
     private var flow: OngiFlow? = null
     private var sync: ServerSync? = null
+    private var genie: GenieLlm? = null
 
     @Volatile private var inputText = "오늘 친구랑 싸웠어"
 
@@ -48,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         val sendBtn = Button(this).apply { text = "보내기 (시험 모드)" }
         val stopBtn = Button(this).apply { text = "멈춤" }
         val clearBtn = Button(this).apply { text = "기록 지우기" }
+        val llmBtn = Button(this).apply { text = "LLM: 가짜" }
         logView = TextView(this).apply { textSize = 12f }
         scroll = ScrollView(this).apply { addView(logView) }
 
@@ -59,6 +62,7 @@ class MainActivity : AppCompatActivity() {
             addView(sendBtn)
             addView(stopBtn)
             addView(clearBtn)
+            addView(llmBtn)
             addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         }
         setContentView(root)
@@ -82,6 +86,10 @@ class MainActivity : AppCompatActivity() {
         }
         embedJudge?.let { log("임베딩 판단: 기준 문장 ${it.size}개 / 차이 ${it.margin} / 점수 ${it.threshold}") }
 
+        // LLM (Genie, 뒤에서 읽기). 다 읽히면 버튼으로 진짜/가짜 전환
+        val genie = GenieLlm(::log).also { it.startLoading() }
+        this.genie = genie
+
         // 부품 조립: 신호 서버 ↔ 흐름
         val db = OngiDb(this)
         val store = MessageStore(db)
@@ -89,7 +97,7 @@ class MainActivity : AppCompatActivity() {
         lateinit var srv: SignalServer
         val f = OngiFlow(
             sink = { signal -> srv.send(signal) },
-            ai = LocalAiClient(embedder),
+            ai = LocalAiClient(embedder, genie, ::log),
             store = store,
             sync = sync,
             log = ::log,
@@ -110,6 +118,12 @@ class MainActivity : AppCompatActivity() {
         sendBtn.setOnClickListener { f.start(inputText) }
         stopBtn.setOnClickListener { f.stop() }
         clearBtn.setOnClickListener { logView.text = "" }
+        llmBtn.setOnClickListener {
+            if (!genie.ready) { log("LLM: Genie가 아직 준비 안 됨(기록 확인)"); return@setOnClickListener }
+            Config.useGenie = !Config.useGenie
+            llmBtn.text = if (Config.useGenie) "LLM: Genie" else "LLM: 가짜"
+            log("LLM 전환 → ${if (Config.useGenie) "Genie(보드 NPU)" else "가짜"}")
+        }
 
         sync.start()
         this.sync = sync
@@ -118,6 +132,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         flow?.shutdown()
         sync?.stop()
+        genie?.close()
         try { server?.stop(500) } catch (_: Exception) {}
         super.onDestroy()
     }
