@@ -12,6 +12,13 @@ object Config {
      *  (adb push로 넣는다. Colab의 ongi_embed.zip을 풀어서 그대로) */
     const val MODEL_DIR = "models"
 
+    /** 서버 주소 (DEV-09). 개발: 맥 가짜 서버 + `adb reverse tcp:8000 tcp:8000` → 127.0.0.1:8000
+     *  같은 공유기 시연: http://192.168.0.20:8000 / AWS 배포 후: EC2 주소 */
+    @Volatile var SERVER_URL = "http://127.0.0.1:8000"
+
+    /** 동기화 간격(초) */
+    const val SYNC_SEC = 30L
+
     /** 시험 모드: 마이크 대신 글로 입력 (오디오 문제 해결 전까지 true) */
     @Volatile var testMode = true
 
