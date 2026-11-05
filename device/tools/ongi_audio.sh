@@ -28,13 +28,13 @@ usb_card() {
     grep -i "usb" /proc/asound/cards | head -1 | sed 's/^ *\([0-9]*\).*/\1/'
 }
 
-# 틀거나 녹음하는 동안에도 stop.req와 alive를 본다. 끝나면 종료 코드를 돌려준다
+# 틀거나 녹음하는 동안에도 stop.req와 alive를 본다. 멈출 때는 INT(tinycap이 wav 머리를 마무리함). 끝나면 종료 코드를 돌려준다
 run_wait() {
     "$@" &
     P=$!
     while kill -0 $P 2>/dev/null; do
         date +%s > $D/alive
-        if [ -f $D/stop.req ]; then rm -f $D/stop.req; kill $P 2>/dev/null; echo "멈춤 $(date)"; fi
+        if [ -f $D/stop.req ]; then rm -f $D/stop.req; kill -INT $P 2>/dev/null; echo "멈춤 $(date)"; fi
         sleep 0.1
     done
     wait $P

@@ -39,6 +39,18 @@ class TinyAlsaHelper(private val dir: File, private val log: (String) -> Unit = 
         return try { File(dir, "rec.wav").readBytes() } catch (e: Exception) { log("녹음 파일 읽기 실패: ${e.message}"); null }
     }
 
+    /** 도우미가 녹음하는 파일 (녹음 중에도 늘어남, 48kHz 모노 16비트) */
+    val recFile get() = File(dir, "rec.wav")
+
+    /** 녹음 시작 (기다리지 않음). 멈추려면 stop() */
+    fun startRecord(maxSeconds: Int): Boolean {
+        File(dir, "rec.done").delete()
+        return request("rec.req", maxSeconds.toString())
+    }
+
+    /** 녹음 끝 기다림. null이면 성공 */
+    fun waitRecord(timeoutMs: Long): String? = waitDone("rec.done", timeoutMs)
+
     fun stop() { request("stop.req", "") }
 
     /** 반쯤 쓴 파일을 도우미가 읽지 않게: 임시 파일에 쓰고 이름을 바꾼다 */

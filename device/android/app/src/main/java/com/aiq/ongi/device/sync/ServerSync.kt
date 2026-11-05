@@ -35,9 +35,14 @@ class ServerSync(
     private val db: OngiDb,
     private val audioDir: File,
     private val log: (String) -> Unit,
-    private val baseUrl: String = Config.SERVER_URL,
 ) {
+    /** 서버 주소는 매번 Config에서 (config.json으로 빌드 없이 바뀜, 11/5) */
+    private val baseUrl get() = Config.SERVER_URL
+
     private val worker = Executors.newSingleThreadScheduledExecutor()
+
+    /** 메시지가 바뀌면(받음·지움) 부른다. 흐름이 부모 메시지 소리를 미리 만든다 (11/5) */
+    @Volatile var onChanged: (() -> Unit)? = null
     private var task: ScheduledFuture<*>? = null
     @Volatile private var lastError: String? = null
 
@@ -53,17 +58,20 @@ class ServerSync(
 
     /** 한 번 동기화. 서버 오류는 같은 오류면 한 번만 기록 */
     fun syncOnce() {
+        com.aiq.ongi.device.ConfigFile.reload(log)
         try {
             flushPlayLogs()
             val since = db.getState("since") ?: "2000-01-01T00:00:00"
             val res = JSONObject(http("GET", "/device/changes?since=" + URLEncoder.encode(since, "UTF-8")))
             val arr = res.optJSONArray("messages") ?: JSONArray()
             val acked = mutableListOf<Int>()
+            var changed = false
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
                 val id = o.getInt("id")
                 if (o.optBoolean("deleted", false)) {
                     store.delete(id)
+                    changed = true
                     log("동기화: 메시지 $id 삭제됨 → 보드에서도 지움")
                     continue
                 }
@@ -96,6 +104,7 @@ class ServerSync(
                     store.clockOffsetSec = off
                 } catch (_: Exception) {}
             }
+            if (changed || acked.isNotEmpty()) onChanged?.invoke()
             if (lastError != null) log("동기화: 서버 다시 연결됨")
             lastError = null
         } catch (e: Exception) {

@@ -35,6 +35,8 @@ class OngiFlow(
     private val outDir: File? = null,
     /** 오디오 도우미 (A안). 살아 있으면 스피커로 틀고, 아니면 소리 길이만큼 기다리기만 한다 */
     private val speaker: com.aiq.ongi.device.audio.TinyAlsaHelper? = null,
+    /** 마이크 듣기 (말 끝 판단) */
+    private val mic: com.aiq.ongi.device.audio.MicListener? = null,
 ) {
     private val responder = Responder(store) { id -> judge.rule(id)?.allowedFeelings ?: emptyList() }
     private val worker = Executors.newSingleThreadExecutor()
@@ -76,6 +78,37 @@ class OngiFlow(
         task?.cancel(true)      // runCycle 안의 sleep이 끊기고 finally에서 idle을 보냄
     }
 
+    /**
+     * 개발용 판단만 해 보기 (11/5): STT → 위기 → 키워드 → 임베딩까지, LLM·재생 없이. 결과 JSON.
+     * STT가 잘못 듣는 모양을 한꺼번에 찾을 때 쓴다(device/tools/stt_sweep.py). 대화 중이면 busy
+     */
+    fun check(wav: String?, text: String?): String {
+        val o = org.json.JSONObject().put("type", "check_result")
+        if (running) return o.put("error", "busy").toString()
+        return try {
+            worker.submit(java.util.concurrent.Callable {
+                val t0 = System.currentTimeMillis()
+                val heard = if (wav != null) ai.stt(File(wav).readBytes()) else text.orEmpty()
+                val sttMs = System.currentTimeMillis() - t0
+                val t = heard.trim().trimEnd('.', '!', '?', '。')
+                o.put("heard", t).put("stt_ms", sttMs)
+                if (safety.isCrisis(t)) return@Callable o.put("by", "safety").put("situation", -1).toString()
+                val hits = judge.matches(t)
+                var s = hits.firstOrNull()
+                var by = if (s != null) "keyword" else "none"
+                if (s == null && embedJudge != null) {
+                    val r = embedJudge.judge(ai.embed(t))
+                    s = r.situation?.takeIf { judge.blockedFor(it, t) == null }
+                    if (s != null) by = "embedding"
+                    o.put("embed_near", r.nearestText).put("embed_score", r.score.toDouble()).put("embed_general", r.generalScore.toDouble())
+                }
+                o.put("by", by).put("situation", s ?: 0).toString()
+            }).get(30, java.util.concurrent.TimeUnit.SECONDS)
+        } catch (e: Exception) {
+            o.put("error", e.message ?: e.javaClass.simpleName).toString()
+        }
+    }
+
     fun shutdown() {
         worker.shutdownNow()
     }
@@ -92,6 +125,7 @@ class OngiFlow(
         val text = listen(testText)?.trim()?.trimEnd('.', '!', '?', '。') ?: return
         if (text.isBlank()) {
             sink.send(Signal.Error("D-002"))
+            sayNotice(Config.RETRY_TEXT, "다시 말해 달라는 안내")     // 11/5: 소리로도 안내
             return
         }
 
@@ -101,8 +135,10 @@ class OngiFlow(
         // 3. 위기 표현 → 안전 응답 후 끝
         if (safety.isCrisis(text)) {
             log("위기 표현 → 안전 응답")
+            // 11/5: 안전 응답도 소리로. 숫자는 TTS가 읽기 쉽게 바꿔서 읽음(화면 글은 1388 그대로)
+            val sec = speakToFile(SafetyChecker.SAFETY_TEXT.replace("1388", "일삼팔팔"), "notice.wav", "안전 응답")
             sink.send(Signal.Safety(SafetyChecker.SAFETY_TEXT))
-            pause(Config.NOTICE_MS)
+            playOrWait(speaker?.takeIf { it.alive }, "notice.wav", sec, Config.NOTICE_MS)
             return
         }
 
@@ -165,7 +201,7 @@ class OngiFlow(
             val msg = messageSound(m)
             messageSec = prepare(msg, "message.wav", "부모 메시지 ${m.id}(${m.author} ${m.kind})")
             val bridgeText = bridge(m)
-            val bridge = try { ai.tts(bridgeText).takeIf { it.size > 44 }?.let { AudioPrep.fromWav(it) } } catch (e: Exception) { null }
+            val bridge = bridgeSound(bridgeText)
             if (bridge != null) {
                 log("연결 문장: \"$bridgeText\" ${"%.1f".format(bridge.seconds)}초")
                 empathySec = (empathySec0 ?: 0.0) + 0.4 + bridge.seconds + 0.4
@@ -205,6 +241,20 @@ class OngiFlow(
         }
     }
 
+    /** 글 → TTS → 스피커용 wav(outDir/name). 소리 길이(초), 못 만들면 null */
+    private fun speakToFile(text: String, name: String, what: String): Double? = try {
+        val wav = ai.tts(text)
+        if (wav.size > 44) prepare(AudioPrep.fromWav(wav), name, what) else null
+    } catch (e: Exception) {
+        log("TTS 실패($what): ${e.message}"); null
+    }
+
+    /** 짧은 안내를 소리로 (D-002 등) */
+    private fun sayNotice(text: String, what: String) {
+        val sec = speakToFile(text, "notice.wav", what)
+        playOrWait(speaker?.takeIf { it.alive }, "notice.wav", sec, Config.NOTICE_MS)
+    }
+
     /** 도우미가 있으면 틀고 끝날 때까지, 없으면 소리 길이만큼 기다림 */
     private fun playOrWait(spk: com.aiq.ongi.device.audio.TinyAlsaHelper?, name: String, sec: Double?, default: Long) {
         val f = outDir?.let { File(it, name) }?.takeIf { it.exists() }
@@ -229,8 +279,48 @@ class OngiFlow(
     /** 소리 길이(초) → 기다릴 시간. 소리가 없으면 기본값 */
     private fun ms(sec: Double?, default: Long) = if (sec != null) (sec * 1000).toLong() + 300 else default
 
-    /** 부모 메시지 소리: 녹음이면 m4a를 풀고, 글이면 TTS로 읽는다 */
-    private fun messageSound(m: com.aiq.ongi.device.store.ParentMessage): AudioPrep.Mono? = try {
+    /**
+     * 11/5: 부모 메시지·연결 문장 소리는 미리 만들어 둔다(첫 응답 시간 단축: 글 메시지 TTS가 2초쯤 걸림).
+     * 메시지가 바뀌면(id·수정 시각·내용) 키가 달라져서 새로 만든다.
+     */
+    private val soundCache = java.util.concurrent.ConcurrentHashMap<String, AudioPrep.Mono>()
+
+    private fun keyOf(m: com.aiq.ongi.device.store.ParentMessage) =
+        "m${m.id}|${m.updatedAt}|${m.kind}|${m.audioPath}|${m.text?.hashCode()}"
+
+    /** 앱이 켜질 때(TTS 준비 후)와 동기화로 메시지가 바뀔 때 부른다. 뒤에서 돈다 */
+    fun prewarm() {
+        Thread({
+            try {
+                val t0 = System.currentTimeMillis()
+                val all = store.all()
+                var n = 0
+                for (m in all) {
+                    if (messageSound(m) != null) n++
+                    bridgeSound(bridge(m))
+                }
+                log("미리 준비: 부모 메시지 ${n}/${all.size}개 소리 + 연결 문장 (${System.currentTimeMillis() - t0}ms)")
+            } catch (e: Exception) {
+                log("미리 준비 실패: ${e.message}")
+            }
+        }, "ongi-prewarm").start()
+    }
+
+    private fun bridgeSound(text: String): AudioPrep.Mono? {
+        soundCache["b$text"]?.let { return it }
+        return try {
+            ai.tts(text).takeIf { it.size > 44 }?.let { AudioPrep.to48k(AudioPrep.fromWav(it)) }?.also { soundCache["b$text"] = it }
+        } catch (e: Exception) { null }
+    }
+
+    /** 부모 메시지 소리(48kHz): 미리 만든 게 있으면 그것, 없으면 지금 만듦 */
+    private fun messageSound(m: com.aiq.ongi.device.store.ParentMessage): AudioPrep.Mono? {
+        soundCache[keyOf(m)]?.let { return it }
+        return buildMessageSound(m)?.let { AudioPrep.to48k(it) }?.also { soundCache[keyOf(m)] = it }
+    }
+
+    /** 녹음이면 m4a를 풀고, 글이면 TTS로 읽는다 */
+    private fun buildMessageSound(m: com.aiq.ongi.device.store.ParentMessage): AudioPrep.Mono? = try {
         when {
             m.kind == "voice" && m.audioPath != null && File(m.audioPath).exists() -> AudioPrep.decode(File(m.audioPath))
             m.kind == "voice" -> { log("부모 메시지 ${m.id}: 녹음 파일 없음(시연 메시지) → 소리 없이 진행"); null }
@@ -275,44 +365,43 @@ class OngiFlow(
     }
 
     /**
-     * 시험 모드면 글을 그대로, 아니면 마이크 → VAD → /stt (DEV-08)
-     * 11/5: 시험 모드에서 "wav:파일경로"를 보내면 그 wav를 STT로 받아쓴다 (마이크 대신 wav 파일)
+     * 듣기 (11/5 정리)
+     *   testText가 있으면 시험 입력: 글 그대로 / "wav:경로"(그 wav를 STT) / "stream:경로"(wav를 실제 시간처럼 넣어 말 끝 판단 → STT)
+     *                              / "mic"(진짜 마이크, 말 끝 판단) / "mic:초"(그 초만큼 녹음)
+     *   testText가 없으면: 마이크 모드(Config.testMode=false)면 진짜 마이크, 아니면 D-001
      */
     private fun listen(testText: String?): String? {
-        if (Config.testMode) {
-            if (testText == null) {
-                pause(Config.LISTEN_MS)
-                sink.send(Signal.Error("D-001"))
-                return null
-            }
-            if (testText.startsWith("mic:")) {
-                val sec = testText.removePrefix("mic:").trim().toIntOrNull() ?: 5
-                val spk = speaker?.takeIf { it.alive }
-                if (spk == null) { log("마이크: 오디오 도우미 꺼짐"); sink.send(Signal.Error("D-001")); return null }
+        val t = testText?.trim()
+        return when {
+            t == null && !Config.testMode -> sttOf("마이크") { mic?.listen() }
+            t == null -> { pause(Config.LISTEN_MS); sink.send(Signal.Error("D-001")); null }
+            t == "mic" -> sttOf("마이크") { mic?.listen() }
+            t.startsWith("mic:") -> {
+                val sec = t.removePrefix("mic:").trim().toIntOrNull() ?: 5
                 log("마이크: ${sec}초 녹음 시작 (도우미 tinycap)")
-                val wav = spk.record(sec) ?: run { sink.send(Signal.Error("D-001")); return null }
-                tSpeechEnd = System.currentTimeMillis()
-                val text = try { ai.stt(wav) } catch (e: Exception) { log("STT 실패: ${e.message}"); "" }
-                sttMs = System.currentTimeMillis() - tSpeechEnd
-                log("STT ${sttMs}ms: 마이크 ${sec}초 → \"$text\"")
-                return text
+                sttOf("마이크 ${sec}초") { speaker?.takeIf { it.alive }?.record(sec) }
             }
-            if (testText.startsWith("wav:")) {
-                val f = java.io.File(testText.removePrefix("wav:").trim())
-                if (!f.exists()) { log("wav 없음: ${f.absolutePath}"); sink.send(Signal.Error("D-001")); return null }
-                tSpeechEnd = System.currentTimeMillis()
-                val text = try { ai.stt(f.readBytes()) } catch (e: Exception) { log("STT 실패: ${e.message}"); "" }
-                sttMs = System.currentTimeMillis() - tSpeechEnd
-                log("STT ${sttMs}ms: ${f.name} → \"$text\"")
-                return text
+            t.startsWith("wav:") -> {
+                val f = File(t.removePrefix("wav:").trim())
+                sttOf(f.name) { f.takeIf { it.exists() }?.readBytes() }
             }
-            pause(Config.LISTEN_MS)
-            tSpeechEnd = System.currentTimeMillis()
-            return testText.trim()
+            t.startsWith("stream:") -> {
+                val f = File(t.removePrefix("stream:").trim())
+                sttOf("마이크 시험 ${f.name}") { f.takeIf { it.exists() }?.readBytes()?.let { mic?.stream(it) } }
+            }
+            else -> { pause(Config.LISTEN_MS); tSpeechEnd = System.currentTimeMillis(); t }
         }
-        // TODO DEV-08: 마이크 녹음 + VAD로 말 끝 감지 → wav → ai.stt(wav)
-        sink.send(Signal.Error("D-001"))
-        return null
+    }
+
+    /** 소리 얻기 → STT. 소리가 없으면 D-001 */
+    private fun sttOf(what: String, get: () -> ByteArray?): String? {
+        val wav = try { get() } catch (e: Exception) { log("$what 실패: ${e.message}"); null }
+        if (wav == null) { log("$what: 소리 없음"); sink.send(Signal.Error("D-001")); return null }
+        tSpeechEnd = System.currentTimeMillis()      // 말이 끝난 때 = STT 시작
+        val text = try { ai.stt(wav) } catch (e: Exception) { log("STT 실패: ${e.message}"); "" }
+        sttMs = System.currentTimeMillis() - tSpeechEnd
+        log("STT ${sttMs}ms: $what → \"$text\"")
+        return text
     }
 
     private fun pause(ms: Long) = Thread.sleep(ms)

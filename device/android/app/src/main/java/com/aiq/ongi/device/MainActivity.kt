@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         val stopBtn = Button(this).apply { text = "멈춤" }
         val clearBtn = Button(this).apply { text = "기록 지우기" }
         val llmBtn = Button(this).apply { text = "LLM: 가짜" }
+        val micBtn = Button(this).apply { text = "입력: 글(시험 모드)" }
         logView = TextView(this).apply { textSize = 12f }
         scroll = ScrollView(this).apply { addView(logView) }
 
@@ -65,6 +66,7 @@ class MainActivity : AppCompatActivity() {
             addView(stopBtn)
             addView(clearBtn)
             addView(llmBtn)
+            addView(micBtn)
             addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         }
         setContentView(root)
@@ -97,6 +99,10 @@ class MainActivity : AppCompatActivity() {
         val speech = SherpaSpeech(speechDir, java.io.File(getExternalFilesDir(null), "tts"), ::log).also { it.startLoading() }
         this.speech = speech
 
+        // 오디오 A안: 도우미 + 마이크(말 끝 판단, silero VAD)
+        val helper = com.aiq.ongi.device.audio.TinyAlsaHelper(java.io.File(Config.AUDIO_HELPER_DIR), ::log)
+        val mic = com.aiq.ongi.device.audio.MicListener(helper, java.io.File(Config.SPEECH_DIR, "vad/silero_vad.onnx"), ::log)
+
         // 부품 조립: 신호 서버 ↔ 흐름
         val db = OngiDb(this)
         val store = MessageStore(db)
@@ -112,12 +118,15 @@ class MainActivity : AppCompatActivity() {
             judge = cfg?.keywordJudge() ?: KeywordJudge(),
             embedJudge = embedJudge,
             outDir = java.io.File(getExternalFilesDir(null), "out"),
-            speaker = com.aiq.ongi.device.audio.TinyAlsaHelper(java.io.File(Config.AUDIO_HELPER_DIR), ::log),
+            speaker = helper,
+            mic = mic,
         )
         srv = SignalServer(
             port = Config.PORT,
-            onStartRequest = { text -> f.start(text ?: inputText) },   // 앱이 text를 안 보내면 화면 입력칸 글
+            // 앱이 text를 안 보내면: 마이크 모드면 마이크, 시험 모드면 화면 입력칸 글 (11/5)
+            onStartRequest = { text -> f.start(text ?: if (Config.testMode) inputText else null) },
             onStopRequest = { f.stop() },
+            onCheckRequest = { wav, text -> f.check(wav, text) },
             log = ::log,
         )
         srv.start()
@@ -127,12 +136,25 @@ class MainActivity : AppCompatActivity() {
         sendBtn.setOnClickListener { f.start(inputText) }
         stopBtn.setOnClickListener { f.stop() }
         clearBtn.setOnClickListener { logView.text = "" }
+        micBtn.setOnClickListener {
+            Config.testMode = !Config.testMode
+            micBtn.text = if (Config.testMode) "입력: 글(시험 모드)" else "입력: 마이크"
+            log("입력 전환 → ${if (Config.testMode) "글(시험 모드)" else "마이크(앱 start에 글이 없으면 마이크로 들음)"}")
+        }
         llmBtn.setOnClickListener {
             if (!genie.ready) { log("LLM: Genie가 아직 준비 안 됨(기록 확인)"); return@setOnClickListener }
             Config.useGenie = !Config.useGenie
             llmBtn.text = if (Config.useGenie) "LLM: Genie" else "LLM: 가짜"
             log("LLM 전환 → ${if (Config.useGenie) "Genie(보드 NPU)" else "가짜"}")
         }
+
+        // 11/5: 부모 메시지·연결 문장 소리 미리 만들기 (TTS가 준비되면 한 번, 메시지가 바뀌면 다시)
+        sync.onChanged = { f.prewarm() }
+        Thread({
+            val end = System.currentTimeMillis() + 60_000
+            while (!speech.ttsReady && System.currentTimeMillis() < end) Thread.sleep(500)
+            f.prewarm()
+        }, "ongi-prewarm-wait").start()
 
         sync.start()
         this.sync = sync
