@@ -111,6 +111,7 @@ class MainActivity : AppCompatActivity() {
             safety = cfg?.safetyChecker() ?: SafetyChecker(),
             judge = cfg?.keywordJudge() ?: KeywordJudge(),
             embedJudge = embedJudge,
+            outDir = java.io.File(getExternalFilesDir(null), "out"),
         )
         srv = SignalServer(
             port = Config.PORT,

@@ -106,10 +106,10 @@ class MessageStore(private val db: OngiDb) {
 
     private fun seedDemoIfEmpty() {
         val demo = listOf(
-            ParentMessage(4, 3, "mom", "text", "괜찮아, 시험보다 네가 더 소중해. 엄마는 늘 네 편이야."),
+            ParentMessage(4, 3, "mom", "text", "민준아, 시험 때문에 속상하구나. 엄마도 3학년 때 받아쓰기에서 빵점을 받고, 집에 오는 길 내내 울었어. 그때 외할머니가 \"틀린 건 다음에 맞히면 돼\" 하셨는데, 그 말이 아직도 생각나. 엄마는 점수보다 끝까지 해 본 민준이가 더 자랑스러워."),
             ParentMessage(1, 4, "mom", "voice", null),
             ParentMessage(2, 10, "mom", "voice", null),
-            ParentMessage(3, 11, "dad", "text", "민준아, 상 받은 거 정말 축하해. 아빠는 네가 노력한 게 제일 자랑스러워."),
+            ParentMessage(3, 11, "dad", "text", "민준아, 상 받은 거 정말 축하해! 일곱 살 때 자전거를 배우면서 열 번도 넘게 넘어지고도, 울면서 다시 페달을 밟던 네 모습이 아빠는 아직도 생생해. 이 상도 그렇게 포기하지 않은 민준이가 만든 거야. 곁에서 안아 주지는 못해도, 아빠는 민준이가 정말 자랑스러워."),
         )
         val w = db.writableDatabase
         for (m in demo) {

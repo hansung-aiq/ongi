@@ -2,6 +2,8 @@ package com.aiq.ongi.device.flow
 
 import com.aiq.ongi.device.Config
 import com.aiq.ongi.device.ai_client.AiClient
+import com.aiq.ongi.device.ai_client.AudioPrep
+import java.io.File
 import com.aiq.ongi.device.bridge.Signal
 import com.aiq.ongi.device.bridge.SignalSink
 import com.aiq.ongi.device.judge.EmbeddingJudge
@@ -29,6 +31,8 @@ class OngiFlow(
     private val judge: KeywordJudge = KeywordJudge(),
     /** 임베딩 판단 (모델 파일이 없으면 null → 키워드만) */
     private val embedJudge: EmbeddingJudge? = null,
+    /** 재생할 소리(48kHz 스테레오 wav)를 만들어 두는 폴더. A안에서 tinyplay가 이 파일을 튼다 (11/5) */
+    private val outDir: File? = null,
 ) {
     private val responder = Responder(store) { id -> judge.rule(id)?.allowedFeelings ?: emptyList() }
     private val worker = Executors.newSingleThreadExecutor()
@@ -114,6 +118,8 @@ class OngiFlow(
                 val t0 = System.currentTimeMillis()
                 val r = embedJudge.judge(ai.embed(text))
                 judged = r.situation
+                // 11/5: 키워드가 막는 말(block)로 거른 상황을 임베딩이 다시 고르지 않게 (예: "친구들끼리 다퉜대" → 4 아님)
+                judged?.let { s -> judge.blockedFor(s, text)?.let { b -> log("임베딩 판단 $s → 막는 말 \"$b\"이 있어서 버림"); judged = null } }
                 val ms = System.currentTimeMillis() - t0
                 log(
                     "임베딩 판단: ${if (judged != null) "$judged ${judge.nameOf(judged)}" else "없음"} " +
@@ -145,33 +151,95 @@ class OngiFlow(
             val total = System.currentTimeMillis() - tSpeechEnd
             log("한 바퀴: 말 끝 → 공감 소리 준비 ${total}ms (STT ${sttMs} / 판단·LLM ${tJudged - tSpeechEnd - sttMs} / TTS ${ttsMs})")
         }
+        // 8. 스피커용 소리 만들기 (48kHz 스테레오 wav). 사운드카드가 붙으면 이 파일을 그대로 튼다
+        //    부모 메시지가 있으면: 공감 → (0.4초) → 연결 문장 → (0.4초) → 부모 메시지를 하나로 이어 out/turn.wav (11/5)
+        val empathySound = lastTtsWav?.let { AudioPrep.fromWav(it) }
+        val empathySec0 = prepare(empathySound, "empathy.wav", "공감 한마디")
+        var empathySec = empathySec0
+        var messageSec: Double? = null
+        if (d is Decision.Play) {
+            val m = d.message
+            val msg = messageSound(m)
+            messageSec = prepare(msg, "message.wav", "부모 메시지 ${m.id}(${m.author} ${m.kind})")
+            val bridgeText = bridge(m)
+            val bridge = try { ai.tts(bridgeText).takeIf { it.size > 44 }?.let { AudioPrep.fromWav(it) } } catch (e: Exception) { null }
+            if (bridge != null) {
+                log("연결 문장: \"$bridgeText\" ${"%.1f".format(bridge.seconds)}초")
+                empathySec = (empathySec0 ?: 0.0) + 0.4 + bridge.seconds + 0.4
+            }
+            val parts = listOfNotNull(empathySound, bridge, msg)
+            if (parts.size >= 2) prepare(AudioPrep.concat(parts), "turn.wav", "한 번에 이어서(공감 → 연결 → 메시지)")
+        }
+
         when (d) {
             is Decision.Play -> {
                 sink.send(Signal.Empathy(d.empathy, hasMessage = true, author = d.message.author))
-                pause(Config.EMPATHY_MS)     // TODO /tts 합성 후 재생
+                pause(ms(empathySec, Config.EMPATHY_MS))     // TODO A안: tinyplay out/empathy.wav
                 val m = d.message
                 sink.send(Signal.Playing(m.situationId, m.id, m.author, m.kind, m.text))
-                pause(Config.PLAY_MS)        // TODO 부모 메시지 wav 재생
+                pause(ms(messageSec, Config.PLAY_MS))        // TODO A안: tinyplay out/message.wav
                 sync.reportPlayed(m.id)
             }
             is Decision.EmpathyOnly -> {
                 sink.send(Signal.Empathy(d.empathy, hasMessage = false, author = null))
-                pause(Config.EMPATHY_MS)
+                pause(ms(empathySec, Config.EMPATHY_MS))
             }
             is Decision.NotFound -> {
                 sink.send(Signal.NotFound(d.text))
-                pause(Config.NOTICE_MS)
+                pause(ms(empathySec, Config.NOTICE_MS))
             }
+        }
+    }
+
+    /** 공감 한마디와 부모 메시지 사이 연결 문장 */
+    private fun bridge(m: com.aiq.ongi.device.store.ParentMessage): String {
+        val parent = if (m.author == "dad") "아빠" else "엄마"
+        val t = if (m.kind == "voice") Config.BRIDGE_VOICE else Config.BRIDGE_TEXT
+        return t.replace("{부모}", parent).replace("{이름}", Config.CHILD_NAME)
+    }
+
+    /** 마지막 TTS 결과 (공감 한마디 wav) */
+    private var lastTtsWav: ByteArray? = null
+
+    /** 소리 길이(초) → 기다릴 시간. 소리가 없으면 기본값 */
+    private fun ms(sec: Double?, default: Long) = if (sec != null) (sec * 1000).toLong() + 300 else default
+
+    /** 부모 메시지 소리: 녹음이면 m4a를 풀고, 글이면 TTS로 읽는다 */
+    private fun messageSound(m: com.aiq.ongi.device.store.ParentMessage): AudioPrep.Mono? = try {
+        when {
+            m.kind == "voice" && m.audioPath != null && File(m.audioPath).exists() -> AudioPrep.decode(File(m.audioPath))
+            m.kind == "voice" -> { log("부모 메시지 ${m.id}: 녹음 파일 없음(시연 메시지) → 소리 없이 진행"); null }
+            !m.text.isNullOrBlank() -> ai.tts(m.text).takeIf { it.size > 44 }?.let { AudioPrep.fromWav(it) }
+            else -> null
+        }
+    } catch (e: Exception) {
+        log("부모 메시지 ${m.id} 소리 준비 실패: ${e.message}"); null
+    }
+
+    /** 스피커용 wav 저장. 소리 길이(초), 못 만들면 null */
+    private fun prepare(sound: AudioPrep.Mono?, name: String, what: String): Double? {
+        val dir = outDir ?: return null
+        if (sound == null || sound.samples.isEmpty()) return null
+        return try {
+            val t0 = System.currentTimeMillis()
+            dir.mkdirs()
+            File(dir, name).writeBytes(AudioPrep.toSpeakerWav(sound))
+            log("재생 준비: $what ${"%.1f".format(sound.seconds)}초 (${sound.rate}Hz → 48kHz 스테레오, ${System.currentTimeMillis() - t0}ms) → out/$name")
+            sound.seconds
+        } catch (e: Exception) {
+            log("재생 준비 실패($what): ${e.message}"); null
         }
     }
 
     /** 공감 한마디 TTS. 걸린 시간(ms), TTS가 가짜거나 실패면 -1 */
     private fun speak(text: String): Long {
+        lastTtsWav = null
         return try {
             val t0 = System.currentTimeMillis()
             val wav = ai.tts(text)
             val ms = System.currentTimeMillis() - t0
             if (wav.size <= 44) return -1
+            lastTtsWav = wav
             val rate = (wav[24].toInt() and 0xff) or ((wav[25].toInt() and 0xff) shl 8) or ((wav[26].toInt() and 0xff) shl 16)
             log("TTS ${ms}ms: \"$text\" → 소리 ${"%.1f".format((wav.size - 44) / 2.0 / rate)}초")
             ms
