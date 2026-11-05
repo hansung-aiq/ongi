@@ -12,6 +12,7 @@ import androidx.core.widget.doAfterTextChanged
 import com.aiq.ongi.device.ai_client.GenieLlm
 import com.aiq.ongi.device.ai_client.LocalAiClient
 import com.aiq.ongi.device.ai_client.OnnxEmbedder
+import com.aiq.ongi.device.ai_client.SherpaSpeech
 import com.aiq.ongi.device.judge.EmbeddingJudge
 import com.aiq.ongi.device.bridge.SignalServer
 import com.aiq.ongi.device.flow.OngiFlow
@@ -36,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private var flow: OngiFlow? = null
     private var sync: ServerSync? = null
     private var genie: GenieLlm? = null
+    private var speech: SherpaSpeech? = null
 
     @Volatile private var inputText = "오늘 친구랑 싸웠어"
 
@@ -90,6 +92,11 @@ class MainActivity : AppCompatActivity() {
         val genie = GenieLlm(::log).also { it.startLoading() }
         this.genie = genie
 
+        // STT·TTS (sherpa-onnx, 뒤에서 읽기). 모델이 없으면 가짜
+        val speechDir = java.io.File(Config.SPEECH_DIR).takeIf { it.isDirectory } ?: modelDir
+        val speech = SherpaSpeech(speechDir, java.io.File(getExternalFilesDir(null), "tts"), ::log).also { it.startLoading() }
+        this.speech = speech
+
         // 부품 조립: 신호 서버 ↔ 흐름
         val db = OngiDb(this)
         val store = MessageStore(db)
@@ -97,7 +104,7 @@ class MainActivity : AppCompatActivity() {
         lateinit var srv: SignalServer
         val f = OngiFlow(
             sink = { signal -> srv.send(signal) },
-            ai = LocalAiClient(embedder, genie, ::log),
+            ai = LocalAiClient(embedder, genie, speech, ::log),
             store = store,
             sync = sync,
             log = ::log,
@@ -133,6 +140,7 @@ class MainActivity : AppCompatActivity() {
         flow?.shutdown()
         sync?.stop()
         genie?.close()
+        speech?.close()
         try { server?.stop(500) } catch (_: Exception) {}
         super.onDestroy()
     }

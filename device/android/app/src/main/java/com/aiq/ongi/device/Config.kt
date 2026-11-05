@@ -26,6 +26,10 @@ object Config {
     /** 프롬프트 앞머리. SUDA 앱은 "<|im_start|>"를 붙임. 우리 모델 학습 방식에 맞춰야 함(멘토 확인) */
     @Volatile var LLM_PROMPT_PREFIX = "<|im_start|>"
 
+    /** STT·TTS 모델 폴더 (stt/, tts/). Android/data 안에는 adb로 하위 폴더를 만들 수 없어서 Genie처럼 /data/local/tmp에 둔다(11/5).
+     *  이 폴더가 없으면 models 폴더(MODEL_DIR)에서 찾는다 */
+    const val SPEECH_DIR = "/data/local/tmp/ongi/speech"
+
     /** LLM 한 번에 기다리는 최대 시간 */
     const val LLM_TIMEOUT_MS = 8000L
 
