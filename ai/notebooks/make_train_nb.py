@@ -24,6 +24,7 @@ md("""
 code("""
 !nvidia-smi --query-gpu=name,memory.total --format=csv
 !pip -q install -U "transformers>=4.46,<5" "peft>=0.15" accelerate datasets
+!pip -q uninstall -y torchao   # Colab 기본 torchao가 옛 버전이라 peft와 충돌 → 지움. 그다음 런타임 > 세션 다시 시작
 """)
 code("""
 from huggingface_hub import login
@@ -50,7 +51,7 @@ md("## 3. 토크나이저 + 새 토큰\n프롬프트는 보드 앱(GenieLlm)과 
 code("""
 import torch, re
 from transformers import AutoTokenizer, AutoModelForCausalLM
-BASE = 'meta-llama/Llama-3.2-1B-Instruct'
+BASE = 'meta-llama/Llama-3.2-1B-Instruct'   # 허가 없으면 'unsloth/Llama-3.2-1B-Instruct' (같은 가중치 공개 사본)
 NEW_TOKENS = ['<maum_0>', '<maum_1>', '<maum_sep>', '<maum_end>']
 PREFIX = '<|im_start|>'
 HEAD = ('Below is the query from the users, please choose the correct function '
@@ -86,7 +87,7 @@ def collate(b):
 md("## 4. LoRA 학습")
 code("""
 from peft import LoraConfig, get_peft_model
-model = AutoModelForCausalLM.from_pretrained(BASE, torch_dtype=torch.float32).cuda()
+model = AutoModelForCausalLM.from_pretrained(BASE, dtype=torch.float32).cuda()
 model.resize_token_embeddings(len(tok))
 # 새 토큰 임베딩은 비슷한 기존 토큰 평균으로 시작
 with torch.no_grad():
@@ -163,7 +164,7 @@ md("## 7. 병합 모델을 새로 불러서 다시 채점\nLoRA 결과와 거의
 code("""
 del model, merged, trainer; torch.cuda.empty_cache()
 tok = AutoTokenizer.from_pretrained(MERGED)
-m2 = AutoModelForCausalLM.from_pretrained(MERGED, torch_dtype=torch.float16).cuda()
+m2 = AutoModelForCausalLM.from_pretrained(MERGED, dtype=torch.float16).cuda()
 assert tok.convert_tokens_to_ids(NEW_TOKENS) == NEW_IDS
 r2 = score(m2, '병합fp16')
 for q in ['나 오늘 시험 망쳤어', '친 구랑 싸웠어', '엄마 보고 싶어', '그림 대회에서 상 받았어', '온기야 오늘 뭐 먹지']:
