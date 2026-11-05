@@ -124,7 +124,7 @@ class OngiFlow(
         log("LLM: ${when { infer == null -> "형식 깨짐(실패)"; infer.general -> "일반 대화(maum_1)"; else -> "상황 ${infer.situation}, 기분 ${infer.feeling}" }}")
 
         // 6. 재생 규칙
-        val d = responder.decide(judged, infer, text)
+        val d = responder.decide(judged, infer, text, byKeyword = hits.isNotEmpty())
         log("결정: ${d.log}")
 
         // 7. 신호 보내고 재생

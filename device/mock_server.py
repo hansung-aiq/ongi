@@ -34,6 +34,9 @@ MESSAGES = {
     2: dict(id=2, situation_id=10, author="mom", kind="voice", text=None, deleted=False, delivered=False, updated_at=T0),
     3: dict(id=3, situation_id=11, author="dad", kind="text",
             text="민준아, 상 받은 거 정말 축하해. 아빠는 네가 노력한 게 제일 자랑스러워.", deleted=False, delivered=False, updated_at=T0),
+    # 11/5 시연 4개 상황 맞추기: 3 시험을 망친 날
+    4: dict(id=4, situation_id=3, author="mom", kind="text",
+            text="괜찮아, 시험보다 네가 더 소중해. 엄마는 늘 네 편이야.", deleted=False, delivered=False, updated_at=T0),
 }
 PLAY_LOGS = []
 FAKE_M4A = b"\x00\x00\x00\x18ftypM4A \x00\x00\x02\x00M4A isomiso2" + b"\x00" * 1000   # 가짜 녹음(재생은 안 됨)

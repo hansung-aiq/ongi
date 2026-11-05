@@ -22,7 +22,8 @@ data class PlayLog(val id: Long, val messageId: Int, val playedAt: String)
 
 /**
  * 보드 안 부모 메시지 저장소 (DEV-09, SQLite messages / play_logs).
- * DB가 비어 있으면 시연용 메시지 3개(공통지침 규칙 7)를 넣는다. 서버에서 같은 상황 메시지가 오면 대체된다.
+ * 시연 4개 상황(3·4·10·11) 중 메시지가 없는 상황에만 시연용 메시지를 넣는다(11/5, 앱 켤 때마다 확인).
+ * 서버에서 같은 상황 메시지가 오면 대체된다.
  */
 class MessageStore(private val db: OngiDb) {
 
@@ -104,18 +105,24 @@ class MessageStore(private val db: OngiDb) {
         db.readableDatabase.rawQuery("SELECT COUNT(*) FROM play_logs", null).use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
 
     private fun seedDemoIfEmpty() {
-        val n = db.readableDatabase.rawQuery("SELECT COUNT(*) FROM messages", null).use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
-        if (n > 0) return
         val demo = listOf(
+            ParentMessage(4, 3, "mom", "text", "괜찮아, 시험보다 네가 더 소중해. 엄마는 늘 네 편이야."),
             ParentMessage(1, 4, "mom", "voice", null),
             ParentMessage(2, 10, "mom", "voice", null),
             ParentMessage(3, 11, "dad", "text", "민준아, 상 받은 거 정말 축하해. 아빠는 네가 노력한 게 제일 자랑스러워."),
         )
         val w = db.writableDatabase
-        for (m in demo) w.insert("messages", null, ContentValues().apply {
+        for (m in demo) {
+            val has = db.readableDatabase.rawQuery(
+                "SELECT COUNT(*) FROM messages WHERE situation_id = ? OR id = ?",
+                arrayOf(m.situationId.toString(), m.id.toString()),
+            ).use { c -> c.moveToFirst() && c.getInt(0) > 0 }
+            if (has) continue
+            w.insert("messages", null, ContentValues().apply {
             put("id", m.id); put("situation_id", m.situationId); put("author", m.author)
             put("kind", m.kind); put("text", m.text); put("demo", 1)
-        })
+            })
+        }
     }
 
     private fun Cursor.toMessage() = ParentMessage(

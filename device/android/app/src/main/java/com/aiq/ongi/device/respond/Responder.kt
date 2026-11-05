@@ -27,6 +27,9 @@ sealed class Decision {
  *  LLM 상황 -1                     → 생성 공감만
  *  일반 대화(<maum_1>)             → 받아주는 말
  *  LLM 없음·실패                   → 판단 결과대로 미리 쓴 공감 + 부모 메시지
+ *  ★ 판단 규칙 A (11/5): 키워드가 잡았는데 LLM이 일반 대화·다른 상황·-1 → 키워드 상황대로 대체 공감 + 부모 메시지
+ *     (임베딩으로 잡은 것은 덜 확실하므로 A를 쓰지 않고 위 규칙대로)
+ *     LLM이 같은 상황이면 학습된 생성 공감이 우선(규칙 통과 시). A는 LLM이 틀렸을 때 시연이 끊기지 않게 하는 안전장치
  *  그 상황에 부모 메시지 없음      → 생성 공감만(생성 실패 시 받아주는 말)
  */
 class Responder(
@@ -39,15 +42,25 @@ class Responder(
      * @param judged 키워드·임베딩으로 판단한 상황 (없으면 null)
      * @param infer  LLM 결과 (없거나 형식이 깨졌으면 null)
      * @param childText 아이 말 (공감 규칙의 부모 호칭 허용 판단에만 씀)
+     * @param byKeyword judged가 키워드로 나온 것인지 (판단 규칙 A는 키워드일 때만)
      */
-    fun decide(judged: Int?, infer: InferResult?, childText: String = ""): Decision {
+    fun decide(judged: Int?, infer: InferResult?, childText: String = "", byKeyword: Boolean = false): Decision {
         // LLM 없음·실패 → 판단 결과대로
         if (infer == null) {
             if (judged == null) return Decision.NotFound(FallbackLines.acknowledge(), "LLM 실패, 판단 없음 → 받아주는 말")
             val msg = store.find(judged)
-            val line = FallbackLines.open()
+            val line = FallbackLines.forSituation(judged) ?: FallbackLines.open()
             return if (msg != null) Decision.Play(line, msg, "LLM 실패 → 판단 상황 $judged 대로, 대체 공감 + 메시지")
             else Decision.EmpathyOnly(line, "LLM 실패, 상황 $judged 메시지 없음 → 대체 공감만")
+        }
+
+        // 판단 규칙 A: 키워드가 잡았는데 LLM이 다르게 답함 → 키워드 우선
+        if (byKeyword && judged != null && (infer.general || infer.situation != judged)) {
+            val llm = if (infer.general) "일반 대화" else "상황 ${infer.situation}"
+            val msg = store.find(judged)
+            val line = FallbackLines.forSituation(judged) ?: FallbackLines.open()
+            return if (msg != null) Decision.Play(line, msg, "키워드 $judged ≠ LLM $llm → 규칙 A: 키워드 우선, 대체 공감 + 메시지")
+            else Decision.EmpathyOnly(line, "키워드 $judged ≠ LLM $llm → 규칙 A, 상황 $judged 메시지 없음 → 대체 공감만")
         }
 
         // 일반 대화
@@ -89,6 +102,7 @@ class Responder(
         if (gen.text != null) return gen.text to gen.log
         // 대체: 부모 메시지 재생 + LLM 기분이 그 상황 허용 기분 안 → 짚는 말
         //       그 밖, 또는 기분 -1(기본 기분을 쓰는 경우) → 열어 두는 말
+        if (playing) FallbackLines.forSituation(situation)?.let { return it to "${gen.log}, 시연 상황 대체 공감" }
         val pointed = playing && situation != null && infer.feeling in allowedFeelings(situation)
         val line = if (pointed) FallbackLines.pointed(infer.feeling) else FallbackLines.open()
         return line to "${gen.log}, ${if (pointed) "짚는 말" else "열어 두는 말"}"
