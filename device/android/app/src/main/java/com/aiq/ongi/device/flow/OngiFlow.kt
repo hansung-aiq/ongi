@@ -33,6 +33,8 @@ class OngiFlow(
     private val embedJudge: EmbeddingJudge? = null,
     /** 재생할 소리(48kHz 스테레오 wav)를 만들어 두는 폴더. A안에서 tinyplay가 이 파일을 튼다 (11/5) */
     private val outDir: File? = null,
+    /** 오디오 도우미 (A안). 살아 있으면 스피커로 틀고, 아니면 소리 길이만큼 기다리기만 한다 */
+    private val speaker: com.aiq.ongi.device.audio.TinyAlsaHelper? = null,
 ) {
     private val responder = Responder(store) { id -> judge.rule(id)?.allowedFeelings ?: emptyList() }
     private val worker = Executors.newSingleThreadExecutor()
@@ -70,6 +72,7 @@ class OngiFlow(
             sink.send(Signal.Idle)
             return
         }
+        speaker?.stop()
         task?.cancel(true)      // runCycle 안의 sleep이 끊기고 finally에서 idle을 보냄
     }
 
@@ -171,23 +174,45 @@ class OngiFlow(
             if (parts.size >= 2) prepare(AudioPrep.concat(parts), "turn.wav", "한 번에 이어서(공감 → 연결 → 메시지)")
         }
 
+        // 9. 신호 + 스피커 (A안 도우미가 살아 있으면 tinyplay, 아니면 소리 길이만큼 기다림)
+        val spk = speaker?.takeIf { it.alive }
+        if (speaker != null && spk == null) log("스피커: 오디오 도우미 꺼짐 → 소리 없이 시간만 기다림")
         when (d) {
             is Decision.Play -> {
                 sink.send(Signal.Empathy(d.empathy, hasMessage = true, author = d.message.author))
-                pause(ms(empathySec, Config.EMPATHY_MS))     // TODO A안: tinyplay out/empathy.wav
+                // 공감 → 연결 → 메시지를 이어 붙인 turn.wav 하나를 틀고, 공감·연결이 끝날 즈음 playing 신호
+                val turn = outDir?.let { File(it, "turn.wav") }?.takeIf { it.exists() }
+                val started = spk != null && turn != null && spk.startPlay(turn).also { if (it) log("스피커: turn.wav 재생 시작") }
+                pause(ms(empathySec, Config.EMPATHY_MS))
                 val m = d.message
                 sink.send(Signal.Playing(m.situationId, m.id, m.author, m.kind, m.text))
-                pause(ms(messageSec, Config.PLAY_MS))        // TODO A안: tinyplay out/message.wav
+                if (started) {
+                    val err = spk!!.waitPlay((((messageSec ?: 10.0) + 5) * 1000).toLong())
+                    log(if (err == null) "스피커: 재생 끝" else "스피커: 재생 실패 → $err")
+                } else {
+                    pause(ms(messageSec, Config.PLAY_MS))
+                }
                 sync.reportPlayed(m.id)
             }
             is Decision.EmpathyOnly -> {
                 sink.send(Signal.Empathy(d.empathy, hasMessage = false, author = null))
-                pause(ms(empathySec, Config.EMPATHY_MS))
+                playOrWait(spk, "empathy.wav", empathySec, Config.EMPATHY_MS)
             }
             is Decision.NotFound -> {
                 sink.send(Signal.NotFound(d.text))
-                pause(ms(empathySec, Config.NOTICE_MS))
+                playOrWait(spk, "empathy.wav", empathySec, Config.NOTICE_MS)
             }
+        }
+    }
+
+    /** 도우미가 있으면 틀고 끝날 때까지, 없으면 소리 길이만큼 기다림 */
+    private fun playOrWait(spk: com.aiq.ongi.device.audio.TinyAlsaHelper?, name: String, sec: Double?, default: Long) {
+        val f = outDir?.let { File(it, name) }?.takeIf { it.exists() }
+        if (spk != null && f != null && spk.startPlay(f)) {
+            val err = spk.waitPlay(ms(sec, default) + 5000)
+            log(if (err == null) "스피커: $name 재생 끝" else "스피커: $name 재생 실패 → $err")
+        } else {
+            pause(ms(sec, default))
         }
     }
 
@@ -259,6 +284,18 @@ class OngiFlow(
                 pause(Config.LISTEN_MS)
                 sink.send(Signal.Error("D-001"))
                 return null
+            }
+            if (testText.startsWith("mic:")) {
+                val sec = testText.removePrefix("mic:").trim().toIntOrNull() ?: 5
+                val spk = speaker?.takeIf { it.alive }
+                if (spk == null) { log("마이크: 오디오 도우미 꺼짐"); sink.send(Signal.Error("D-001")); return null }
+                log("마이크: ${sec}초 녹음 시작 (도우미 tinycap)")
+                val wav = spk.record(sec) ?: run { sink.send(Signal.Error("D-001")); return null }
+                tSpeechEnd = System.currentTimeMillis()
+                val text = try { ai.stt(wav) } catch (e: Exception) { log("STT 실패: ${e.message}"); "" }
+                sttMs = System.currentTimeMillis() - tSpeechEnd
+                log("STT ${sttMs}ms: 마이크 ${sec}초 → \"$text\"")
+                return text
             }
             if (testText.startsWith("wav:")) {
                 val f = java.io.File(testText.removePrefix("wav:").trim())
