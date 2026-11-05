@@ -37,6 +37,9 @@ object Config {
     const val BRIDGE_VOICE = "{부모}가 {이름}이한테 남긴 말이 있어. 들려줄게"
     const val BRIDGE_TEXT = "{부모}가 {이름}이한테 남긴 말을 읽어 줄게"
 
+    /** 오디오 도우미(device/tools/ongi_audio.sh, root)와 주고받는 폴더 (A안, 11/5) */
+    const val AUDIO_HELPER_DIR = "/data/local/tmp/ongi/audio"
+
     /** LLM 한 번에 기다리는 최대 시간 */
     const val LLM_TIMEOUT_MS = 8000L
 

@@ -112,6 +112,7 @@ class MainActivity : AppCompatActivity() {
             judge = cfg?.keywordJudge() ?: KeywordJudge(),
             embedJudge = embedJudge,
             outDir = java.io.File(getExternalFilesDir(null), "out"),
+            speaker = com.aiq.ongi.device.audio.TinyAlsaHelper(java.io.File(Config.AUDIO_HELPER_DIR), ::log),
         )
         srv = SignalServer(
             port = Config.PORT,
