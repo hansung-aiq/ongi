@@ -73,10 +73,16 @@ class OngiFlow(
         worker.shutdownNow()
     }
 
+    /** 시간 측정 (11/5): 말 끝(=STT 시작) → 공감 소리 준비까지 */
+    private var tSpeechEnd = 0L
+    private var sttMs = 0L
+
     private fun runCycle(testText: String?) {
         // 1. 듣기
         sink.send(Signal.Listening)
-        val text = listen(testText) ?: return
+        tSpeechEnd = System.currentTimeMillis()
+        sttMs = 0L
+        val text = listen(testText)?.trim()?.trimEnd('.', '!', '?', '。') ?: return
         if (text.isBlank()) {
             sink.send(Signal.Error("D-002"))
             return
@@ -127,7 +133,18 @@ class OngiFlow(
         val d = responder.decide(judged, infer, text, byKeyword = hits.isNotEmpty())
         log("결정: ${d.log}")
 
-        // 7. 신호 보내고 재생
+        // 7. 신호 보내고 재생 (공감 한마디는 TTS로 wav를 만들고 시간을 잰다)
+        val tJudged = System.currentTimeMillis()
+        val spoken = when (d) {
+            is Decision.Play -> d.empathy
+            is Decision.EmpathyOnly -> d.empathy
+            is Decision.NotFound -> d.text
+        }
+        val ttsMs = speak(spoken)
+        if (ttsMs >= 0) {
+            val total = System.currentTimeMillis() - tSpeechEnd
+            log("한 바퀴: 말 끝 → 공감 소리 준비 ${total}ms (STT ${sttMs} / 판단·LLM ${tJudged - tSpeechEnd - sttMs} / TTS ${ttsMs})")
+        }
         when (d) {
             is Decision.Play -> {
                 sink.send(Signal.Empathy(d.empathy, hasMessage = true, author = d.message.author))
@@ -148,14 +165,44 @@ class OngiFlow(
         }
     }
 
-    /** 시험 모드면 글을 그대로, 아니면 마이크 → VAD → /stt (DEV-08) */
+    /** 공감 한마디 TTS. 걸린 시간(ms), TTS가 가짜거나 실패면 -1 */
+    private fun speak(text: String): Long {
+        return try {
+            val t0 = System.currentTimeMillis()
+            val wav = ai.tts(text)
+            val ms = System.currentTimeMillis() - t0
+            if (wav.size <= 44) return -1
+            val rate = (wav[24].toInt() and 0xff) or ((wav[25].toInt() and 0xff) shl 8) or ((wav[26].toInt() and 0xff) shl 16)
+            log("TTS ${ms}ms: \"$text\" → 소리 ${"%.1f".format((wav.size - 44) / 2.0 / rate)}초")
+            ms
+        } catch (e: Exception) {
+            log("TTS 실패: ${e.message}")
+            -1
+        }
+    }
+
+    /**
+     * 시험 모드면 글을 그대로, 아니면 마이크 → VAD → /stt (DEV-08)
+     * 11/5: 시험 모드에서 "wav:파일경로"를 보내면 그 wav를 STT로 받아쓴다 (마이크 대신 wav 파일)
+     */
     private fun listen(testText: String?): String? {
         if (Config.testMode) {
-            pause(Config.LISTEN_MS)
             if (testText == null) {
+                pause(Config.LISTEN_MS)
                 sink.send(Signal.Error("D-001"))
                 return null
             }
+            if (testText.startsWith("wav:")) {
+                val f = java.io.File(testText.removePrefix("wav:").trim())
+                if (!f.exists()) { log("wav 없음: ${f.absolutePath}"); sink.send(Signal.Error("D-001")); return null }
+                tSpeechEnd = System.currentTimeMillis()
+                val text = try { ai.stt(f.readBytes()) } catch (e: Exception) { log("STT 실패: ${e.message}"); "" }
+                sttMs = System.currentTimeMillis() - tSpeechEnd
+                log("STT ${sttMs}ms: ${f.name} → \"$text\"")
+                return text
+            }
+            pause(Config.LISTEN_MS)
+            tSpeechEnd = System.currentTimeMillis()
             return testText.trim()
         }
         // TODO DEV-08: 마이크 녹음 + VAD로 말 끝 감지 → wav → ai.stt(wav)

@@ -30,8 +30,12 @@ class FakeAiClient : AiClient {
 
     override fun infer(text: String): String {
         Thread.sleep(300)   // 생각하는 시간 흉내
-        return fixed[text.trim()] ?: "<maum_1>()<maum_end>"
+        // 11/5: STT 글은 끝에 마침표가 붙거나 띄어쓰기가 다를 수 있어서, 띄어쓰기·문장부호를 빼고 비교
+        val key = norm(text)
+        return fixed.entries.firstOrNull { norm(it.key) == key }?.value ?: "<maum_1>()<maum_end>"
     }
 
     override fun tts(text: String): ByteArray = ByteArray(0)
+
+    private fun norm(s: String) = s.replace(Regex("[\\s.,!?~。]"), "")
 }
