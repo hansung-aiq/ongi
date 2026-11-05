@@ -60,6 +60,12 @@ class SherpaSpeech(
                     ),
                 )
                 log("STT: SenseVoice 준비 완료 (${System.currentTimeMillis() - t0}ms)")
+                // 11/5: 처음 한 번은 3초쯤 걸림 → 켤 때 조용한 1초로 미리 한 번 돌려 둔다(시연 첫 문장이 늦지 않게)
+                try {
+                    val w0 = System.currentTimeMillis()
+                    transcribe(Wav.write(FloatArray(16000) { ((it % 7) - 3) / 32768f }, 16000))
+                    log("STT: 미리 한 번 돌림 (${System.currentTimeMillis() - w0}ms)")
+                } catch (e: Exception) { log("STT 미리 돌리기 실패: ${e.message}") }
             } catch (e: Throwable) {
                 log("STT 읽기 실패 → 가짜: ${e.message}")
             }
