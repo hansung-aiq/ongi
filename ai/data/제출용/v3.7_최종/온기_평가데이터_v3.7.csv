@@ -1,0 +1,184 @@
+﻿No,기능명,LLM Output,Query(한글)
+1,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>오늘 시험을 잘 못 봐서 속상하구나<maum_end>",있잖아 오늘 시험 망했잖아요
+2,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>수학 시험을 망쳐서 속상했구나<maum_end>",아빠 수학 시험 완전 망쳤다
+3,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>오늘 받아쓰기를 잘 못 봐서 속상하구나<maum_end>",오늘 받아쓰기 망쳤어
+4,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>영어 시험을 잘 못 봐서 속상하구나<maum_end>",아빠 영어 시험 완전 망쳤어요
+5,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>단원평가를 망쳐서 마음이 무겁구나<maum_end>",나 단원평가 완전 망쳤거든요
+6,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>시험을 잘 못 봤구나<maum_end>",있잖아 시험 잘 못 봤다
+7,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>오늘 수학 시험을 잘 못 봤구나<maum_end>",나 오늘 수학 시험 못 봤어요
+8,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>오늘 영어 시험을 잘 못 봤구나<maum_end>",있잖아 오늘 영어 시험 못 봤어
+9,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>오늘 시험 점수 때문에 속상하구나<maum_end>",나 오늘 시험 점수 낮게 나왔잖아
+10,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>수학 점수가 낮게 나왔구나<maum_end>",온기야 수학 점수가 낮게 나왔잖아요
+11,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>점수가 낮아서 속상했구나<maum_end>",엄마 받아쓰기 점수가 낮게 나왔잖아요
+12,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>영어 점수가 낮게 나왔구나<maum_end>",있잖아 영어 점수 낮게 나왔거든
+13,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>점수 때문에 많이 속상했구나<maum_end>",있잖아 오늘 시험 빵점 맞았거든요
+14,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>시험을 망쳤구나<maum_end>",엄마 시험 망쳤다
+15,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>수학 시험을 망쳐서 마음이 무겁구나<maum_end>",엄마 수학 시험 망했어요
+16,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>받아쓰기를 망쳤구나<maum_end>",아빠 나 받아쓰기 완전 망쳤잖아
+17,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>영어 시험을 망쳤구나<maum_end>",엄마 영어 시험 망쳤다
+18,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>단원평가를 잘 못 봐서 속상하구나<maum_end>",엄마 나 단원평가 망쳤잖아
+19,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>시험을 못 봐서 속상했구나<maum_end>",있잖아 시험 잘 못 봤잖아요
+20,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>수학 시험을 못 봐서 속상했구나<maum_end>",나 오늘 수학 시험 잘 못 봤단 말이야
+21,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>영어 시험을 못 봐서 속상했구나<maum_end>",아까 영어 시험 못 봤다
+22,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>오늘 시험 점수가 낮게 나왔구나<maum_end>",오늘 시험 점수가 낮게 나왔거든
+23,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>점수가 낮아서 속상했구나<maum_end>",엄마 나 수학 점수 낮게 나왔잖아요
+24,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>점수가 생각보다 낮았구나<maum_end>",온기야 나 받아쓰기 점수 낮게 나왔거든요
+25,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>점수가 낮아서 속상했구나<maum_end>",있잖아 나 영어 점수가 낮게 나왔어요
+26,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>시험을 망친 날이구나<maum_end>",있잖아 받아쓰기 빵점 맞았거든
+27,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>시험을 망친 날이구나<maum_end>",온기야 시험 완전 망쳤다
+28,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>수학 시험을 잘 못 봐서 속상하구나<maum_end>",수학 시험 완전 망쳤거든요
+29,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>받아쓰기를 망친 날이구나<maum_end>",온기야 받아쓰기 완전 망쳤거든
+30,상황 말하기,"<maum_0>(situation=3, feeling=1)<maum_sep>영어 시험을 망친 날이구나<maum_end>",엄마 나 영어 시험 망쳤어요
+31,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구랑 다퉈서 마음이 안 좋구나<maum_end>",엄마 친구랑 싸웠단 말이야
+32,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>오늘 친구랑 다퉜구나<maum_end>",오늘 친구랑 다퉜단 말이야
+33,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>오늘 친구랑 싸웠구나<maum_end>",나 오늘 친구랑 크게 싸웠잖아
+34,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구랑 다퉜구나<maum_end>",나 아까 친구랑 크게 다퉜거든
+35,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>오늘 친구랑 싸웠구나<maum_end>",나 오늘 친구랑 또 싸웠잖아
+36,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구랑 다툰 날이구나<maum_end>",아빠 친구랑 또 다퉜단 말이야
+37,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구랑 싸운 날이구나<maum_end>",아까 친구랑 싸움 났단 말이야
+38,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구랑 다툰 날이구나<maum_end>",나 친구랑 말다툼했거든요
+39,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 싸웠구나<maum_end>",있잖아 나 짝꿍이랑 싸웠잖아요
+40,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 다퉜구나<maum_end>",아빠 나 짝꿍이랑 다퉜단 말이야
+41,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 싸워서 속상했구나<maum_end>",아빠 나 짝꿍이랑 크게 싸웠다
+42,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 다퉜구나<maum_end>",아까 짝꿍이랑 크게 다퉜잖아
+43,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 다퉈서 마음이 안 좋구나<maum_end>",나 아까 짝꿍이랑 또 싸웠어
+44,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 다퉈서 마음이 무겁구나<maum_end>",온기야 나 짝꿍이랑 또 다퉜다
+45,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 싸움이 났구나<maum_end>",온기야 나 짝꿍이랑 싸움 났거든
+46,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 다퉈서 속상했구나<maum_end>",있잖아 짝꿍이랑 말다툼했잖아
+47,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>오늘 친구들이랑 싸운 날이구나<maum_end>",오늘 친구들이랑 싸웠잖아요
+48,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 다퉈서 속상했구나<maum_end>",있잖아 친구들이랑 다퉜거든
+49,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 싸운 날이구나<maum_end>",나 아까 친구들이랑 크게 싸웠거든
+50,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 다퉜구나<maum_end>",온기야 친구들이랑 크게 다퉜어요
+51,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 싸웠구나<maum_end>",아빠 친구들이랑 또 싸웠어
+52,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>오늘 친구들이랑 다퉜구나<maum_end>",나 오늘 친구들이랑 또 다퉜다
+53,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 싸운 날이구나<maum_end>",온기야 친구들이랑 싸움 났잖아
+54,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 다툰 날이구나<maum_end>",아빠 나 친구들이랑 말다툼했거든요
+55,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>반 친구랑 다퉈서 마음이 안 좋구나<maum_end>",온기야 나 반 친구랑 싸웠어
+56,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>오늘 반 친구랑 다퉈서 마음이 무겁구나<maum_end>",나 오늘 반 친구랑 다퉜어요
+57,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>반 친구랑 다퉈서 마음이 안 좋구나<maum_end>",나 아까 반 친구랑 크게 싸웠어요
+58,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>반 친구랑 다퉜구나<maum_end>",나 아까 반 친구랑 크게 다퉜거든
+59,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>반 친구랑 싸워서 속상했구나<maum_end>",아까 반 친구랑 또 싸웠단 말이야
+60,상황 말하기,"<maum_0>(situation=4, feeling=1)<maum_sep>오늘 반 친구랑 다퉜구나<maum_end>",있잖아 오늘 반 친구랑 또 다퉜잖아요
+61,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마가 곁에 있으면 좋겠구나<maum_end>",나 오늘 엄마 보고 싶어
+62,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>그리운 마음이 드는구나<maum_end>",온기야 나 엄마 너무 보고 싶어요
+63,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마가 곁에 있으면 좋겠구나<maum_end>",오늘 엄마 진짜 보고 싶잖아
+64,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 곁에 있으면 좋겠구나<maum_end>",밤 되니까 엄마 많이 보고 싶잖아
+65,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마 목소리가 듣고 싶구나<maum_end>",온기야 엄마 목소리 듣고 싶어
+66,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>오늘 그리운 마음이 드는구나<maum_end>",나 오늘 엄마 그리워요
+67,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 생각이 많이 나는구나<maum_end>",지금 엄마 생각나
+68,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 생각이 많이 나는구나<maum_end>",온기야 아빠 보고 싶단 말이야
+69,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 생각이 많이 나는구나<maum_end>",온기야 나 아빠 너무 보고 싶단 말이야
+70,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>오늘 아빠가 보고 싶어서 마음이 허전하구나<maum_end>",오늘따라 아빠 진짜 보고 싶잖아
+71,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 생각이 많이 나는구나<maum_end>",있잖아 아빠 많이 보고 싶다
+72,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 많이 그립구나<maum_end>",나 지금 아빠 목소리 듣고 싶단 말이야
+73,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 많이 그립구나<maum_end>",있잖아 아빠 그립단 말이야
+74,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>그리운 마음이 드는구나<maum_end>",있잖아 아빠 생각난단 말이야
+75,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마 아빠가 생각이 많이 나는구나<maum_end>",나 엄마 아빠 보고 싶어
+76,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마 아빠가 생각이 많이 나는구나<maum_end>",오늘따라 엄마 아빠 너무 보고 싶잖아요
+77,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마 아빠가 곁에 있으면 좋겠구나<maum_end>",밤 되니까 엄마 아빠 진짜 보고 싶어요
+78,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마 아빠가 보고 싶어서 마음이 허전하구나<maum_end>",나 지금 엄마 아빠 많이 보고 싶잖아요
+79,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마 아빠가 곁에 있으면 좋겠구나<maum_end>",오늘따라 엄마 아빠 목소리 듣고 싶단 말이야
+80,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>그리운 마음이 드는구나<maum_end>",있잖아 엄마 아빠 그립거든
+81,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마 아빠가 자꾸 생각나는구나<maum_end>",엄마 아빠 자꾸 생각나
+82,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마가 보고 싶어서 마음이 허전하구나<maum_end>",오늘따라 우리 엄마 보고 싶잖아요
+83,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 많이 보고 싶구나<maum_end>",있잖아 우리 엄마 너무 보고 싶어요
+84,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 곁에 있으면 좋겠구나<maum_end>",온기야 나 우리 엄마 진짜 보고 싶잖아
+85,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 곁에 있으면 좋겠구나<maum_end>",갑자기 우리 엄마 많이 보고 싶어
+86,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 많이 그립구나<maum_end>",우리 엄마 목소리 듣고 싶어
+87,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 많이 보고 싶구나<maum_end>",나 지금 우리 엄마 그립다
+88,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마가 많이 보고 싶구나<maum_end>",오늘 우리 엄마 자꾸 생각나
+89,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 많이 보고 싶구나<maum_end>",밤 되니까 우리 아빠 보고 싶다
+90,상황 말하기,"<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 곁에 있으면 좋겠구나<maum_end>",지금 우리 아빠 너무 보고 싶어
+91,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>자랑하고 싶은 날이구나<maum_end>",나 상 받았잖아
+92,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>뿌듯한 날이구나<maum_end>",온기야 학교에서 상 받았단 말이야
+93,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>열심히 한 보람이 있구나<maum_end>",나 아까 대회에서 상 받았어요
+94,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>그림 대회에서 상을 받다니 정말 기쁘구나<maum_end>",있잖아 나 그림 대회에서 상장 받았잖아
+95,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>글짓기 대회에서 상을 받다니 정말 기쁘구나<maum_end>",글짓기 대회에서 상 받았잖아요
+96,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>칭찬을 받았구나<maum_end>",나 아까 칭찬받았잖아
+97,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>기분 좋은 날이구나<maum_end>",아빠 나 선생님한테 칭찬 많이 받았다
+98,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>칭찬받은 날이구나<maum_end>",온기야 나 학교에서 칭찬 많이 받았거든요
+99,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>열심히 한 보람이 있구나<maum_end>",아빠 백 점 맞았어
+100,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>기분 좋은 날이구나<maum_end>",있잖아 나 시험 백 점 맞았잖아
+101,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>오늘 자랑하고 싶은 날이구나<maum_end>",있잖아 오늘 수학 시험 백 점 맞았거든요
+102,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>받아쓰기 백 점이라 기쁘구나<maum_end>",엄마 나 받아쓰기 백 점 받았다
+103,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>열심히 한 보람이 있구나<maum_end>",아빠 나 일등 했거든
+104,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>달리기 일등이라 뿌듯하구나<maum_end>",있잖아 나 달리기 일등 했단 말이야
+105,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>자랑하고 싶은 날이구나<maum_end>",온기야 나 반에서 일등 했어요
+106,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>일등이라니 정말 기쁘구나<maum_end>",나 오늘 대회에서 일등 했다
+107,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>상을 받았구나<maum_end>",나 아까 상장 받았잖아
+108,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>학교에서 상을 받다니 정말 기쁘구나<maum_end>",아까 학교에서 상장 받았잖아
+109,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>자랑하고 싶은 날이구나<maum_end>",아까 대회에서 상 받았잖아요
+110,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>그림 대회에서 상을 받았구나<maum_end>",아빠 나 그림 대회에서 상 받았단 말이야
+111,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>글짓기 대회에서 상을 받았구나<maum_end>",있잖아 나 글짓기 대회에서 상장 받았어요
+112,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>칭찬받아서 뿌듯하구나<maum_end>",엄마 나 칭찬받았단 말이야
+113,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>칭찬받은 날이구나<maum_end>",온기야 나 선생님한테 칭찬 많이 받았잖아
+114,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>학교에서 칭찬을 받았구나<maum_end>",나 아까 학교에서 칭찬받았어
+115,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>백 점을 맞았구나<maum_end>",나 아까 백 점 받았어요
+116,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>오늘 시험 백 점이라 기쁘구나<maum_end>",있잖아 오늘 시험 백 점 맞았다
+117,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>수학 시험 백 점을 맞았구나<maum_end>",엄마 나 수학 시험 백 점 맞았어
+118,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>오늘 열심히 한 보람이 있구나<maum_end>",나 오늘 받아쓰기 백 점 맞았어요
+119,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>일등을 했구나<maum_end>",온기야 일등 했다
+120,상황 말하기,"<maum_0>(situation=11, feeling=6)<maum_sep>달리기 일등을 했구나<maum_end>",아빠 달리기 일등 했잖아요
+121,일반 대화,<maum_1>()<maum_end>,짝꿍이 선생님한테 혼났대
+122,일반 대화,<maum_1>()<maum_end>,동생이 시험 망쳤대
+123,일반 대화,<maum_1>()<maum_end>,형이 친구랑 싸웠대
+124,일반 대화,<maum_1>()<maum_end>,친구들끼리 다퉜대
+125,일반 대화,<maum_1>()<maum_end>,누나가 상 받았대
+126,일반 대화,<maum_1>()<maum_end>,동생이 상 받았어
+127,일반 대화,<maum_1>()<maum_end>,형 생일이야
+128,일반 대화,<maum_1>()<maum_end>,엄마 생일 선물 샀어
+129,일반 대화,<maum_1>()<maum_end>,친구랑 눈싸움했어
+130,일반 대화,<maum_1>()<maum_end>,동생이 울고 있어
+131,일반 대화,<maum_1>()<maum_end>,양파 때문에 눈물 나
+132,일반 대화,<maum_1>()<maum_end>,엄마 언제 와
+133,일반 대화,<maum_1>()<maum_end>,아빠 이거 봐 봐
+134,일반 대화,<maum_1>()<maum_end>,오늘 시험 봤어
+135,일반 대화,<maum_1>()<maum_end>,학교 끝났어
+136,일반 대화,<maum_1>()<maum_end>,친구랑 놀이터에서 놀았어
+137,일반 대화,<maum_1>()<maum_end>,잠옷 입었어
+138,일반 대화,<maum_1>()<maum_end>,이제 잘게
+139,일반 대화,<maum_1>()<maum_end>,숙제 다 했어
+140,일반 대화,<maum_1>()<maum_end>,창밖에 눈이 내려
+141,일반 대화,<maum_1>()<maum_end>,방금 샤워했어
+142,일반 대화,<maum_1>()<maum_end>,동생이랑 레고 조립했어
+143,일반 대화,<maum_1>()<maum_end>,체육복을 세탁기에 넣었어
+144,일반 대화,<maum_1>()<maum_end>,오늘 점심은 김밥이었어
+145,일반 대화,<maum_1>()<maum_end>,잠깐 멈춰줘
+146,일반 대화,<maum_1>()<maum_end>,알람 꺼줘
+147,일반 대화,<maum_1>()<maum_end>,빗소리 틀어줘
+148,일반 대화,<maum_1>()<maum_end>,밝기 낮춰줘
+149,일반 대화,<maum_1>()<maum_end>,방금 노래 한 번 더 들려줘
+150,일반 대화,<maum_1>()<maum_end>,오늘 달이 보여
+151,일반 대화,<maum_1>()<maum_end>,무지개는 어떻게 생겨
+152,일반 대화,<maum_1>()<maum_end>,내일 체육 있어
+153,일반 대화,<maum_1>()<maum_end>,주말에 비 와
+154,일반 대화,<maum_1>()<maum_end>,바다는 왜 짜
+155,일반 대화,<maum_1>()<maum_end>,수고했어
+156,일반 대화,<maum_1>()<maum_end>,푹 쉬어
+157,일반 대화,<maum_1>()<maum_end>,또 만나
+158,일반 대화,<maum_1>()<maum_end>,편안한 밤 되세요
+159,일반 대화,<maum_1>()<maum_end>,잘 갔다 올게
+160,일반 대화,<maum_1>()<maum_end>,오늘 학교 가기 너무 싫잖아
+161,일반 대화,<maum_1>()<maum_end>,나 학교 안 가고 싶단 말이야
+162,일반 대화,<maum_1>()<maum_end>,학교 쉬고 싶단 말이야
+163,일반 대화,<maum_1>()<maum_end>,나 아빠한테 엄청 혼났단 말이야
+164,일반 대화,<maum_1>()<maum_end>,있잖아 선생님한테 야단맞았단 말이야
+165,일반 대화,<maum_1>()<maum_end>,오늘 선생님한테 꾸중 들었잖아
+166,일반 대화,<maum_1>()<maum_end>,오늘 애들이 나 따돌린단 말이야
+167,일반 대화,<maum_1>()<maum_end>,오늘 반 애들이 나만 빼고 놀았단 말이야
+168,일반 대화,<maum_1>()<maum_end>,오늘 반 애들이 나 따돌리거든
+169,일반 대화,<maum_1>()<maum_end>,온기야 비교당했단 말이야
+170,일반 대화,<maum_1>()<maum_end>,오늘 친구랑 비교당했어요
+171,일반 대화,<maum_1>()<maum_end>,온기야 비교당했다
+172,일반 대화,<maum_1>()<maum_end>,오늘 진짜 울 것 같잖아
+173,일반 대화,<maum_1>()<maum_end>,오늘 눈물 난단 말이야
+174,일반 대화,<maum_1>()<maum_end>,오늘 자꾸 눈물이 나
+175,일반 대화,<maum_1>()<maum_end>,있잖아 진짜 아무것도 하기 싫다
+176,일반 대화,<maum_1>()<maum_end>,온기야 아무것도 안 하고 싶거든
+177,일반 대화,<maum_1>()<maum_end>,있잖아 진짜 다 귀찮단 말이야
+178,일반 대화,<maum_1>()<maum_end>,무서운 꿈 꿨다
+179,일반 대화,<maum_1>()<maum_end>,나 진짜 못 자겠다
+180,일반 대화,<maum_1>()<maum_end>,잠이 안 온단 말이야
+181,일반 대화,<maum_1>()<maum_end>,내일 내 생일이에요
+182,일반 대화,<maum_1>()<maum_end>,있잖아 오늘 내 생일이에요
+183,일반 대화,<maum_1>()<maum_end>,오늘 내 생일이야
