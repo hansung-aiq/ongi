@@ -30,6 +30,13 @@ object Config {
      *  이 폴더가 없으면 models 폴더(MODEL_DIR)에서 찾는다 */
     const val SPEECH_DIR = "/data/local/tmp/ongi/speech"
 
+    /** 아이 이름 (연결 문장에 씀). 나중에 앱 2-1 자녀 정보 설정에서 받는다. 지금은 시연용 */
+    @Volatile var CHILD_NAME = "민준"
+
+    /** 공감 한마디와 부모 메시지 사이 연결 문장 (11/5). {부모} = 엄마/아빠, {이름} = 아이 이름. LLM이 만들지 않는 정해 둔 문장 */
+    const val BRIDGE_VOICE = "{부모}가 {이름}이한테 남긴 말이 있어. 들려줄게"
+    const val BRIDGE_TEXT = "{부모}가 {이름}이한테 남긴 말을 읽어 줄게"
+
     /** LLM 한 번에 기다리는 최대 시간 */
     const val LLM_TIMEOUT_MS = 8000L
 

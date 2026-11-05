@@ -37,6 +37,12 @@ class KeywordJudge(
         return priority.filter { it in hit } + hit.filter { it !in priority }
     }
 
+    /** 그 상황의 막는 말(block)이 들어 있는지. 임베딩이 고른 상황도 이걸로 한 번 더 거른다 (11/5) */
+    fun blockedFor(id: Int, text: String): String? {
+        val base = squash(text)
+        return rule(id)?.block?.firstOrNull { base.contains(squash(it)) }
+    }
+
     /** 최종 판단 상황. 없으면 null */
     fun judge(text: String): Int? = matches(text).firstOrNull()
 
