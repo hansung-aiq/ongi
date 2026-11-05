@@ -15,10 +15,16 @@ class TinyAlsaHelper(private val dir: File, private val log: (String) -> Unit = 
 
     /** 도우미가 3초 안에 살아 있었는지 */
     val alive: Boolean
-        get() = try {
-            val t = File(dir, "alive").readText().trim().toLong()
-            kotlin.math.abs(System.currentTimeMillis() / 1000 - t) <= 3
-        } catch (_: Exception) { false }
+        get() {
+            repeat(3) {     // 11/5: 쓰는 순간에 읽으면 비어 있을 수 있어 3번까지 다시 읽음
+                try {
+                    val t = File(dir, "alive").readText().trim().toLong()
+                    if (kotlin.math.abs(System.currentTimeMillis() / 1000 - t) <= 3) return true
+                } catch (_: Exception) {}
+                Thread.sleep(30)
+            }
+            return false
+        }
 
     /** 재생 시작 (기다리지 않음). 요청을 못 쓰면 false */
     fun startPlay(wav: File): Boolean {

@@ -23,6 +23,11 @@ mkdir -p $D
 chmod 777 $D
 rm -f $D/*.req $D/*.done
 
+# 살아 있음 표시: 임시 파일에 쓰고 이름을 바꿔 한 번에 교체 (11/5: 앱이 비어 있는 파일을 읽어 "꺼짐"으로 보던 문제)
+beat() {
+    date +%s > $D/alive.tmp && chmod 666 $D/alive.tmp && mv -f $D/alive.tmp $D/alive
+}
+
 # USB 사운드카드 번호 (없으면 빈 값)
 usb_card() {
     grep -i "usb" /proc/asound/cards | head -1 | sed 's/^ *\([0-9]*\).*/\1/'
@@ -33,7 +38,7 @@ run_wait() {
     "$@" &
     P=$!
     while kill -0 $P 2>/dev/null; do
-        date +%s > $D/alive
+        beat
         if [ -f $D/stop.req ]; then rm -f $D/stop.req; kill -INT $P 2>/dev/null; echo "멈춤 $(date)"; fi
         sleep 0.1
     done
@@ -42,8 +47,7 @@ run_wait() {
 
 echo "온기 오디오 도우미 시작 $(date)"
 while true; do
-    date +%s > $D/alive
-    chmod 666 $D/alive 2>/dev/null
+    beat
 
     if [ -f $D/stop.req ]; then
         rm -f $D/stop.req
