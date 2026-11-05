@@ -155,7 +155,8 @@ object Wav {
                 bits = b.getShort(pos + 22).toInt()
             } else if (id == "data") {
                 dataStart = pos + 8
-                dataLen = minOf(len, bytes.size - dataStart)
+                // 녹음 중에 멈춘 파일은 data 길이가 0이거나 틀릴 수 있음 → 남은 바이트 전부
+                dataLen = if (len <= 0 || len > bytes.size - dataStart) bytes.size - dataStart else len
                 break
             }
             pos += 8 + len + (len and 1)

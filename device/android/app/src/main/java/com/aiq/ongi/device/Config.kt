@@ -37,6 +37,9 @@ object Config {
     const val BRIDGE_VOICE = "{부모}가 {이름}이한테 남긴 말이 있어. 들려줄게"
     const val BRIDGE_TEXT = "{부모}가 {이름}이한테 남긴 말을 읽어 줄게"
 
+    /** 받아쓰기가 비었을 때 소리 안내 (앱 화면은 "다시 말해 줄래?") */
+    const val RETRY_TEXT = "잘 못 들었어. 한 번 더 말해 줘"
+
     /** 오디오 도우미(device/tools/ongi_audio.sh, root)와 주고받는 폴더 (A안, 11/5) */
     const val AUDIO_HELPER_DIR = "/data/local/tmp/ongi/audio"
 
@@ -57,3 +60,31 @@ object Config {
 }
 
 enum class EmpathyMode { GENERATE, SELECT }
+
+/**
+ * 빌드 없이 바꾸는 설정 (11/5): 보드 /data/local/tmp/ongi/config.json
+ *   {"server_url": "http://192.168.0.20:8000", "child_name": "민준"}
+ * 맥에서 바꾸기: bash device/tools/set_config.sh server_url http://192.168.0.20:8000
+ * 동기화할 때마다(30초) 다시 읽는다.
+ */
+object ConfigFile {
+    const val PATH = "/data/local/tmp/ongi/config.json"
+    @Volatile private var lastModified = -1L
+
+    fun reload(log: (String) -> Unit) {
+        val f = java.io.File(PATH)
+        if (!f.exists() || f.lastModified() == lastModified) return
+        lastModified = f.lastModified()
+        try {
+            val o = org.json.JSONObject(f.readText())
+            o.optString("server_url").takeIf { it.isNotBlank() }?.let {
+                if (it != Config.SERVER_URL) { log("설정: 서버 주소 ${Config.SERVER_URL} → $it"); Config.SERVER_URL = it }
+            }
+            o.optString("child_name").takeIf { it.isNotBlank() }?.let {
+                if (it != Config.CHILD_NAME) { log("설정: 아이 이름 ${Config.CHILD_NAME} → $it"); Config.CHILD_NAME = it }
+            }
+        } catch (e: Exception) {
+            log("설정 파일 읽기 실패($PATH): ${e.message}")
+        }
+    }
+}
