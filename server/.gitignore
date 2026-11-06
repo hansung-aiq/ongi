@@ -1,0 +1,6 @@
+.env
+.venv/
+__pycache__/
+files/
+# 저장소 맨 위 .gitignore의 .env.* 에 걸리지 않게 견본 파일은 올린다
+!.env.example
