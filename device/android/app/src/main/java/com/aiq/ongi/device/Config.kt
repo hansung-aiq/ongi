@@ -66,6 +66,8 @@ enum class EmpathyMode { GENERATE, SELECT }
  *   {"server_url": "http://192.168.0.20:8000", "child_name": "민준"}
  * 맥에서 바꾸기: bash device/tools/set_config.sh server_url http://192.168.0.20:8000
  * 동기화할 때마다(30초) 다시 읽는다.
+ * LLM(11/7, 양자화 모델 교체용): "llm_config"(Genie json 경로), "llm_prefix"(프롬프트 앞머리), "use_genie"("true"/"false")
+ *   llm_config는 앱이 켜질 때 한 번만 읽힌다 → 바꾸면 앱 다시 켜기. device/tools/swap_llm.sh가 한 번에 한다
  */
 object ConfigFile {
     const val PATH = "/data/local/tmp/ongi/config.json"
@@ -82,6 +84,17 @@ object ConfigFile {
             }
             o.optString("child_name").takeIf { it.isNotBlank() }?.let {
                 if (it != Config.CHILD_NAME) { log("설정: 아이 이름 ${Config.CHILD_NAME} → $it"); Config.CHILD_NAME = it }
+            }
+            o.optString("llm_config").takeIf { it.isNotBlank() }?.let {
+                if (it != Config.LLM_CONFIG) { log("설정: LLM json ${Config.LLM_CONFIG} → $it (앱 다시 켜야 적용)"); Config.LLM_CONFIG = it }
+            }
+            if (o.has("llm_prefix")) {
+                val p = o.optString("llm_prefix")
+                if (p != Config.LLM_PROMPT_PREFIX) { log("설정: LLM 앞머리 \"${Config.LLM_PROMPT_PREFIX}\" → \"$p\""); Config.LLM_PROMPT_PREFIX = p }
+            }
+            o.optString("use_genie").takeIf { it.isNotBlank() }?.let {
+                val v = it.equals("true", ignoreCase = true)
+                if (v != Config.useGenie) { log("설정: LLM ${if (v) "Genie" else "가짜"}"); Config.useGenie = v }
             }
         } catch (e: Exception) {
             log("설정 파일 읽기 실패($PATH): ${e.message}")

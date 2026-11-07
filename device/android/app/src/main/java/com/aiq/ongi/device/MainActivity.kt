@@ -91,6 +91,8 @@ class MainActivity : AppCompatActivity() {
         embedJudge?.let { log("임베딩 판단: 기준 문장 ${it.size}개 / 차이 ${it.margin} / 점수 ${it.threshold}") }
 
         // LLM (Genie, 뒤에서 읽기). 다 읽히면 버튼으로 진짜/가짜 전환
+        // 11/7: config.json의 llm_config·llm_prefix·use_genie를 먼저 읽어 둔다(swap_llm.sh)
+        com.aiq.ongi.device.ConfigFile.reload(::log)
         val genie = GenieLlm(::log).also { it.startLoading() }
         this.genie = genie
 
@@ -126,7 +128,7 @@ class MainActivity : AppCompatActivity() {
             // 앱이 text를 안 보내면: 마이크 모드면 마이크, 시험 모드면 화면 입력칸 글 (11/5)
             onStartRequest = { text -> f.start(text ?: if (Config.testMode) inputText else null) },
             onStopRequest = { f.stop() },
-            onCheckRequest = { wav, text -> f.check(wav, text) },
+            onCheckRequest = { wav, text, llm -> f.check(wav, text, llm) },
             log = ::log,
         )
         srv.start()

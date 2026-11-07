@@ -35,4 +35,7 @@ class LocalAiClient(
     }
 
     val hasEmbedder get() = embedder != null
+
+    /** 지금 infer가 진짜 Genie로 가는지 (11/7, 평가 도구가 가짜 답을 채점하지 않게) */
+    val genieActive get() = Config.useGenie && genie?.ready == true
 }

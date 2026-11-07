@@ -82,7 +82,7 @@ class OngiFlow(
      * 개발용 판단만 해 보기 (11/5): STT → 위기 → 키워드 → 임베딩까지, LLM·재생 없이. 결과 JSON.
      * STT가 잘못 듣는 모양을 한꺼번에 찾을 때 쓴다(device/tools/stt_sweep.py). 대화 중이면 busy
      */
-    fun check(wav: String?, text: String?): String {
+    fun check(wav: String?, text: String?, llm: Boolean = false): String {
         val o = org.json.JSONObject().put("type", "check_result")
         if (running) return o.put("error", "busy").toString()
         return try {
@@ -92,6 +92,16 @@ class OngiFlow(
                 val sttMs = System.currentTimeMillis() - t0
                 val t = heard.trim().trimEnd('.', '!', '?', '。')
                 o.put("heard", t).put("stt_ms", sttMs)
+                // 11/7: LLM 원문 (위기 표현이어도 채점용으로 먼저 돌림)
+                if (llm) {
+                    val t1 = System.currentTimeMillis()
+                    val raw = try { ai.infer(t) } catch (e: Exception) { "ERROR: ${e.message ?: e.javaClass.simpleName}" }
+                    o.put("llm_raw", raw).put("llm_ms", System.currentTimeMillis() - t1)
+                    o.put("llm_genie", (ai as? com.aiq.ongi.device.ai_client.LocalAiClient)?.genieActive == true)
+                    InferParser.parse(raw)?.let { r ->
+                        o.put("llm_general", r.general).put("llm_situation", r.situation).put("llm_feeling", r.feeling).put("llm_empathy", r.empathy ?: "")
+                    }
+                }
                 if (safety.isCrisis(t)) return@Callable o.put("by", "safety").put("situation", -1).toString()
                 val hits = judge.matches(t)
                 var s = hits.firstOrNull()
