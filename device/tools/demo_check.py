@@ -7,6 +7,7 @@
   python3 device/tools/demo_check.py --wav      시연 4개 + 배고파를 wav(STT)로 (보드 files/test/1~5.wav)
   python3 device/tools/demo_check.py --stream   말 끝 판단 시험: 조용함을 붙인 wav(files/test/s0~s5.wav)
   python3 device/tools/demo_check.py --mic      진짜 마이크로 1번 (사운드카드 필요)
+  python3 device/tools/demo_check.py --micset   진짜 마이크로 말투가 다른 10문장 (화면에 뜬 문장을 말하기, 약 5분)
 
 부모 메시지까지 실제 소리 길이만큼 기다리므로 시연 문장 하나에 약 25초 걸린다.
 """
@@ -37,6 +38,20 @@ RULES = [
 WAV = [(f"wav:{D}/{i}.wav", exp, f"wav {i} ({desc})") for i, (exp, desc) in
        enumerate([(("play", 3), "시험"), (("play", 4), "친구"), (("play", 10), "보고 싶음"), (("play", 11), "상"), (("not_found",), "배고파")], 1)]
 MIC = [("mic", None, "마이크 (말하고 멈추면 바로 끝나야 함)")]
+# 실제 목소리 말투 시험 (11/7): 아이가 실제로 할 법한 짧은 말 10개. 화면에 뜬 문장을 말한다
+#  (평가 데이터의 "있잖아 / ~단 말이야" 말투는 소리 내면 어색해서, 시연에서 쓸 법한 말로)
+MICSET = [("mic", exp, say) for say, exp in [
+    ("나 시험 망했어", ("play", 3)),
+    ("수학 시험 빵점 맞았어", ("play", 3)),
+    ("짝꿍이랑 싸웠어", ("play", 4)),
+    ("친구랑 다퉜어", ("play", 4)),
+    ("아빠 보고 싶어", ("play", 10)),
+    ("엄마 언제 와", ("not_found",)),   # 학습 데이터에서 일반(0). 보고 싶음으로 보지 않기로 한 말
+    ("나 상 받았어", ("play", 11)),
+    ("나 달리기 일등 했어", ("play", 11)),
+    ("배고파", ("not_found",)),
+    ("친구들끼리 싸웠대", ("not_found",)),
+]]
 # 마이크 시험(파일): 앞 1.5초·뒤 3초 조용함을 붙인 wav를 실제 시간처럼 넣어 말 끝 판단 → STT
 STREAM = [(f"stream:{D}/s{i}.wav", exp, f"말 끝 판단 s{i} ({desc})") for i, exp, desc in
           [(1, ("play", 3), "시험"), (2, ("play", 4), "친구"), (3, ("play", 10), "보고 싶음"), (4, ("play", 11), "상"),
@@ -76,12 +91,14 @@ def judge(sig, exp):
 
 async def main():
     a = sys.argv[1:]
-    cases = (DEMO if "--demo" in a else WAV if "--wav" in a else MIC if "--mic" in a
+    cases = (DEMO if "--demo" in a else WAV if "--wav" in a else MICSET if "--micset" in a else MIC if "--mic" in a
              else STREAM if "--stream" in a else DEMO + RULES)
     print(f"시연 점검 {len(cases)}개 (문장마다 최대 30초)\n")
     rows, n_ok = [], 0
     for text, exp, desc in cases:
-        if text == "mic":
+        if text == "mic" and exp is not None:
+            print(f"🎤 말하세요 →  「{desc}」")
+        elif text == "mic":
             print("🎤 지금 말하세요 (예: 나 오늘 상 받았어) — 말한 뒤 조용히 기다리기, 5초 안에 시작")
         try:
             sig, tf, tt = await run_one(text)
