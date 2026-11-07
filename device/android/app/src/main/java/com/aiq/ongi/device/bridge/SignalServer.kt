@@ -15,8 +15,9 @@ class SignalServer(
     port: Int,
     private val onStartRequest: (text: String?) -> Unit,
     private val onStopRequest: () -> Unit,
-    /** 개발용(11/5): {"type":"check","wav":경로} 또는 {"type":"check","text":글} → 재생 없이 STT·판단 결과만 그 연결에 답함 */
-    private val onCheckRequest: ((wav: String?, text: String?) -> String)? = null,
+    /** 개발용(11/5): {"type":"check","wav":경로} 또는 {"type":"check","text":글} → 재생 없이 STT·판단 결과만 그 연결에 답함
+     *  11/7: "llm":true를 넣으면 LLM 원문도 함께 (device/tools/llm_eval.py) */
+    private val onCheckRequest: ((wav: String?, text: String?, llm: Boolean) -> String)? = null,
     private val log: (String) -> Unit,
 ) : WebSocketServer(InetSocketAddress(port)), SignalSink {
 
@@ -47,7 +48,7 @@ class SignalServer(
         when (obj.optString("type")) {
             "start" -> onStartRequest(obj.optString("text").ifBlank { null })
             "stop" -> onStopRequest()
-            "check" -> onCheckRequest?.let { conn?.send(it(obj.optString("wav").ifBlank { null }, obj.optString("text").ifBlank { null })) }
+            "check" -> onCheckRequest?.let { conn?.send(it(obj.optString("wav").ifBlank { null }, obj.optString("text").ifBlank { null }, obj.optBoolean("llm"))) }
             else -> log("모르는 type: ${obj.optString("type")}")
         }
     }
