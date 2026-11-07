@@ -200,7 +200,7 @@ class _ResponseLayout extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.screenHorizontal,
-            AppSpacing.s12,
+            AppSpacing.s8,
             AppSpacing.screenHorizontal,
             AppSpacing.s16,
           ),
