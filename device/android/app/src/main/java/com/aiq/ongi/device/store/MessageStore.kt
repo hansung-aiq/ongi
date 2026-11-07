@@ -105,6 +105,9 @@ class MessageStore(private val db: OngiDb) {
         db.readableDatabase.rawQuery("SELECT COUNT(*) FROM play_logs", null).use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
 
     private fun seedDemoIfEmpty() {
+        // 11/7: 서버와 한 번이라도 동기화했으면 시연용 메시지를 다시 채우지 않음
+        // (부모가 앱에서 지운 상황이 앱을 다시 켤 때 시연용으로 되살아나 재생되는 것을 막음)
+        if (db.getState("since") != null) return
         val demo = listOf(
             ParentMessage(4, 3, "mom", "text", "민준아, 시험 때문에 속상하구나. 엄마도 3학년 때 받아쓰기에서 빵점을 받고, 집에 오는 길 내내 울었어. 그때 외할머니가 \"틀린 건 다음에 맞히면 돼\" 하셨는데, 그 말이 아직도 생각나. 엄마는 점수보다 끝까지 해 본 민준이가 더 자랑스러워."),
             ParentMessage(1, 4, "mom", "voice", null),

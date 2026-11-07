@@ -60,6 +60,13 @@ class ServerSync(
     fun syncOnce() {
         com.aiq.ongi.device.ConfigFile.reload(log)
         try {
+            // 11/7: 서버 주소가 바뀌면(가짜 서버 → 정범 PC → AWS) since를 처음부터. 다른 서버의 시각이라 메시지를 놓칠 수 있음
+            val lastUrl = db.getState("since_url")
+            if (lastUrl != Config.SERVER_URL) {
+                if (lastUrl != null) log("동기화: 서버가 바뀜 ($lastUrl → ${Config.SERVER_URL}) → 메시지를 처음부터 받음")
+                db.setState("since", "2000-01-01T00:00:00")
+                db.setState("since_url", Config.SERVER_URL)
+            }
             flushPlayLogs()
             val since = db.getState("since") ?: "2000-01-01T00:00:00"
             val res = JSONObject(http("GET", "/device/changes?since=" + URLEncoder.encode(since, "UTF-8")))
