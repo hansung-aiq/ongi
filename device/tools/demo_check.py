@@ -70,7 +70,7 @@ def judge(sig, exp):
     elif "not_found" in types: got = ("not_found",)
     elif "error" in types: got = ("error",)
     say = next((s.get("text") for s in sig if s["type"] in ("empathy", "not_found", "safety")), "")
-    ok = exp is None or got == exp
+    ok = (got not in (("error",), ("?",))) if exp is None else got == exp
     return ok, got, heard, say
 
 
@@ -81,6 +81,8 @@ async def main():
     print(f"시연 점검 {len(cases)}개 (문장마다 최대 30초)\n")
     rows, n_ok = [], 0
     for text, exp, desc in cases:
+        if text == "mic":
+            print("🎤 지금 말하세요 (예: 나 오늘 상 받았어) — 말한 뒤 조용히 기다리기, 5초 안에 시작")
         try:
             sig, tf, tt = await run_one(text)
             ok, got, heard, say = judge(sig, exp)

@@ -39,6 +39,7 @@ class TinyAlsaHelper(private val dir: File, private val log: (String) -> Unit = 
     /** 녹음 (끝날 때까지 기다림). 48kHz 모노 16비트 wav 바이트, 실패하면 null */
     fun record(seconds: Int): ByteArray? {
         File(dir, "rec.done").delete()
+        recFile.delete()
         if (!request("rec.req", seconds.toString())) return null
         val err = waitDone("rec.done", seconds * 1000L + 4000)
         if (err != null) { log("녹음 실패: $err"); return null }
@@ -51,6 +52,8 @@ class TinyAlsaHelper(private val dir: File, private val log: (String) -> Unit = 
     /** 녹음 시작 (기다리지 않음). 멈추려면 stop() */
     fun startRecord(maxSeconds: Int): Boolean {
         File(dir, "rec.done").delete()
+        // 11/7: 지난 rec.wav가 남아 있으면 앱이 그걸 새 녹음으로 읽어 0.5초 만에 "말 없음"으로 끝남 → 요청 전에 지움
+        if (recFile.exists() && !recFile.delete()) log("마이크: 지난 녹음 파일을 못 지움 (${recFile.absolutePath})")
         return request("rec.req", maxSeconds.toString())
     }
 
