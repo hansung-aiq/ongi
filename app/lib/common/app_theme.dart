@@ -8,11 +8,16 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get light => ThemeData(
-    colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
-    scaffoldBackgroundColor: AppColors.background,
-    textTheme: const TextTheme(
-      titleLarge: AppTextStyles.title,
-      bodyMedium: AppTextStyles.body,
+    fontFamily: AppTextStyles.fontFamily,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.accent,
+      primary: AppColors.textPrimary,
+      surface: AppColors.surface,
+      error: AppColors.error,
+    ),
+    scaffoldBackgroundColor: AppColors.bgBase,
+    textSelectionTheme: const TextSelectionThemeData(
+      cursorColor: AppColors.textPrimary,
     ),
   );
 }

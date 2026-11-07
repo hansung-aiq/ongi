@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
 
-/// 색 토큰
+
 class AppColors {
   AppColors._();
 
-  static const primary = Color(0xFFF28C38);
-  static const background = Color(0xFFFFF8F1);
+  static const bgBase = Color(0xFFFFFDF7);
+  static const bgSoft = Color(0xFFFAF3E8);
   static const surface = Color(0xFFFFFFFF);
-  static const textPrimary = Color(0xFF1A1A1A);
-  static const textSecondary = Color(0xFF6B6B6B);
-  static const buttonDark = Color(0xFF111111);
-  static const onButtonDark = Color(0xFFFFFFFF);
+
+  static const textPrimary = Color(0xFF1F1A17);
+  static const textSecondary = Color(0xFF6B5D4F);
+  static const textOnDarkSecondary = Color(0xFFD7CBBE);
+
+  static const line = Color(0xFFEADFCF);
+  static const accent = Color(0xFFF5A623);
+
+  static const error = Color(0xFFC8442E);
+  static const errorSoft = Color(0xFFFBECE8);
+
+  // 가이드에는 없고 화면 CSS에만 있는 색
+  static const iconInactive = Color(0xFFAD9E8C);
+  static const micThinking = Color(0xFF523829);
+  static const dotOffline = Color(0xFF9E9991);
+
+  /// 주 버튼을 눌렀을 때의 배경
+  static const primaryPressed = Color(0xFF3D332D);
 }

@@ -7,9 +7,10 @@ class AppConfig {
   /// 폰이면 http://<노트북 IP>:8000, 진짜 서버면 그 서버 주소로 바꾼다.
   static const serverUrl = 'http://10.0.2.2:8000';
 
-  /// 시연용 고정 데이터
+  /// 시연용 데이터
   static const familyId = 1;
   static const childName = '민준';
+  static const childCalled = '민준아';
   static const momTitle = '엄마';
   static const dadTitle = '아빠';
 }

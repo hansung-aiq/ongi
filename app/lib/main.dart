@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'child/child_screen.dart';
 import 'common/common.dart';
 
 void main() => runApp(const OngiApp());
@@ -13,31 +14,8 @@ class OngiApp extends StatelessWidget {
       title: '온기',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const _PlaceholderScreen(),
-    );
-  }
-}
-
-/// 임시 화면.
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('온기', style: AppTextStyles.title),
-              const SizedBox(height: AppSpacing.lg),
-              OngiButton(label: '시작하기', onPressed: () {}),
-            ],
-          ),
-        ),
-      ),
+      // 시작·역할 선택 화면을 만들기 전까지 자녀 화면을 바로 띄운다.
+      home: const ChildScreen(),
     );
   }
 }
