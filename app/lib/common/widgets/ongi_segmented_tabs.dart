@@ -67,7 +67,8 @@ class OngiSegmentedTabs extends StatelessWidget {
               ],
               Text(
                 segment.label,
-                style: AppTextStyles.label14.copyWith(color: color),
+                style: (selected ? AppTextStyles.label14 : AppTextStyles.body14)
+                    .copyWith(color: color),
               ),
             ],
           ),

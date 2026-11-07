@@ -1,4 +1,3 @@
-
 class AppSpacing {
   AppSpacing._();
 
@@ -9,6 +8,7 @@ class AppSpacing {
   static const s20 = 20.0;
   static const s24 = 24.0;
   static const s28 = 28.0;
+  static const s32 = 32.0;
 
   /// 화면 좌우 여백
   static const screenHorizontal = s20;
@@ -34,12 +34,12 @@ class AppSizes {
   static const buttonHeight = 52.0;
   static const inputHeight = 52.0;
   static const chipHeight = 29.0;
-  static const tabBarHeight = 64.0;
+  static const tabBarHeight = 72.0;
   static const navBarHeight = 40.0;
 
   static const iconNav = 22.0;
   static const iconSmall = 16.0;
-  static const iconTab = 24.0;
+  static const iconTab = 22.0;
 
   static const borderDefault = 1.0;
   static const borderSelected = 1.5;

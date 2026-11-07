@@ -12,20 +12,34 @@ class MessageCard extends StatelessWidget {
   const MessageCard({
     super.key,
     required this.title,
-    required this.category,
-    required this.body,
+    this.category,
+    this.body,
+    this.bodyMaxLines = 3,
     required this.typeLabel,
     required this.typeIcon,
+    this.statusLabel,
+    this.statusMuted = false,
     required this.date,
     this.onTap,
     this.onMore,
   });
 
   final String title;
-  final String category;
-  final String body;
+
+  /// 없으면 분류 줄을 숨긴다.
+  final String? category;
+
+  /// 없으면 본문 줄을 숨긴다 (녹음 메시지).
+  final String? body;
+  final int bodyMaxLines;
   final String typeLabel;
   final IconData typeIcon;
+
+  /// 전달 상태 칩 ('전달됨', '전달 대기'). 없으면 숨긴다.
+  final String? statusLabel;
+
+  /// 아직 전달되지 않은 상태처럼 흐리게 보인다.
+  final bool statusMuted;
   final String date;
   final VoidCallback? onTap;
 
@@ -50,8 +64,10 @@ class MessageCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title, style: AppTextStyles.label16),
-                    const SizedBox(height: AppSpacing.s4),
-                    Text(category, style: secondary),
+                    if (category != null) ...[
+                      const SizedBox(height: AppSpacing.s4),
+                      Text(category!, style: secondary),
+                    ],
                   ],
                 ),
               ),
@@ -66,20 +82,29 @@ class MessageCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s12),
-          Text(
-            body,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.body14.copyWith(
-              color: AppColors.textSecondary,
+          if (body != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            Text(
+              body!,
+              maxLines: bodyMaxLines,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.body14.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: AppSpacing.s12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               OngiChip(label: typeLabel, icon: typeIcon),
+              if (statusLabel != null) ...[
+                const SizedBox(width: AppSpacing.s8),
+                Opacity(
+                  opacity: statusMuted ? AppSizes.disabledOpacity : 1,
+                  child: OngiChip(label: statusLabel!),
+                ),
+              ],
+              const Spacer(),
               Text(date, style: secondary),
             ],
           ),

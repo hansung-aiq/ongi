@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'child/child_screen.dart';
 import 'common/common.dart';
+import 'start/login_screen.dart';
 
 void main() => runApp(const OngiApp());
 
@@ -14,8 +14,7 @@ class OngiApp extends StatelessWidget {
       title: '온기',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      // 시작·역할 선택 화면을 만들기 전까지 자녀 화면을 바로 띄운다.
-      home: const ChildScreen(),
+      home: const LoginScreen(),
     );
   }
 }

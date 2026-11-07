@@ -1,0 +1,109 @@
+import 'package:flutter/foundation.dart';
+
+import '../api/server_client.dart';
+import '../api/server_models.dart';
+
+/// 부모 화면이 함께 쓰는 서버 데이터 (상황 목록, 메시지 목록).
+class ParentStore extends ChangeNotifier {
+  ParentStore({required this.client, required this.familyId});
+
+  final ServerClient client;
+  final int familyId;
+
+  /// '추천 10개 채우기'의 목표 수
+  static const goal = 10;
+
+  List<Situation> situations = const [];
+  List<ParentMessage> messages = const [];
+  bool loading = false;
+
+  /// 불러오기에 실패했을 때의 안내 문구
+  String? loadError;
+
+  bool get loaded => situations.isNotEmpty;
+
+  /// 서버의 분류 순서 그대로
+  List<String> get categories =>
+      {for (final s in situations) s.category}.toList();
+
+  List<Situation> situationsIn(String category) =>
+      situations.where((s) => s.category == category).toList();
+
+  Situation? situation(int id) {
+    for (final s in situations) {
+      if (s.id == id) return s;
+    }
+    return null;
+  }
+
+  ParentMessage? messageFor(int situationId) {
+    for (final m in messages) {
+      if (m.situationId == situationId) return m;
+    }
+    return null;
+  }
+
+  int savedIn(String category) =>
+      situationsIn(category).where((s) => messageFor(s.id) != null).length;
+
+  /// 목표 수를 넘으면 목표 수에서 멈춘다.
+  int get progress => messages.length.clamp(0, goal);
+
+  Future<void> load() async {
+    loading = true;
+    loadError = null;
+    notifyListeners();
+    try {
+      final results = await Future.wait([
+        client.situations(),
+        client.messages(familyId),
+      ]);
+      situations = results[0] as List<Situation>;
+      messages = results[1] as List<ParentMessage>;
+    } on ServerException catch (e) {
+      loadError = e.message;
+    } finally {
+      loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// 글 메시지를 저장한다. 실패하면 [ServerException]을 던진다.
+  Future<void> saveText({
+    required int situationId,
+    required String author,
+    required String text,
+  }) async {
+    final message = await client.createTextMessage(
+      familyId: familyId,
+      situationId: situationId,
+      author: author,
+      text: text,
+    );
+    _add(message);
+  }
+
+  /// 녹음을 올리고(API-05) 녹음 메시지로 등록한다(API-04).
+  /// 실패하면 [ServerException]을 던진다.
+  Future<void> saveVoice({
+    required int situationId,
+    required String author,
+    required List<int> audio,
+    required String filename,
+  }) async {
+    final audioPath = await client.uploadAudio(audio, filename: filename);
+    final message = await client.createVoiceMessage(
+      familyId: familyId,
+      situationId: situationId,
+      author: author,
+      audioPath: audioPath,
+    );
+    _add(message);
+  }
+
+  void _add(ParentMessage message) {
+    messages = [...messages, message]
+      ..sort((a, b) => a.situationId.compareTo(b.situationId));
+    notifyListeners();
+  }
+}

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class AppColors {
   AppColors._();
 
@@ -18,7 +17,7 @@ class AppColors {
   static const error = Color(0xFFC8442E);
   static const errorSoft = Color(0xFFFBECE8);
 
-  // 가이드에는 없고 화면 CSS에만 있는 색
+  /// 가이드에는 없고 화면 CSS에만 있는 색
   static const iconInactive = Color(0xFFAD9E8C);
   static const micThinking = Color(0xFF523829);
   static const dotOffline = Color(0xFF9E9991);
