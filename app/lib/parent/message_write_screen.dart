@@ -15,16 +15,21 @@ import 'voice_recorder.dart';
 
 /// 3-4 메시지 남기기. 글(200자까지) 또는 녹음(60초까지)을 저장한다.
 /// 저장하면 3-5를 띄우고, 3-5에서 고른 행동을 돌려준다.
+/// [editing]을 주면 6-2 수정하기로, 고쳐 저장한 뒤 [SaveDoneAction.edited]를 돌려준다.
 class MessageWriteScreen extends StatefulWidget {
   const MessageWriteScreen({
     super.key,
     required this.store,
     required this.situation,
     this.recorderFactory = DeviceVoiceRecorder.new,
+    this.editing,
   });
 
   final ParentStore store;
   final Situation situation;
+
+  /// 고칠 메시지. 글이면 내용을 채워 두고, 녹음이면 새로 녹음한다.
+  final ParentMessage? editing;
 
   /// 시험할 때 가짜 녹음기로 바꿔 끼운다.
   final VoiceRecorder Function() recorderFactory;
@@ -37,11 +42,13 @@ class MessageWriteScreen extends StatefulWidget {
 }
 
 class _MessageWriteScreenState extends State<MessageWriteScreen> {
-  final _controller = TextEditingController();
+  late final _controller = TextEditingController(
+    text: widget.editing?.text ?? '',
+  );
   final _focus = FocusNode();
 
-  /// 0: 음성 녹음, 1: 텍스트 입력
-  int _tab = 1;
+  /// 0: 음성 녹음, 1: 텍스트 입력. 녹음 메시지를 고칠 때는 녹음 탭부터 연다.
+  late int _tab = widget.editing?.isVoice ?? false ? 0 : 1;
   bool _saving = false;
   String? _error;
 
@@ -173,8 +180,21 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
       _saving = true;
       _error = null;
     });
+    final editing = widget.editing;
     try {
-      if (_tab == 1) {
+      if (editing != null && _tab == 1) {
+        await widget.store.updateText(
+          messageId: editing.id,
+          text: _controller.text.trim(),
+        );
+      } else if (editing != null) {
+        final path = _recordedPath!;
+        await widget.store.updateVoice(
+          messageId: editing.id,
+          audio: await _recorder.read(path),
+          filename: path.split(RegExp(r'[/\\]')).last,
+        );
+      } else if (_tab == 1) {
         await widget.store.saveText(
           situationId: widget.situation.id,
           author: widget.store.profile.author,
@@ -199,6 +219,10 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
       return;
     }
     if (!mounted) return;
+    if (editing != null) {
+      Navigator.of(context).pop(SaveDoneAction.edited);
+      return;
+    }
     final action = await Navigator.of(context).push<SaveDoneAction>(
       MaterialPageRoute(builder: (_) => SaveDoneScreen(store: widget.store)),
     );
@@ -220,7 +244,7 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TopNavBar(
-                title: '메시지 남기기',
+                title: widget.editing == null ? '메시지 남기기' : '메시지 수정하기',
                 onBack: () => Navigator.of(context).maybePop(),
               ),
               Expanded(

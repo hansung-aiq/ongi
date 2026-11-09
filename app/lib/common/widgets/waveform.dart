@@ -24,6 +24,13 @@ class Waveform extends StatefulWidget {
        barWidth = 3,
        scale = 0.48;
 
+  /// 메시지 카드(6-2) 재생 줄의 아주 작은 파형
+  const Waveform.mini({super.key, this.animate = false, this.opacity = 1})
+    : width = 65,
+      height = 24,
+      barWidth = 2,
+      scale = 0.45;
+
   final double width;
   final double height;
   final double barWidth;

@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../api/message_playback.dart';
 import '../api/server_models.dart';
 import '../common/common.dart';
+import 'message_menu_sheet.dart';
 import 'parent_store.dart';
 import 'situation_info.dart';
 
 /// 3-2 메시지 전체, 3-3 분류별 메시지.
 /// [category]가 null이면 저장한 메시지만, 아니면 그 분류의 상황을 모두 보여 준다.
-class MessageListScreen extends StatelessWidget {
+/// 카드의 … 버튼을 누르면 6-2 수정·삭제 메뉴를 띄운다.
+class MessageListScreen extends StatefulWidget {
   const MessageListScreen({
     super.key,
     required this.store,
     required this.category,
     required this.onCategoryChanged,
     required this.onWrite,
+    required this.onEdit,
+    required this.onDelete,
+    required this.playback,
   });
 
   final ParentStore store;
@@ -22,8 +28,52 @@ class MessageListScreen extends StatelessWidget {
   final ValueChanged<String?> onCategoryChanged;
   final ValueChanged<Situation> onWrite;
 
+  /// 6-2 수정하기
+  final void Function(ParentMessage message, Situation situation) onEdit;
+
+  /// 6-2 삭제하기
+  final ValueChanged<ParentMessage> onDelete;
+
+  /// 녹음 메시지 다시 듣기
+  final MessagePlayback playback;
+
+  @override
+  State<MessageListScreen> createState() => _MessageListScreenState();
+}
+
+class _MessageListScreenState extends State<MessageListScreen> {
+  /// 메뉴를 연 메시지. 메뉴가 열려 있는 동안 카드를 붉게 표시한다.
+  int? _menuFor;
+
+  ParentStore get store => widget.store;
+  String? get category => widget.category;
+
+  Future<void> _openMenu(ParentMessage m, Situation s) async {
+    setState(() => _menuFor = m.id);
+    final action = await showMessageMenu(context, title: s.name);
+    if (!mounted) return;
+    setState(() => _menuFor = null);
+    switch (action) {
+      case MessageMenuAction.edit:
+        widget.playback.stop();
+        widget.onEdit(m, s);
+      case MessageMenuAction.delete:
+        widget.playback.stop();
+        widget.onDelete(m);
+      case null:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.playback,
+      builder: (context, _) => _list(),
+    );
+  }
+
+  Widget _list() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -75,7 +125,7 @@ class MessageListScreen extends StatelessWidget {
           OngiChip(
             label: '전체 ${store.messages.length}',
             selected: category == null,
-            onTap: () => onCategoryChanged(null),
+            onTap: () => widget.onCategoryChanged(null),
           ),
           for (final c in store.categories) ...[
             const SizedBox(width: AppSpacing.s8),
@@ -83,7 +133,7 @@ class MessageListScreen extends StatelessWidget {
               label:
                   '${categoryLabel(c)} ${store.savedIn(c)}/${store.situationsIn(c).length}',
               selected: category == c,
-              onTap: () => onCategoryChanged(c),
+              onTap: () => widget.onCategoryChanged(c),
             ),
           ],
         ],
@@ -117,7 +167,10 @@ class MessageListScreen extends StatelessWidget {
       for (final s in store.situationsIn(category))
         _spaced(switch (store.messageFor(s.id)) {
           final m? => _messageCard(m, s, full: false),
-          null => EmptySituationCard(title: s.name, onTap: () => onWrite(s)),
+          null => EmptySituationCard(
+            title: s.name,
+            onTap: () => widget.onWrite(s),
+          ),
         }),
     ];
   }
@@ -138,6 +191,12 @@ class MessageListScreen extends StatelessWidget {
       statusLabel: m.delivered ? '전달됨' : '전달 대기',
       statusMuted: !m.delivered,
       date: _date(m.createdAt),
+      highlighted: _menuFor == m.id,
+      onMore: s == null ? null : () => _openMenu(m, s),
+      onPlay: m.isVoice
+          ? () => widget.playback.toggle(m.id, store.client.audioUrl(m.id))
+          : null,
+      playing: widget.playback.isPlaying(m.id),
     );
   }
 

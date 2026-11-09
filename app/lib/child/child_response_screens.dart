@@ -14,10 +14,14 @@ class ChildEmpathyScreen extends StatelessWidget {
     super.key,
     required this.signal,
     required this.onStop,
+    this.parentPhoto,
   });
 
   final EmpathySignal signal;
   final VoidCallback onStop;
+
+  /// 이어서 들려줄 메시지를 남긴 부모의 사진
+  final String? parentPhoto;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +38,10 @@ class ChildEmpathyScreen extends StatelessWidget {
         _Heading(signal.text),
         if (signal.hasMessage) ...[
           const SizedBox(height: AppSpacing.s28),
-          _NextVoiceChip(title: _authorTitle(signal.author)),
+          _NextVoiceChip(
+            title: _authorTitle(signal.author),
+            photo: parentPhoto,
+          ),
         ],
       ],
     );
@@ -46,10 +53,14 @@ class ChildPlayingScreen extends StatelessWidget {
   const ChildPlayingScreen({
     super.key,
     required this.signal,
+    this.parentPhoto,
     required this.onStop,
   });
 
   final PlayingSignal signal;
+
+  /// 메시지를 남긴 부모의 사진
+  final String? parentPhoto;
   final VoidCallback onStop;
 
   @override
@@ -58,7 +69,7 @@ class ChildPlayingScreen extends StatelessWidget {
     final text = signal.kind == 'text' ? signal.text : null;
     return _ResponseLayout(
       navTitle: '$title의 메시지',
-      picture: const ProfileAvatar(size: 96),
+      picture: ProfileAvatar(size: 96, imagePath: parentPhoto),
       name: title,
       onStop: onStop,
       children: [
@@ -147,9 +158,10 @@ class _Heading extends StatelessWidget {
 }
 
 class _NextVoiceChip extends StatelessWidget {
-  const _NextVoiceChip({required this.title});
+  const _NextVoiceChip({required this.title, this.photo});
 
   final String title;
+  final String? photo;
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +174,7 @@ class _NextVoiceChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const ProfileAvatar(size: 28),
+          ProfileAvatar(size: 28, imagePath: photo),
           const SizedBox(width: 10),
           Flexible(
             child: Text(

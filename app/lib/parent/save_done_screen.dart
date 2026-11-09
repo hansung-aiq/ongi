@@ -11,6 +11,9 @@ enum SaveDoneAction {
 
   /// 완료 → 부모 홈
   done,
+
+  /// 6-2에서 고친 메시지를 저장
+  edited,
 }
 
 /// 3-5 저장 완료

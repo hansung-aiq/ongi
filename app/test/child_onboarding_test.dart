@@ -34,7 +34,9 @@ ServerClient _server({int count = 3, bool offline = false}) {
       return http.Response.bytes(
         utf8.encode(
           jsonEncode({
-            'items': [for (var i = 1; i <= count; i++) message(i)],
+            'items': request.url.path == '/play-logs'
+                ? const []
+                : [for (var i = 1; i <= count; i++) message(i)],
           }),
         ),
         200,
@@ -153,10 +155,10 @@ void main() {
     expect(find.text('아빠가 메시지 5개를 남겨뒀어'), findsOneWidget);
     expect(find.textContaining('아빠의 마음을 들려줄게.'), findsOneWidget);
 
-    /// 자녀 홈(5-1)도 같은 이름과 호칭을 쓴다.
+    /// 자녀 홈(5-1)도 같은 이름을 쓴다.
     await _tap(tester, '건너뛰기');
     expect(find.text('안녕, 서아야!'), findsOneWidget);
-    expect(find.text('서아야, 마음이 많이 속상했지?\n아빠는 언제나 네 편이야.'), findsNWidgets(2));
+    expect(find.textContaining('아직 들은 메시지가 없어'), findsOneWidget);
   });
 
   testWidgets('서버에 닿지 않거나 메시지가 없으면 메시지 수 칩을 숨긴다', (tester) async {

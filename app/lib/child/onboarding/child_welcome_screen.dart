@@ -31,8 +31,11 @@ class _ChildWelcomeScreenState extends State<ChildWelcomeScreen> {
   /// 부모가 남긴 메시지 수. 받기 전이거나 받지 못하면 null이다.
   int? _messageCount;
 
-  ChildOnboardingSession get _session =>
-      ChildOnboardingSession(profile: _profile, connector: widget.connector);
+  ChildOnboardingSession get _session => ChildOnboardingSession(
+    profile: _profile,
+    connector: widget.connector,
+    serverClient: widget.serverClient,
+  );
 
   @override
   void initState() {

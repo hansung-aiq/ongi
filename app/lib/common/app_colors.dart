@@ -22,6 +22,12 @@ class AppColors {
   static const micThinking = Color(0xFF523829);
   static const dotOffline = Color(0xFF9E9991);
 
+  /// 아래에서 올라오는 창(6-2)의 손잡이
+  static const sheetHandle = Color(0xFFD9D1C7);
+
+  /// 메뉴를 연 메시지 카드(6-2)의 배경
+  static const errorTint = Color(0xFFFFF4F1);
+
   /// 주 버튼을 눌렀을 때의 배경
   static const primaryPressed = Color(0xFF3D332D);
 }

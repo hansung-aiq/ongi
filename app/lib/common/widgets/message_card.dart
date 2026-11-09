@@ -6,6 +6,7 @@ import '../app_spacing.dart';
 import '../app_text_styles.dart';
 import 'ongi_card.dart';
 import 'ongi_chip.dart';
+import 'waveform.dart';
 
 /// 저장된 메시지를 보여 주는 카드.
 class MessageCard extends StatelessWidget {
@@ -22,6 +23,9 @@ class MessageCard extends StatelessWidget {
     required this.date,
     this.onTap,
     this.onMore,
+    this.onPlay,
+    this.playing = false,
+    this.highlighted = false,
   });
 
   final String title;
@@ -48,6 +52,15 @@ class MessageCard extends StatelessWidget {
   /// 없으면 더보기 버튼을 숨긴다.
   final VoidCallback? onMore;
 
+  /// 있으면 날짜 옆에 작은 파형과 재생 버튼을 보인다 (녹음 메시지).
+  final VoidCallback? onPlay;
+
+  /// 재생 중이면 파형이 움직이고 버튼이 멈춤으로 바뀐다.
+  final bool playing;
+
+  /// 6-2처럼 메뉴를 연 카드를 붉은 테두리로 표시한다.
+  final bool highlighted;
+
   @override
   Widget build(BuildContext context) {
     final secondary = AppTextStyles.caption12.copyWith(
@@ -55,6 +68,8 @@ class MessageCard extends StatelessWidget {
     );
     return OngiCard(
       onTap: onTap,
+      color: highlighted ? AppColors.errorTint : AppColors.surface,
+      borderColor: highlighted ? AppColors.error : AppColors.line,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -119,11 +134,61 @@ class MessageCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                Text(date, style: secondary),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (onPlay != null) ...[
+                      Waveform.mini(animate: playing),
+                      const SizedBox(width: AppSpacing.s12),
+                    ],
+                    Text(date, style: secondary),
+                    if (onPlay != null) ...[
+                      const SizedBox(width: AppSpacing.s12),
+                      _PlayButton(playing: playing, onPressed: onPlay!),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 녹음 메시지를 다시 듣는 작은 진한 원형 버튼
+class _PlayButton extends StatelessWidget {
+  const _PlayButton({required this.playing, required this.onPressed});
+
+  final bool playing;
+  final VoidCallback onPressed;
+
+  static const _size = 30.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: playing ? '멈추기' : '다시 듣기',
+      child: Tooltip(
+        message: playing ? '멈추기' : '다시 듣기',
+        child: Material(
+          color: AppColors.textPrimary,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
+            child: SizedBox.square(
+              dimension: _size,
+              child: Icon(
+                playing ? LucideIcons.pause : LucideIcons.play,
+                size: 12,
+                color: AppColors.bgBase,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

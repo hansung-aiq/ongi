@@ -9,16 +9,14 @@ class AppConfig {
 
   /// 시연용 데이터
   static const familyId = 1;
-  static const childName = '민준';
-  static const childCalled = '민준아';
 
-  /// 부모 화면 문장에 쓰는 이름
-  static const childNickname = '민준이';
+  /// 첫 설정(2-1) 전에 쓰는 자녀 이름. 문장 속 이름은 ParentProfile이 만든다.
+  static const childName = '민준';
   static const momTitle = '엄마';
   static const dadTitle = '아빠';
 
-  /// 부모 화면에서 저장하는 메시지의 작성자 (mom / dad).
-  /// 부모 온보딩에서 엄마·아빠를 고르게 되면 그 값으로 바꾼다.
+  /// 첫 설정(2-1) 전에 쓰는 메시지 작성자 (mom / dad).
+  /// 2-1이나 3-6에서 엄마·아빠를 고르면 기기에 저장한 값을 쓴다.
   static const parentAuthor = 'mom';
 
   static String parentTitle(String author) =>

@@ -9,21 +9,26 @@ class ParentStore extends ChangeNotifier {
   ParentStore({
     required this.client,
     required this.familyId,
-    this.profile = ParentProfile.fallback,
+    this._profile = ParentProfile.fallback,
   });
 
   final ServerClient client;
   final int familyId;
 
-  /// 첫 설정에서 저장한 자녀 이름과 호칭
-  final ParentProfile profile;
+  ParentProfile _profile;
+
+  /// 자녀 이름·부모 호칭·사진. 3-6 설정에서 바꾸면 화면이 다시 그려진다.
+  ParentProfile get profile => _profile;
+  set profile(ParentProfile value) {
+    _profile = value;
+    notifyListeners();
+  }
 
   /// '추천 10개 채우기'의 목표 수
   static const goal = 10;
 
   List<Situation> situations = const [];
   List<ParentMessage> messages = const [];
-  bool loading = false;
 
   /// 불러오기에 실패했을 때의 안내 문구
   String? loadError;
@@ -58,7 +63,6 @@ class ParentStore extends ChangeNotifier {
   int get progress => messages.length.clamp(0, goal);
 
   Future<void> load() async {
-    loading = true;
     loadError = null;
     notifyListeners();
     try {
@@ -71,7 +75,6 @@ class ParentStore extends ChangeNotifier {
     } on ServerException catch (e) {
       loadError = e.message;
     } finally {
-      loading = false;
       notifyListeners();
     }
   }
@@ -107,6 +110,47 @@ class ParentStore extends ChangeNotifier {
       audioPath: audioPath,
     );
     _add(message);
+  }
+
+  /// 글 메시지로 고친다 (API-06). 실패하면 [ServerException]을 던진다.
+  Future<void> updateText({
+    required int messageId,
+    required String text,
+  }) async {
+    final message = await client.updateMessage(
+      messageId,
+      kind: 'text',
+      text: text,
+    );
+    _replace(message);
+  }
+
+  /// 새 녹음을 올리고(API-05) 녹음 메시지로 고친다(API-06).
+  /// 실패하면 [ServerException]을 던진다.
+  Future<void> updateVoice({
+    required int messageId,
+    required List<int> audio,
+    required String filename,
+  }) async {
+    final audioPath = await client.uploadAudio(audio, filename: filename);
+    final message = await client.updateMessage(
+      messageId,
+      kind: 'voice',
+      audioPath: audioPath,
+    );
+    _replace(message);
+  }
+
+  /// 메시지를 지운다 (API-07). 실패하면 [ServerException]을 던진다.
+  Future<void> delete(int messageId) async {
+    await client.deleteMessage(messageId);
+    messages = messages.where((m) => m.id != messageId).toList();
+    notifyListeners();
+  }
+
+  void _replace(ParentMessage message) {
+    messages = [for (final m in messages) m.id == message.id ? message : m];
+    notifyListeners();
   }
 
   bool _disposed = false;

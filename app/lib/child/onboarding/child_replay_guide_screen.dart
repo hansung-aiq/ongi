@@ -47,6 +47,7 @@ class ChildReplayGuideScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.s16),
               RecentMessageCard(
                 highlighted: true,
+                showPlay: true,
                 message: RecentMessage(
                   author: profile.title,
                   situation: '친구와 싸운 날',

@@ -55,7 +55,10 @@ class _RoleSelectScreenState extends State<RoleSelectScreen> {
         serverClient: widget.serverClient,
         profile: profile,
       ),
-      _Role.child => ChildScreen(profile: profile),
+      _Role.child => ChildScreen(
+        serverClient: widget.serverClient,
+        profile: profile,
+      ),
     };
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(builder: (_) => next),

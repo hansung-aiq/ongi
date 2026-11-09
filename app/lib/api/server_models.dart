@@ -57,3 +57,30 @@ class ParentMessage {
 
   bool get isVoice => kind == 'voice';
 }
+
+/// API-09 재생 기록. 보드가 메시지를 재생할 때마다 하나씩 생긴다.
+class PlayLog {
+  const PlayLog({
+    required this.id,
+    required this.messageId,
+    required this.situationId,
+    required this.author,
+    required this.playedAt,
+  });
+
+  factory PlayLog.fromJson(Map<String, dynamic> json) => PlayLog(
+    id: json['id'] as int,
+    messageId: json['message_id'] as int,
+    situationId: json['situation_id'] as int,
+    author: json['author'] as String,
+    playedAt: DateTime.parse(json['played_at'] as String),
+  );
+
+  final int id;
+  final int messageId;
+  final int situationId;
+
+  /// mom / dad
+  final String author;
+  final DateTime playedAt;
+}

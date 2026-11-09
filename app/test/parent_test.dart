@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:ongi_app/api/message_playback.dart';
 import 'package:ongi_app/api/server_client.dart';
 import 'package:ongi_app/common/common.dart';
 import 'package:ongi_app/parent/message_write_screen.dart';
@@ -14,6 +15,8 @@ import 'package:ongi_app/parent/parent_shell.dart';
 import 'package:ongi_app/parent/voice_recorder.dart';
 import 'package:ongi_app/start/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/fake_audio.dart';
 
 /// device/mock_server.py와 같은 모양으로 답하는 가짜 서버.
 class FakeServer {
@@ -44,6 +47,12 @@ class FakeServer {
 
   /// true면 연결이 안 되는 것처럼 동작한다.
   bool offline = false;
+
+  /// API-06으로 고친 내용 ({id, kind, text | audio_path})
+  final patched = <Map<String, dynamic>>[];
+
+  /// API-07로 지운 메시지 번호
+  final deleted = <int>[];
 
   static Map<String, Object?> _message(
     int id,
@@ -105,6 +114,23 @@ class FakeServer {
       );
       messages.add(m);
       return _json(201, m);
+    }
+    if (request.method == 'PATCH' && path.startsWith('/messages/')) {
+      final id = int.parse(path.split('/').last);
+      final body = jsonDecode(request.body) as Map<String, dynamic>;
+      patched.add({'id': id, ...body});
+      final m = messages.firstWhere((m) => m['id'] == id);
+      m
+        ..addAll(body)
+        ..['delivered'] = false;
+      return _json(200, m);
+    }
+    if (request.method == 'DELETE' && path.startsWith('/messages/')) {
+      final id = int.parse(path.split('/').last);
+      deleted.add(id);
+      final m = messages.firstWhere((m) => m['id'] == id);
+      messages.remove(m);
+      return _json(200, {...m, 'deleted': true});
     }
     return _json(404, {'error': 'E-404', 'message': '없는 주소'});
   }
@@ -172,6 +198,7 @@ Future<void> _openParent(
   WidgetTester tester,
   FakeServer server, {
   FakeRecorder? recorder,
+  FakeUrlPlayer? player,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -179,6 +206,7 @@ Future<void> _openParent(
       home: ParentShell(
         serverClient: server.client,
         recorderFactory: () => recorder ?? FakeRecorder(),
+        audioPlayer: player ?? FakeUrlPlayer(),
       ),
     ),
   );
@@ -195,6 +223,8 @@ Future<void> _openVoiceTab(WidgetTester tester) async {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  group('4차: 설정·수정·삭제·재생', settingsAndMenuTests);
 
   test('문장 속 이름은 받침이 있을 때만 이를 붙인다', () {
     String nick(String name) =>
@@ -646,5 +676,133 @@ void main() {
 
     expect(recorder.cancelled, isTrue);
     expect(find.text('학교 · 학업 0/3'), findsOneWidget);
+  });
+}
+
+/// 하단 탭바의 [label] 탭을 누른다.
+Future<void> _tapTab(WidgetTester tester, String label) async {
+  await tester.tap(
+    find.descendant(of: find.byType(BottomTabBar), matching: find.text(label)),
+  );
+  await tester.pumpAndSettle();
+}
+
+void settingsAndMenuTests() {
+  testWidgets('3-6 설정: 스피커는 숨기고 이름·호칭을 바꾸면 홈에도 반영된다', (tester) async {
+    await _openParent(tester, FakeServer());
+    await _tapTab(tester, '설정');
+
+    expect(find.text('프로필'), findsOneWidget);
+    expect(find.text('자녀 · 이름과 사진 바꾸기'), findsOneWidget);
+    expect(find.text('나 · 호칭과 사진 바꾸기'), findsOneWidget);
+    expect(find.text('온기 스피커'), findsNothing);
+    expect(find.text('로그아웃'), findsNothing);
+
+    await _tapText(tester, '민준');
+    expect(find.text('자녀 프로필'), findsOneWidget);
+    expect(find.text('사진 등록'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '서아');
+    await _tapText(tester, '저장하기');
+    expect(find.text('서아'), findsOneWidget);
+
+    await _tapText(tester, '엄마');
+    expect(find.text('부모 프로필'), findsOneWidget);
+    await _tapText(tester, '아빠');
+    await _tapText(tester, '저장하기');
+    expect(find.text('아빠'), findsOneWidget);
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('child_name'), '서아');
+    expect(prefs.getString('parent_author'), 'dad');
+
+    await _tapTab(tester, '홈');
+    expect(find.text('서아의 부모님'), findsOneWidget);
+  });
+
+  testWidgets('3-6 설정: 사용 모드를 누르면 1-2 역할 선택으로 간다', (tester) async {
+    await _openParent(tester, FakeServer());
+    await _tapTab(tester, '설정');
+    await _tapText(tester, '사용 모드');
+    expect(find.text('이 기기는 누가 쓰나요?'), findsOneWidget);
+  });
+
+  testWidgets('6-2: 닫기는 아무것도 하지 않고, 삭제하기는 메시지를 지운다', (tester) async {
+    final server = FakeServer();
+    await _openParent(tester, server);
+    await _tapTab(tester, '메시지');
+    expect(find.text('전체 3'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('더보기').first);
+    await tester.pumpAndSettle();
+    expect(find.text('이 메시지를 어떻게 할까요?'), findsOneWidget);
+    await _tapText(tester, '닫기');
+    expect(find.text('이 메시지를 어떻게 할까요?'), findsNothing);
+    expect(server.deleted, isEmpty);
+
+    await tester.tap(find.byTooltip('더보기').first);
+    await tester.pumpAndSettle();
+    await _tapText(tester, '삭제하기');
+    expect(server.deleted, [1]);
+    expect(find.text('메시지를 지웠어요'), findsOneWidget);
+    expect(find.text('전체 2'), findsOneWidget);
+  });
+
+  testWidgets('6-2: 수정하기로 글 메시지를 고치면 API-06으로 저장하고 목록으로 돌아온다', (tester) async {
+    final server = FakeServer();
+    await _openParent(tester, server);
+    await _tapTab(tester, '메시지');
+
+    final more = find.byTooltip('더보기').at(2);
+    await tester.ensureVisible(more);
+    await tester.pumpAndSettle();
+    await tester.tap(more);
+    await tester.pumpAndSettle();
+    await _tapText(tester, '수정하기');
+
+    expect(find.text('메시지 수정하기'), findsOneWidget);
+    expect(find.text('민준아, 상 받은 거 정말 축하해!'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '민준아, 정말 멋졌어!');
+    await _tapText(tester, '저장하기');
+
+    expect(server.patched.single, {
+      'id': 3,
+      'kind': 'text',
+      'text': '민준아, 정말 멋졌어!',
+    });
+    expect(find.text('메시지를 고쳤어요'), findsOneWidget);
+    expect(find.text('민준아, 정말 멋졌어!'), findsOneWidget);
+    expect(find.text('메시지를 남겼어요'), findsNothing);
+  });
+
+  testWidgets('녹음 메시지 카드의 재생 버튼은 서버의 녹음을 재생하고 멈춘다', (tester) async {
+    final player = FakeUrlPlayer();
+    await _openParent(tester, FakeServer(), player: player);
+    await _tapTab(tester, '메시지');
+
+    /// 녹음 메시지 2개만 재생 버튼이 있다.
+    expect(find.byTooltip('다시 듣기'), findsNWidgets(2));
+    await tester.tap(find.byTooltip('다시 듣기').first);
+    await tester.pump();
+    expect(player.played, [Uri.parse('http://server/device/audio/1')]);
+    expect(find.byTooltip('멈추기'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('멈추기'));
+    await tester.pump();
+    expect(find.byTooltip('멈추기'), findsNothing);
+
+    /// 재생에 실패하면 아래에 안내를 띄우고 재생 버튼으로 돌아온다.
+    player.fail = true;
+    await tester.tap(find.byTooltip('다시 듣기').first);
+    await tester.pump();
+    expect(find.text(MessagePlayback.failedMessage), findsOneWidget);
+    expect(find.byTooltip('멈추기'), findsNothing);
+    player.fail = false;
+
+    /// 끝까지 들으면 저절로 재생 버튼으로 돌아온다.
+    await tester.tap(find.byTooltip('다시 듣기').last);
+    await tester.pump();
+    player.finish();
+    await tester.pump();
+    expect(find.byTooltip('멈추기'), findsNothing);
   });
 }

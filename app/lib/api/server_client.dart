@@ -18,7 +18,7 @@ class ServerException implements Exception {
   String toString() => 'ServerException($code, $message)';
 }
 
-/// 부모 화면이 쓰는 서버 API
+/// 부모·자녀 화면이 쓰는 서버 API
 class ServerClient {
   ServerClient({required this.baseUrl, http.Client? client})
     : _client = client ?? http.Client();
@@ -108,6 +108,47 @@ class ServerClient {
     );
     return ParentMessage.fromJson(json);
   }
+
+  /// API-06 메시지 수정. 글로 바꾸면 [text], 녹음으로 바꾸면 [audioPath]를 준다.
+  /// 서버는 고친 메시지를 다시 '전달 대기'로 돌린다.
+  Future<ParentMessage> updateMessage(
+    int messageId, {
+    required String kind,
+    String? text,
+    String? audioPath,
+  }) async {
+    final json = await _send(
+      () => _client.patch(
+        _uri('/messages/$messageId'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'kind': kind,
+          if (kind == 'text') 'text': text,
+          if (kind == 'voice') 'audio_path': audioPath,
+        }),
+      ),
+    );
+    return ParentMessage.fromJson(json);
+  }
+
+  /// API-07 메시지 삭제
+  Future<void> deleteMessage(int messageId) async {
+    await _send(() => _client.delete(_uri('/messages/$messageId')));
+  }
+
+  /// API-09 재생 기록 (최근 순)
+  Future<List<PlayLog>> playLogs(int familyId) async {
+    final json = await _send(
+      () => _client.get(_uri('/play-logs', {'family_id': '$familyId'})),
+    );
+    return [
+      for (final item in json['items'] as List)
+        PlayLog.fromJson(item as Map<String, dynamic>),
+    ];
+  }
+
+  /// 녹음 메시지의 소리 파일 주소 (API-12). 앱에서 다시 들을 때 쓴다.
+  Uri audioUrl(int messageId) => _uri('/device/audio/$messageId');
 
   Uri _uri(String path, [Map<String, String>? query]) =>
       Uri.parse('$baseUrl$path').replace(queryParameters: query);

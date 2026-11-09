@@ -2,42 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../common/common.dart';
-import '../parent/parent_profile.dart';
 
+/// 자녀가 들은 메시지 한 개 (5-1 최근에 들은 메시지, 3-7 온기기록, 4-3 안내)
 class RecentMessage {
   const RecentMessage({
     required this.author,
     required this.situation,
     required this.text,
     required this.heardAt,
+    this.messageId,
+    this.isVoice = false,
+    this.photo,
   });
 
+  /// 엄마 / 아빠
   final String author;
   final String situation;
-  final String text;
+
+  /// 글 메시지 내용. 녹음이면 null이고 파형을 보인다.
+  final String? text;
+
+  /// '들은 날 · 오늘 · 오후 4:32'
   final String heardAt;
+
+  /// 서버의 메시지 번호. 안내 화면의 예시는 null이다.
+  final int? messageId;
+  final bool isVoice;
+
+  /// 메시지를 남긴 부모의 사진 경로
+  final String? photo;
 }
 
-/// 시안의 예시 데이터. 재생 기록 API-09를 붙일 때 실제 데이터로 바꾼다.
-/// 이름과 호칭은 부모가 첫 설정에서 저장한 값을 쓴다.
-List<RecentMessage> sampleRecentMessages(ParentProfile profile) => [
-  for (var i = 0; i < 2; i++)
-    RecentMessage(
-      author: profile.title,
-      situation: '친구와 싸운 날',
-      text:
-          '${profile.called}, 마음이 많이 속상했지?\n'
-          '${profile.title}는 언제나 네 편이야.',
-      heardAt: '들은 날 · 오늘 · 오후 4:32',
-    ),
-];
-
-/// 최근에 들은 메시지 카드.
+/// 들은 메시지 카드.
 class RecentMessageCard extends StatelessWidget {
   const RecentMessageCard({
     super.key,
     required this.message,
     this.highlighted = false,
+    this.onPlay,
+    this.playing = false,
+    this.showPlay = false,
+    this.maxLines,
+    this.onTap,
   });
 
   final RecentMessage message;
@@ -45,10 +51,27 @@ class RecentMessageCard extends StatelessWidget {
   /// 4-3 안내처럼 진한 1.5 테두리로 강조한다.
   final bool highlighted;
 
+  /// 있으면 재생 버튼을 눌러 다시 들을 수 있다 (녹음 메시지).
+  final VoidCallback? onPlay;
+
+  /// 재생 중이면 버튼이 멈춤으로 바뀌고 파형이 움직인다.
+  final bool playing;
+
+  /// [onPlay] 없이 재생 버튼 모양만 보인다 (4-3 안내).
+  final bool showPlay;
+
+  /// 글을 이 줄 수까지만 보이고 나머지는 '…'로 줄인다. null이면 다 보인다.
+  final int? maxLines;
+
+  /// 카드를 누르면 부른다 (자세히 보기).
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
     final secondary = AppColors.textSecondary;
+    final text = message.text;
     return OngiCard(
+      onTap: onTap,
       borderColor: highlighted ? AppColors.textPrimary : AppColors.line,
       borderWidth: highlighted
           ? AppSizes.borderSelected
@@ -58,7 +81,7 @@ class RecentMessageCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const ProfileAvatar(),
+              ProfileAvatar(size: 44, imagePath: message.photo),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(
@@ -76,20 +99,8 @@ class RecentMessageCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // 앱은 재생하지 않는다. 시안 모양만 보여 준다.
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: AppColors.textPrimary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  LucideIcons.play,
-                  size: 14.4,
-                  color: AppColors.bgBase,
-                ),
-              ),
+              if (onPlay != null || showPlay)
+                _PlayButton(playing: playing, onPressed: onPlay),
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -98,10 +109,15 @@ class RecentMessageCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  message.text,
-                  style: AppTextStyles.body14.copyWith(color: secondary),
-                ),
+                if (text != null)
+                  Text(
+                    text,
+                    maxLines: maxLines,
+                    overflow: maxLines == null ? null : TextOverflow.ellipsis,
+                    style: AppTextStyles.body14.copyWith(color: secondary),
+                  )
+                else
+                  Waveform.small(animate: playing),
                 const SizedBox(height: AppSpacing.s12),
                 Text(
                   message.heardAt,
@@ -112,6 +128,41 @@ class RecentMessageCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 진한 원형 재생 버튼 (36). [onPressed]가 없으면 모양만 보인다.
+class _PlayButton extends StatelessWidget {
+  const _PlayButton({required this.playing, required this.onPressed});
+
+  final bool playing;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = playing ? '멈추기' : '다시 듣기';
+    final button = Material(
+      color: AppColors.textPrimary,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        child: SizedBox.square(
+          dimension: 36,
+          child: Icon(
+            playing ? LucideIcons.pause : LucideIcons.play,
+            size: 14.4,
+            color: AppColors.bgBase,
+          ),
+        ),
+      ),
+    );
+    if (onPressed == null) return ExcludeSemantics(child: button);
+    return Semantics(
+      button: true,
+      label: label,
+      child: Tooltip(message: label, child: button),
     );
   }
 }

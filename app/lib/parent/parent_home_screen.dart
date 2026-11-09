@@ -96,7 +96,7 @@ class ParentHomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.s12),
-            const ProfileAvatar(size: 52),
+            ProfileAvatar(size: 52, imagePath: store.profile.parentPhoto),
           ],
         ),
       ],
