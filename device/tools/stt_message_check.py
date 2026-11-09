@@ -22,10 +22,32 @@ TMP = "/tmp/ongi_stt_msg"
 BOARD = "/sdcard/Android/data/com.aiq.ongi.device/files/sweep"
 
 
+def read_pcm(path):
+    """afconvert wav는 확장 형식(65534)이라 wave 모듈이 못 읽음 → chunk를 직접 읽는다. (채널, 샘플레이트, 16비트 bytes)"""
+    import struct
+    b = open(path, "rb").read()
+    i, ch, sr, data = 12, 1, 16000, b""
+    while i + 8 <= len(b):
+        cid, size = b[i:i + 4], struct.unpack("<I", b[i + 4:i + 8])[0]
+        body = b[i + 8:i + 8 + size]
+        if cid == b"fmt ":
+            ch, sr = struct.unpack("<HI", body[2:8])
+        elif cid == b"data":
+            data = body
+        i += 8 + size + (size & 1)
+    return ch, sr, data
+
+
 def to_wav(m4a):
+    """m4a → 16kHz 모노 16비트 표준 wav (보드 STT 입력)"""
+    import wave
     os.makedirs(TMP, exist_ok=True)
+    raw = os.path.join(TMP, "_raw.wav")
     out = os.path.join(TMP, os.path.basename(m4a).rsplit(".", 1)[0] + ".wav")
-    subprocess.run(["afconvert", "-f", "WAVE", "-d", "LEI16@16000", "-c", "1", m4a, out], check=True)
+    subprocess.run(["afconvert", "-f", "WAVE", "-d", "LEI16@16000", "-c", "1", m4a, raw], check=True)
+    ch, sr, data = read_pcm(raw)
+    with wave.open(out, "wb") as w:
+        w.setnchannels(ch); w.setsampwidth(2); w.setframerate(sr); w.writeframes(data)
     return out
 
 

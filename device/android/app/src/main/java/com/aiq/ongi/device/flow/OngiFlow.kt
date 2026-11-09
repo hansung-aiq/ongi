@@ -296,7 +296,8 @@ class OngiFlow(
     private val soundCache = java.util.concurrent.ConcurrentHashMap<String, AudioPrep.Mono>()
 
     private fun keyOf(m: com.aiq.ongi.device.store.ParentMessage) =
-        "m${m.id}|${m.updatedAt}|${m.kind}|${m.audioPath}|${m.text?.hashCode()}"
+        // 11/9: voice의 text는 받아쓴 글이라 소리와 상관없음 → 키에서 뺌(받아쓴 뒤 소리를 다시 만들지 않게)
+        "m${m.id}|${m.updatedAt}|${m.kind}|${m.audioPath}|${if (m.kind == "text") m.text?.hashCode() else ""}"
 
     /** 앱이 켜질 때(TTS 준비 후)와 동기화로 메시지가 바뀔 때 부른다. 뒤에서 돈다 */
     fun prewarm() {
@@ -310,10 +311,45 @@ class OngiFlow(
                     bridgeSound(bridge(m))
                 }
                 log("미리 준비: 부모 메시지 ${n}/${all.size}개 소리 + 연결 문장 (${System.currentTimeMillis() - t0}ms)")
+                if (Config.TRANSCRIBE_VOICE) for (m in all) if (m.kind == "voice" && m.text.isNullOrBlank()) transcribe(m)
             } catch (e: Exception) {
                 log("미리 준비 실패: ${e.message}")
             }
         }, "ongi-prewarm").start()
+    }
+
+    /**
+     * 녹음 메시지 받아쓰기 (11/9 C안). 메시지를 받을 때 미리 하므로 아이 응답 시간에는 영향 없음.
+     * 무음 녹음은 받아쓰지 않는다(파형만). 아이와 대화 중이면 끝날 때까지 기다림(STT를 같이 씀)
+     */
+    private fun transcribe(m: com.aiq.ongi.device.store.ParentMessage) {
+        val path = m.audioPath ?: return
+        if (!File(path).exists()) return
+        try {
+            val sound = AudioPrep.decode(File(path))
+            val peak = sound.samples.maxOfOrNull { kotlin.math.abs(it) } ?: 0f
+            if (peak < 0.03f) { log("받아쓰기: 메시지 ${m.id} 무음(최대 ${"%.3f".format(peak)}) → 글 없이 파형만"); return }
+            var waited = 0
+            while (running && waited < 120) { Thread.sleep(500); waited++ }
+            val t0 = System.currentTimeMillis()
+            val text = ai.stt(monoWav(sound)).trim().trimEnd(',', '.', ' ')
+            if (text.isBlank()) { log("받아쓰기: 메시지 ${m.id} 결과 없음"); return }
+            store.setTranscript(m.id, text)
+            log("받아쓰기: 메시지 ${m.id} ${"%.1f".format(sound.seconds)}초 → ${System.currentTimeMillis() - t0}ms \"${text.take(60)}${if (text.length > 60) "…" else ""}\"")
+        } catch (e: Exception) {
+            log("받아쓰기 실패: 메시지 ${m.id} ${e.message}")
+        }
+    }
+
+    /** float 모노 → 16비트 모노 wav (STT 입력) */
+    private fun monoWav(m: AudioPrep.Mono): ByteArray {
+        val n = m.samples.size
+        val b = java.nio.ByteBuffer.allocate(44 + n * 2).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+        b.put("RIFF".toByteArray()).putInt(36 + n * 2).put("WAVE".toByteArray())
+        b.put("fmt ".toByteArray()).putInt(16).putShort(1).putShort(1).putInt(m.rate).putInt(m.rate * 2).putShort(2).putShort(16)
+        b.put("data".toByteArray()).putInt(n * 2)
+        for (v in m.samples) b.putShort((v.coerceIn(-1f, 1f) * 32767).toInt().toShort())
+        return b.array()
     }
 
     private fun bridgeSound(text: String): AudioPrep.Mono? {

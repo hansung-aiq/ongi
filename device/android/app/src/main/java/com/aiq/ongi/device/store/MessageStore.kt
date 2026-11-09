@@ -12,7 +12,7 @@ data class ParentMessage(
     val situationId: Int,
     val author: String,     // "mom" / "dad"
     val kind: String,       // "voice" / "text"
-    val text: String?,      // 글 메시지 내용 (voice면 null)
+    val text: String?,      // 글 메시지 내용. voice면 보드가 받아쓴 글(11/9, 없으면 null)
     val audioPath: String? = null,   // 받은 녹음 파일 (voice)
     val updatedAt: String? = null,
 )
@@ -67,6 +67,16 @@ class MessageStore(private val db: OngiDb) {
         } finally {
             w.endTransaction()
         }
+    }
+
+    /**
+     * 녹음 메시지의 받아쓴 글 저장 (11/9, 재생 화면에 글로 보여 주기).
+     * updated_at은 바꾸지 않는다(동기화 기준). 서버에서 같은 메시지가 바뀌어 오면 upsert가 text를 null로 덮어 다시 받아쓴다
+     */
+    @Synchronized
+    fun setTranscript(id: Int, text: String) {
+        db.writableDatabase.update("messages", ContentValues().apply { put("text", text) },
+            "id = ? AND kind = 'voice'", arrayOf(id.toString()))
     }
 
     /** 서버에서 삭제된 메시지 → 보드에서도 지우고 녹음 파일도 지움 */
