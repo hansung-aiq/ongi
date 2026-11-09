@@ -49,8 +49,9 @@ object Config {
     /** 동기화 간격(초) */
     const val SYNC_SEC = 30L
 
-    /** 시험 모드: 마이크 대신 글로 입력 (오디오 문제 해결 전까지 true) */
-    @Volatile var testMode = true
+    /** 시험 모드: 마이크 대신 글로 입력. 11/9: 앱(유정) 연결 후 기본은 마이크(false).
+     *  start에 text가 있으면(demo_check 등) 시험 입력은 그대로 쓴다. 보드 화면 버튼으로 바꿀 수 있음 */
+    @Volatile var testMode = false
 
     // 시험 모드에서 소리 대신 기다리는 시간(밀리초)
     const val LISTEN_MS = 800L      // 아이가 말하는 시간

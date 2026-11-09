@@ -128,7 +128,8 @@ class H(BaseHTTPRequestHandler):
             return None
 
     def log_message(self, fmt, *args):
-        print(f"[{now()}] {self.command} {self.path}")
+        # 11/9: 잘못된 요청(브라우저 https 시도 등)은 command·path가 없을 수 있음
+        print(f"[{now()}] {getattr(self, 'command', '?')} {getattr(self, 'path', fmt % args)}")
 
     def do_OPTIONS(self):          # CORS (Flutter web)
         self.send_response(204)
