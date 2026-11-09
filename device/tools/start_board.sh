@@ -52,17 +52,31 @@ adb forward tcp:8765 tcp:8765 >/dev/null && ok "보드 신호 8765 → 맥 127.0
 adb reverse tcp:8000 tcp:8000 >/dev/null && ok "보드 127.0.0.1:8000 → 맥 서버 8000 (가짜 서버: python3 device/mock_server.py)"
 
 echo "7. 준비 확인 (최대 60초, 부모 메시지 소리 미리 만들기까지 기다림)"
-for i in $(seq 1 60); do
-    L=$(adb logcat -d -s ongi)
-    echo "$L" | grep -q "신호 서버 시작" && echo "$L" | grep -q "STT: 미리 한 번 돌림" && echo "$L" | grep -q "미리 준비:" && break
-    sleep 1
-done
+wait_ready() {
+    for i in $(seq 1 60); do
+        L=$(adb logcat -d -s ongi)
+        echo "$L" | grep -q "신호 서버 시작" && echo "$L" | grep -q "STT: 미리 한 번 돌림" && echo "$L" | grep -q "미리 준비:" && break
+        sleep 1
+    done
+}
+wait_ready
+# 11/9: 앱을 새로 설치한 직후 첫 실행에서 Genie Init 실패(rc=-1)가 남 → 앱을 한 번 더 켜면 됨
+if echo "$L" | grep -q "Genie Init 실패"; then
+    info "LLM: Genie 첫 실행 실패 → 앱을 한 번 더 켭니다"
+    adb logcat -c
+    adb shell am force-stop $PKG; sleep 2
+    adb shell am start -n $PKG/.MainActivity >/dev/null 2>&1
+    wait_ready
+fi
 for k in "situations.json" "임베딩 판단: 기준" "신호 서버 시작" "LLM: Genie 준비 완료" "STT: SenseVoice 준비 완료" "TTS: 한국어 목소리 준비 완료" "STT: 미리 한 번 돌림" "미리 준비:" "VAD" "동기화 시작" "실패" "없음 →"; do
     line=$(echo "$L" | grep "$k" | tail -1 | sed 's/^.*ongi *: //')
     [ -n "$line" ] && info "$line"
 done
 if echo "$L" | grep -q "STT: 미리 한 번 돌림" && echo "$L" | grep -q "미리 준비:" && echo "$L" | grep -q "신호 서버 시작"; then
     echo; echo "준비 끝 🎉  시연 점검: python3 device/tools/demo_check.py"
+    MAC_IP=$(ipconfig getifaddr en0 2>/dev/null)
+    echo "   윈도우 앱 연결(11/9): 새 탭에서 python3 device/tools/ws_relay.py → 앱 config.dart boardWsUrl = 'ws://${MAC_IP:-<맥 IP>}:8766'"
+    echo "$L" | grep -q "LLM: Genie 준비 완료" || echo "   ⚠️ Genie가 준비 안 됨(가짜 LLM). 시연 전이면 start_board.sh를 한 번 더 실행하세요"
 else
     echo; bad "아직 준비 안 됨. adb logcat -d -s ongi | tail -30 을 확인하세요"
 fi

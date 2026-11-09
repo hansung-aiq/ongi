@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         val stopBtn = Button(this).apply { text = "멈춤" }
         val clearBtn = Button(this).apply { text = "기록 지우기" }
         val llmBtn = Button(this).apply { text = "LLM: 가짜" }
-        val micBtn = Button(this).apply { text = "입력: 글(시험 모드)" }
+        val micBtn = Button(this).apply { text = if (Config.testMode) "입력: 글(시험 모드)" else "입력: 마이크" }
         logView = TextView(this).apply { textSize = 12f }
         scroll = ScrollView(this).apply { addView(logView) }
 
