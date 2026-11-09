@@ -13,7 +13,7 @@ sealed class Signal {
         val messageId: Int,
         val author: String,
         val kind: String,          // "voice" / "text"
-        val text: String?,         // voice면 null
+        val text: String?,         // text면 글 메시지, voice면 보드가 받아쓴 글(11/9, 없으면 null)
     ) : Signal()
     data class NotFound(val text: String) : Signal()
     object Idle : Signal()

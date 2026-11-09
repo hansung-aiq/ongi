@@ -16,9 +16,15 @@ for f in "${FILES[@]}"; do
     tmp=/tmp/ongi_chk_$$.wav
     afconvert -f WAVE -d LEI16 "$f" "$tmp" 2>/dev/null || { echo "❌ 변환 실패: $f"; continue; }
     python3 - "$tmp" "$(basename "$f")" "$(date -r "$f" '+%m/%d %H:%M')" <<'PY'
-import array, math, sys, wave
-w = wave.open(sys.argv[1]); ch = w.getnchannels(); sr = w.getframerate()
-a = array.array('h', w.readframes(w.getnframes()))
+import array, math, struct, sys
+# afconvert wav는 확장 형식(65534)일 수 있어 wave 모듈 대신 chunk를 직접 읽음
+b = open(sys.argv[1], 'rb').read(); i, ch, sr, data = 12, 1, 44100, b''
+while i + 8 <= len(b):
+    cid, size = b[i:i+4], struct.unpack('<I', b[i+4:i+8])[0]; body = b[i+8:i+8+size]
+    if cid == b'fmt ': ch, sr = struct.unpack('<HI', body[2:8])
+    elif cid == b'data': data = body
+    i += 8 + size + (size & 1)
+a = array.array('h', data[:len(data) // 2 * 2])
 db = lambda v: 20 * math.log10(max(v, 1) / 32768)
 peak = max((abs(x) for x in a), default=0)
 rms = math.sqrt(sum(x * x for x in a) / max(len(a), 1))

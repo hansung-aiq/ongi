@@ -46,6 +46,9 @@ object Config {
     /** LLM 한 번에 기다리는 최대 시간 */
     const val LLM_TIMEOUT_MS = 8000L
 
+    /** 녹음 메시지를 보드 STT로 받아써서 재생 화면에 글로 보냄 (11/9 C안). 끄면 voice의 text는 null 그대로 */
+    const val TRANSCRIBE_VOICE = true
+
     /** 동기화 간격(초) */
     const val SYNC_SEC = 30L
 
