@@ -8,9 +8,12 @@ import 'package:http/testing.dart';
 import 'package:ongi_app/api/server_client.dart';
 import 'package:ongi_app/common/common.dart';
 import 'package:ongi_app/parent/message_write_screen.dart';
+import 'package:ongi_app/parent/onboarding/child_info_screen.dart';
+import 'package:ongi_app/parent/onboarding/onboarding_session.dart';
 import 'package:ongi_app/parent/parent_shell.dart';
 import 'package:ongi_app/parent/voice_recorder.dart';
 import 'package:ongi_app/start/login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// device/mock_server.py와 같은 모양으로 답하는 가짜 서버.
 class FakeServer {
@@ -191,7 +194,188 @@ Future<void> _openVoiceTab(WidgetTester tester) async {
 }
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  test('문장 속 이름은 받침이 있을 때만 이를 붙인다', () {
+    String nick(String name) =>
+        ParentProfile(childName: name, author: 'mom').nickname;
+    expect(nick('민준'), '민준이');
+    expect(nick('서아'), '서아');
+    expect(nick('Alex'), 'Alex');
+  });
+
+  testWidgets('처음 부모를 고르면 2-1이 열리고 뒤로 가면 역할 선택으로 돌아온다', (tester) async {
+    final server = FakeServer();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: LoginScreen(serverClient: server.client),
+      ),
+    );
+    await _tapText(tester, '시작하기');
+    await tester.tap(find.text('부모'));
+    await tester.pump();
+    await _tapText(tester, '시작하기');
+    expect(find.text('아이를 알려주세요.'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('뒤로'));
+    await tester.pumpAndSettle();
+    expect(find.text('이 기기는 누가 쓰나요?'), findsOneWidget);
+  });
+
+  testWidgets('2-1부터 녹음으로 첫 메시지를 남기고 홈으로 간다', (tester) async {
+    final server = FakeServer()..messages.clear();
+    final recorder = FakeRecorder();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: ChildInfoScreen(
+          serverClient: server.client,
+          recorderFactory: () => recorder,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    /// 2-1: 이름을 넣기 전에는 다음으로 갈 수 없다.
+    expect(find.text('아이를 알려주세요.'), findsOneWidget);
+    await _tapText(tester, '다음');
+    expect(find.text('아이를 알려주세요.'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '민준');
+    await _tapText(tester, '아빠');
+    await _tapText(tester, '다음');
+
+    /// 2-2
+    expect(find.text('민준이를 위한\n첫 번째 메시지를\n남겨볼까요?'), findsOneWidget);
+    expect(find.textContaining('아빠의 목소리로 말해주세요.'), findsOneWidget);
+    await _tapText(tester, '다음');
+
+    /// 2-3
+    expect(find.text('이런 순간,\n아빠의 목소리가 필요해요.'), findsOneWidget);
+    expect(find.text('친구와 싸운 날'), findsOneWidget);
+    await _tapText(tester, '이 상황에 메시지 남기기');
+
+    /// 2-4 → 2-5 → 2-6
+    expect(find.text('버튼을 누르고 말해주세요.'), findsOneWidget);
+    await tester.tap(find.byTooltip('녹음 시작'));
+    await tester.pump();
+    expect(find.text('녹음 중이에요.'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('0:02 / 1:00'), findsOneWidget);
+    await tester.tap(find.byTooltip('녹음 멈추기'));
+    await tester.pump();
+    expect(find.text('녹음을 마쳤어요.'), findsOneWidget);
+
+    /// 재생 중에는 파형이 계속 움직이므로 pumpAndSettle을 쓰지 않는다.
+    await tester.tap(find.text('다시 듣기'));
+    await tester.pump();
+    expect(recorder.played, ['/tmp/ongi_1.m4a']);
+    expect(find.text('멈추기'), findsOneWidget);
+    recorder.finishPlaying();
+    await tester.pump();
+    expect(find.text('다시 듣기'), findsOneWidget);
+    await _tapText(tester, '저장하기');
+
+    /// 2-7
+    expect(server.posted.single['situation_id'], 4);
+    expect(server.posted.single['author'], 'dad');
+    expect(find.text('첫 메시지를 남겼어요'), findsOneWidget);
+    expect(find.text('1/10'), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('parent_onboarding_done'), isTrue);
+    expect(prefs.getString('child_name'), '민준');
+
+    await _tapText(tester, '홈으로');
+    expect(find.text('민준이의 부모님'), findsOneWidget);
+  });
+
+  testWidgets('작은 화면에서도 첫 설정 화면이 넘치지 않는다', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final server = FakeServer()..messages.clear();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: ChildInfoScreen(
+          serverClient: server.client,
+          recorderFactory: FakeRecorder.new,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '민준');
+    for (final button in ['다음', '다음', '이 상황에 메시지 남기기']) {
+      await _tapText(tester, button);
+      expect(tester.takeException(), isNull);
+    }
+    await tester.tap(find.text('텍스트 입력'));
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), '민준아, 아빠는 네 편이야.');
+    await _tapText(tester, '저장하기');
+    expect(find.text('첫 메시지를 남겼어요'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    /// 메시지 탭의 카드도 칩 글자를 줄여서 넘치지 않는다.
+    await _tapText(tester, '메시지 더 남기기');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('2-7에서 메시지 더 남기기를 누르면 메시지 탭으로 간다', (tester) async {
+    final server = FakeServer()..messages.clear();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: ChildInfoScreen(
+          serverClient: server.client,
+          recorderFactory: FakeRecorder.new,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '민준');
+    for (final button in ['다음', '다음', '이 상황에 메시지 남기기']) {
+      await _tapText(tester, button);
+    }
+    await tester.tap(find.text('텍스트 입력'));
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), '민준아, 엄마는 네 편이야.');
+    await _tapText(tester, '저장하기');
+
+    await _tapText(tester, '메시지 더 남기기');
+    expect(find.textContaining('메시지가 민준이를 기다리고 있어요'), findsOneWidget);
+    expect(find.text('민준이의 부모님'), findsNothing);
+  });
+
+  testWidgets('첫 설정에서 저장한 이름과 호칭을 부모 화면에 쓴다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'parent_onboarding_done': true,
+      'child_name': '서아',
+      'parent_author': 'dad',
+    });
+    final server = FakeServer();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: LoginScreen(serverClient: server.client),
+      ),
+    );
+    await _tapText(tester, '시작하기');
+    await tester.tap(find.text('부모'));
+    await tester.pump();
+    await _tapText(tester, '시작하기');
+    expect(find.text('서아의 부모님'), findsOneWidget);
+
+    await _tapText(tester, '학교 · 학업');
+    await _tapText(tester, '시험을 망친 날');
+    await tester.enterText(find.byType(TextField), '서아야, 괜찮아.');
+    await _tapText(tester, '저장하기');
+    expect(server.posted.single['author'], 'dad');
+    expect(find.textContaining('아빠의 마음을'), findsOneWidget);
+  });
+
   testWidgets('시작하기 → 부모 선택 → 부모 홈에 서버 데이터가 보인다', (tester) async {
+    SharedPreferences.setMockInitialValues({'parent_onboarding_done': true});
     final server = FakeServer();
     await tester.pumpWidget(
       MaterialApp(
@@ -348,7 +532,7 @@ void main() {
     await tester.tap(find.text('음성 녹음'));
     await tester.pump();
     expect(tester.takeException(), isNull);
-    await tester.tap(find.byType(MicHalo));
+    await tester.tap(find.byTooltip('녹음 시작'));
     await tester.pump(const Duration(seconds: 1));
     expect(tester.takeException(), isNull);
     await tester.tap(find.byTooltip('녹음 멈추기'));
@@ -362,10 +546,11 @@ void main() {
     await _openParent(tester, server, recorder: recorder);
     await _openVoiceTab(tester);
 
-    expect(find.text('마이크를 눌러 녹음을 시작하세요'), findsOneWidget);
+    expect(find.text('버튼을 누르고 말해주세요.'), findsOneWidget);
+    expect(find.textContaining('민준이에게 들려드려요'), findsOneWidget);
     expect(find.text('최대 1분까지 녹음할 수 있어요'), findsOneWidget);
 
-    await tester.tap(find.byType(MicHalo));
+    await tester.tap(find.byTooltip('녹음 시작'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 3));
     expect(recorder.recording, isTrue);
@@ -378,15 +563,15 @@ void main() {
 
     await tester.tap(find.byTooltip('녹음 멈추기'));
     await tester.pumpAndSettle();
-    expect(find.text('0:03 녹음했어요'), findsOneWidget);
+    expect(find.text('녹음을 마쳤어요.'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('다시 듣기'));
+    await tester.tap(find.text('다시 듣기'));
     await tester.pump();
     expect(recorder.played, ['/tmp/ongi_1.m4a']);
-    expect(find.byTooltip('멈추기'), findsOneWidget);
+    expect(find.text('멈추기'), findsOneWidget);
     recorder.finishPlaying();
     await tester.pumpAndSettle();
-    expect(find.byTooltip('다시 듣기'), findsOneWidget);
+    expect(find.text('다시 듣기'), findsOneWidget);
 
     await tester.tap(find.text('저장하기'));
     await tester.pumpAndSettle();
@@ -408,7 +593,7 @@ void main() {
     await _openParent(tester, FakeServer(), recorder: recorder);
     await _openVoiceTab(tester);
 
-    await tester.tap(find.byType(MicHalo));
+    await tester.tap(find.byTooltip('녹음 시작'));
     await tester.pump();
     for (var i = 0; i < 60; i++) {
       await tester.pump(const Duration(seconds: 1));
@@ -416,7 +601,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(recorder.recording, isFalse);
-    expect(find.text('1:00 녹음했어요'), findsOneWidget);
+    expect(find.text('녹음을 마쳤어요.'), findsOneWidget);
   });
 
   testWidgets('다시 녹음하면 녹음 전으로 돌아가고 저장할 수 없다', (tester) async {
@@ -424,14 +609,14 @@ void main() {
     await _openParent(tester, server);
     await _openVoiceTab(tester);
 
-    await tester.tap(find.byType(MicHalo));
+    await tester.tap(find.byTooltip('녹음 시작'));
     await tester.pump(const Duration(seconds: 2));
     await tester.tap(find.byTooltip('녹음 멈추기'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('다시 녹음'));
     await tester.pumpAndSettle();
 
-    expect(find.text('마이크를 눌러 녹음을 시작하세요'), findsOneWidget);
+    expect(find.text('버튼을 누르고 말해주세요.'), findsOneWidget);
     await tester.tap(find.text('저장하기'));
     await tester.pumpAndSettle();
     expect(server.uploads, isEmpty);
@@ -442,7 +627,7 @@ void main() {
     await _openParent(tester, FakeServer(), recorder: recorder);
     await _openVoiceTab(tester);
 
-    await tester.tap(find.byType(MicHalo));
+    await tester.tap(find.byTooltip('녹음 시작'));
     await tester.pumpAndSettle();
 
     expect(find.text('마이크 권한을 허용해 주세요'), findsOneWidget);
@@ -454,7 +639,7 @@ void main() {
     await _openParent(tester, FakeServer(), recorder: recorder);
     await _openVoiceTab(tester);
 
-    await tester.tap(find.byType(MicHalo));
+    await tester.tap(find.byTooltip('녹음 시작'));
     await tester.pump(const Duration(seconds: 1));
     await tester.tap(find.byTooltip('뒤로'));
     await tester.pumpAndSettle();

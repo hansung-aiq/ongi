@@ -15,6 +15,8 @@ class _ComponentGalleryState extends State<ComponentGallery> {
   int _segment = 0;
   int _tab = 0;
   bool _selected = true;
+  int _choice = 0;
+  int _step = 0;
 
   Widget _section(String title, List<Widget> children) {
     return Padding(
@@ -73,6 +75,67 @@ class _ComponentGalleryState extends State<ComponentGallery> {
               const OngiButton(label: '시작하기', onPressed: null),
               OngiButton.secondary(label: '완료', onPressed: () {}),
               const OngiButton.secondary(label: '완료', onPressed: null),
+              Wrap(
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s8,
+                children: [
+                  OngiPillButton(
+                    label: '다시 듣기',
+                    icon: LucideIcons.play,
+                    onPressed: () {},
+                  ),
+                  OngiPillButton(label: '다시 녹음', onPressed: () {}),
+                  const OngiPillButton(label: '비활성', onPressed: null),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  RoundIconButton(
+                    icon: LucideIcons.mic,
+                    tooltip: '녹음 시작',
+                    size: 88,
+                    iconSize: 32,
+                    onPressed: () {},
+                  ),
+                  RoundIconButton(
+                    icon: LucideIcons.square,
+                    tooltip: '녹음 멈추기',
+                    size: 64,
+                    iconSize: 24,
+                    onPressed: () {},
+                  ),
+                  RoundIconButton(
+                    icon: LucideIcons.play,
+                    tooltip: '다시 듣기',
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ]),
+            _section('화면 틀', [
+              GestureDetector(
+                onTap: () => setState(() => _step = (_step + 1) % 4),
+                child: StepDots(count: 4, current: _step),
+              ),
+              const PageHeading(
+                title: '아이를 알려주세요.',
+                description: '메시지에 담길 이름과 호칭이에요.',
+              ),
+              const PageHeading.situation(
+                category: '친구 · 관계',
+                title: '친구와 싸운 날',
+                description: '민준이에게 전하고 싶은 마음을 남겨주세요.',
+              ),
+              const PageHeading(
+                title: '첫 메시지를 남겼어요',
+                description: '민준이가 필요한 순간,\n엄마의 목소리로 마음을 전해드릴게요.',
+                centered: true,
+              ),
+              const HintRow(
+                icon: LucideIcons.audioLines,
+                text: '녹음한 목소리 그대로 민준이에게 들려드려요.\n조용한 곳에서 편하게 말해주세요.',
+              ),
             ]),
             _section('칩·탭', [
               const Wrap(
@@ -101,6 +164,18 @@ class _ComponentGalleryState extends State<ComponentGallery> {
                 errorText: '이름을 한 글자 이상 입력해 주세요.',
               ),
               const OngiTextField(hintText: '민준', enabled: false),
+              const LabeledField(
+                label: '자녀 이름',
+                child: OngiTextField(hintText: '민준'),
+              ),
+              LabeledField(
+                label: '아이가 부르는 호칭',
+                child: OngiChoiceGroup(
+                  options: const ['엄마', '아빠'],
+                  selectedIndex: _choice,
+                  onChanged: (index) => setState(() => _choice = index),
+                ),
+              ),
             ]),
             _section('카드', [
               SelectionCard(
@@ -122,6 +197,29 @@ class _ComponentGalleryState extends State<ComponentGallery> {
                 title: '시험을 망친 날',
                 subtitle: '노력만큼 결과가 나오지 않았을 때',
                 onTap: () {},
+              ),
+              const GoalProgressCard(
+                title: '추천 10개 채우기',
+                progress: 1,
+                goal: 10,
+                caption: '작은 메시지 하나가 아이의 든든한 힘이 돼요.',
+              ),
+            ]),
+            _section('하단 버튼 묶음', [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.line),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.s16),
+                  child: BottomActions(
+                    children: [
+                      OngiButton(label: '메시지 더 남기기', onPressed: () {}),
+                      OngiButton.secondary(label: '홈으로', onPressed: () {}),
+                    ],
+                  ),
+                ),
               ),
             ]),
             _section('상태 표시', [

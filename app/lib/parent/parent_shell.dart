@@ -8,13 +8,29 @@ import '../config.dart';
 import 'message_list_screen.dart';
 import 'message_write_screen.dart';
 import 'parent_home_screen.dart';
+import 'parent_profile.dart';
 import 'parent_store.dart';
 import 'save_done_screen.dart';
 import 'voice_recorder.dart';
 
 /// 부모 화면 전체. 하단 탭(홈·메시지·설정)과 서버 데이터를 가진다.
 class ParentShell extends StatefulWidget {
-  const ParentShell({super.key, this.serverClient, this.recorderFactory});
+  const ParentShell({
+    super.key,
+    this.serverClient,
+    this.recorderFactory,
+    this.initialTab = homeTab,
+    this.profile = ParentProfile.fallback,
+  });
+
+  static const homeTab = 0;
+  static const messagesTab = 1;
+
+  /// 처음 열 탭 (2-7에서 '메시지 더 남기기'를 누르면 메시지 탭)
+  final int initialTab;
+
+  /// 문장에 쓰는 자녀 이름과 호칭
+  final ParentProfile profile;
 
   /// 시험할 때 가짜 서버로 바꿔 끼운다.
   final ServerClient? serverClient;
@@ -32,9 +48,10 @@ class _ParentShellState extends State<ParentShell> {
   late final ParentStore _store = ParentStore(
     client: _client,
     familyId: AppConfig.familyId,
+    profile: widget.profile,
   )..load();
 
-  int _tab = 0;
+  late int _tab = widget.initialTab;
 
   /// 메시지 탭에서 고른 분류. null이면 전체다.
   String? _category;

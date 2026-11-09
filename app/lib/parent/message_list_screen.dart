@@ -3,7 +3,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/server_models.dart';
 import '../common/common.dart';
-import '../config.dart';
 import 'parent_store.dart';
 import 'situation_info.dart';
 
@@ -51,7 +50,7 @@ class MessageListScreen extends StatelessWidget {
               ...category == null ? _allCards() : _categoryCards(category!),
               const SizedBox(height: AppSpacing.s12),
               Text(
-                '상황마다 하나의 메시지가 ${AppConfig.childNickname}를 기다리고 있어요.',
+                '상황마다 하나의 메시지가 ${store.profile.nickname}를 기다리고 있어요.',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.caption12.copyWith(
                   color: AppColors.textSecondary,
@@ -128,13 +127,12 @@ class MessageListScreen extends StatelessWidget {
     child: card,
   );
 
-  /// [full]이면 3-2 모양(분류 표시, 본문 여러 줄), 아니면 3-3 모양(본문 한 줄).
+  /// [full]이면 3-2 모양(분류 표시), 아니면 3-3 모양.
   Widget _messageCard(ParentMessage m, Situation? s, {required bool full}) {
     return MessageCard(
       title: s?.name ?? '상황 ${m.situationId}',
       category: full && s != null ? categoryLabel(s.category) : null,
       body: m.text,
-      bodyMaxLines: full ? 3 : 1,
       typeLabel: m.isVoice ? '음성' : '텍스트',
       typeIcon: m.isVoice ? LucideIcons.mic : LucideIcons.type,
       statusLabel: m.delivered ? '전달됨' : '전달 대기',

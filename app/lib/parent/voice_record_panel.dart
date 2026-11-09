@@ -14,7 +14,8 @@ enum VoiceStage {
   recorded,
 }
 
-/// 3-4 음성 녹음 탭의 입력 칸. 상태와 버튼 동작은 화면이 정한다.
+/// 음성 녹음 칸 (2-4 녹음 전, 2-5 녹음 중, 2-6 녹음 후).
+/// 첫 메시지(2-4~2-6)와 메시지 남기기(3-4)가 함께 쓴다.
 class VoiceRecordPanel extends StatelessWidget {
   const VoiceRecordPanel({
     super.key,
@@ -31,8 +32,10 @@ class VoiceRecordPanel extends StatelessWidget {
 
   final VoiceStage stage;
 
-  /// 녹음 중이면 지금까지, 녹음 후면 녹음한 길이
+  /// 녹음 중에 지금까지 녹음한 길이
   final Duration elapsed;
+
+  /// 녹음할 수 있는 가장 긴 길이
   final Duration maxDuration;
   final bool playing;
 
@@ -43,13 +46,15 @@ class VoiceRecordPanel extends StatelessWidget {
   final VoidCallback onPlayToggle;
   final VoidCallback onRetake;
 
+  static const height = 260.0;
+
   static String format(Duration d) =>
       '${d.inMinutes}:${(d.inSeconds % 60).toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 260,
+      height: height,
       padding: const EdgeInsets.all(AppSpacing.s20),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -67,92 +72,65 @@ class VoiceRecordPanel extends StatelessWidget {
     );
   }
 
-  TextStyle get _secondary =>
-      AppTextStyles.caption12.copyWith(color: AppColors.textSecondary);
+  static const _gap = SizedBox(height: AppSpacing.s16);
 
   List<Widget> _ready() => [
-    Semantics(
-      button: true,
-      label: '녹음 시작',
-      child: GestureDetector(
-        onTap: enabled ? onStart : null,
-        child: const MicHalo(size: 120),
-      ),
+    RoundIconButton(
+      icon: LucideIcons.mic,
+      tooltip: '녹음 시작',
+      size: 88,
+      iconSize: 48,
+      onPressed: enabled ? onStart : null,
     ),
-    const SizedBox(height: AppSpacing.s16),
-    Text('마이크를 눌러 녹음을 시작하세요', style: AppTextStyles.label14),
+    _gap,
+    Text('버튼을 누르고 말해주세요.', style: AppTextStyles.label16),
+    const SizedBox(height: AppSpacing.s8),
+    Text(
+      '천천히, 평소 말투 그대로 괜찮아요.',
+      style: AppTextStyles.caption12.copyWith(color: AppColors.textSecondary),
+    ),
     const SizedBox(height: AppSpacing.s4),
-    Text('최대 ${maxDuration.inSeconds ~/ 60}분까지 녹음할 수 있어요', style: _secondary),
+    Text(
+      '최대 ${maxDuration.inSeconds ~/ 60}분까지 녹음할 수 있어요',
+      style: AppTextStyles.caption12.copyWith(color: AppColors.textSecondary),
+    ),
   ];
 
   List<Widget> _recording() => [
-    const Waveform.large(),
-    const SizedBox(height: AppSpacing.s16),
+    Text('녹음 중이에요.', style: AppTextStyles.label16),
+    _gap,
+    const Waveform.small(),
+    _gap,
     Text(
       '${format(elapsed)} / ${format(maxDuration)}',
-      style: AppTextStyles.label16,
+      style: AppTextStyles.body16.copyWith(color: AppColors.textSecondary),
     ),
-    const SizedBox(height: AppSpacing.s16),
-    _RoundButton(icon: LucideIcons.square, tooltip: '녹음 멈추기', onTap: onStop),
+    _gap,
+    RoundIconButton(
+      icon: Icons.stop_rounded,
+      tooltip: '녹음 멈추기',
+      size: 64,
+      iconSize: 36,
+      onPressed: onStop,
+    ),
   ];
 
   List<Widget> _recorded() => [
+    Text('녹음을 마쳤어요.', style: AppTextStyles.label16),
+    _gap,
     Waveform.small(animate: playing),
-    const SizedBox(height: AppSpacing.s16),
-    Text('${format(elapsed)} 녹음했어요', style: AppTextStyles.label16),
-    const SizedBox(height: AppSpacing.s16),
+    _gap,
     Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _RoundButton(
+        OngiPillButton(
+          label: playing ? '멈추기' : '다시 듣기',
           icon: playing ? LucideIcons.pause : LucideIcons.play,
-          tooltip: playing ? '멈추기' : '다시 듣기',
-          onTap: enabled ? onPlayToggle : null,
+          onPressed: enabled ? onPlayToggle : null,
         ),
-        const SizedBox(width: AppSpacing.s16),
-        TextButton.icon(
-          onPressed: enabled ? onRetake : null,
-          icon: const Icon(LucideIcons.rotateCcw, size: AppSizes.iconSmall),
-          label: const Text('다시 녹음'),
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.textSecondary,
-            textStyle: AppTextStyles.label14,
-          ),
-        ),
+        const SizedBox(width: AppSpacing.s8),
+        OngiPillButton(label: '다시 녹음', onPressed: enabled ? onRetake : null),
       ],
     ),
   ];
-}
-
-/// 멈춤·재생에 쓰는 진한 원형 버튼
-class _RoundButton extends StatelessWidget {
-  const _RoundButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: onTap == null ? AppSizes.disabledOpacity : 1,
-      child: IconButton(
-        onPressed: onTap,
-        tooltip: tooltip,
-        iconSize: 20,
-        style: IconButton.styleFrom(
-          backgroundColor: AppColors.textPrimary,
-          foregroundColor: AppColors.bgBase,
-          disabledBackgroundColor: AppColors.textPrimary,
-          disabledForegroundColor: AppColors.bgBase,
-          fixedSize: const Size.square(AppSizes.buttonHeight),
-        ),
-        icon: Icon(icon),
-      ),
-    );
-  }
 }

@@ -2,13 +2,21 @@ import 'package:flutter/foundation.dart';
 
 import '../api/server_client.dart';
 import '../api/server_models.dart';
+import 'parent_profile.dart';
 
 /// 부모 화면이 함께 쓰는 서버 데이터 (상황 목록, 메시지 목록).
 class ParentStore extends ChangeNotifier {
-  ParentStore({required this.client, required this.familyId});
+  ParentStore({
+    required this.client,
+    required this.familyId,
+    this.profile = ParentProfile.fallback,
+  });
 
   final ServerClient client;
   final int familyId;
+
+  /// 첫 설정에서 저장한 자녀 이름과 호칭
+  final ParentProfile profile;
 
   /// '추천 10개 채우기'의 목표 수
   static const goal = 10;
@@ -99,6 +107,20 @@ class ParentStore extends ChangeNotifier {
       audioPath: audioPath,
     );
     _add(message);
+  }
+
+  bool _disposed = false;
+
+  /// 화면을 닫은 뒤에 서버 응답이 와도 오류가 나지 않게 한다.
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 
   void _add(ParentMessage message) {

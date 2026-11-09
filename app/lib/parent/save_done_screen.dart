@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../common/common.dart';
-import '../config.dart';
 import 'parent_store.dart';
 import 'progress_card.dart';
 
@@ -23,8 +22,8 @@ class SaveDoneScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final secondary = AppColors.textSecondary;
-    final title = AppConfig.parentTitle(AppConfig.parentAuthor);
-    final nickname = AppConfig.childNickname;
+    final title = store.profile.title;
+    final nickname = store.profile.nickname;
     return Scaffold(
       body: SafeArea(
         child: Padding(

@@ -4,11 +4,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../api/server_client.dart';
 import '../child/child_screen.dart';
 import '../common/common.dart';
+import '../parent/onboarding/child_info_screen.dart';
+import '../parent/onboarding/onboarding_session.dart';
 import '../parent/parent_shell.dart';
 
 enum _Role { parent, child }
 
 /// 1-2 역할 선택. 부모는 부모 홈(3-1), 자녀는 자녀 홈(5-1)으로 간다.
+/// 부모를 처음 고르면 첫 설정(2-1~2-7)을 먼저 한다.
 class RoleSelectScreen extends StatefulWidget {
   const RoleSelectScreen({super.key, this.serverClient});
 
@@ -22,9 +25,24 @@ class RoleSelectScreen extends StatefulWidget {
 class _RoleSelectScreenState extends State<RoleSelectScreen> {
   _Role? _role;
 
-  void _start() {
+  Future<void> _start() async {
+    /// 부모를 처음 고르면 첫 설정(2-1)부터 한다. 뒤로 가면 이 화면으로 돌아온다.
+    if (_role == _Role.parent && !await OnboardingPrefs.isDone()) {
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ChildInfoScreen(serverClient: widget.serverClient),
+        ),
+      );
+      return;
+    }
+    final profile = await OnboardingPrefs.loadProfile();
+    if (!mounted) return;
     final Widget next = switch (_role!) {
-      _Role.parent => ParentShell(serverClient: widget.serverClient),
+      _Role.parent => ParentShell(
+        serverClient: widget.serverClient,
+        profile: profile,
+      ),
       _Role.child => const ChildScreen(),
     };
     Navigator.of(context).pushAndRemoveUntil(

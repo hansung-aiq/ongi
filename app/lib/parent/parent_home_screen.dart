@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../common/common.dart';
-import '../config.dart';
 import 'parent_store.dart';
 import 'progress_card.dart';
 import 'situation_info.dart';
@@ -83,7 +82,7 @@ class ParentHomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${AppConfig.childNickname}의 부모님',
+                    '${store.profile.nickname}의 부모님',
                     style: AppTextStyles.title28,
                   ),
                   const SizedBox(height: AppSpacing.s8),

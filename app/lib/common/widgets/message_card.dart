@@ -14,7 +14,7 @@ class MessageCard extends StatelessWidget {
     required this.title,
     this.category,
     this.body,
-    this.bodyMaxLines = 3,
+    this.bodyMaxLines = 1,
     required this.typeLabel,
     required this.typeIcon,
     this.statusLabel,
@@ -31,6 +31,8 @@ class MessageCard extends StatelessWidget {
 
   /// 없으면 본문 줄을 숨긴다 (녹음 메시지).
   final String? body;
+
+  /// 본문을 이 줄 수까지만 보여 주고 나머지는 '…'로 줄인다.
   final int bodyMaxLines;
   final String typeLabel;
   final IconData typeIcon;
@@ -94,19 +96,32 @@ class MessageCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: AppSpacing.s12),
-          Row(
-            children: [
-              OngiChip(label: typeLabel, icon: typeIcon),
-              if (statusLabel != null) ...[
-                const SizedBox(width: AppSpacing.s8),
-                Opacity(
-                  opacity: statusMuted ? AppSizes.disabledOpacity : 1,
-                  child: OngiChip(label: statusLabel!),
+
+          /// 한 줄에 다 들어가지 않으면 날짜만 아래 줄로 내린다.
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OngiChip(label: typeLabel, icon: typeIcon),
+                    if (statusLabel != null) ...[
+                      const SizedBox(width: AppSpacing.s8),
+                      Opacity(
+                        opacity: statusMuted ? AppSizes.disabledOpacity : 1,
+                        child: OngiChip(label: statusLabel!),
+                      ),
+                    ],
+                  ],
                 ),
+                Text(date, style: secondary),
               ],
-              const Spacer(),
-              Text(date, style: secondary),
-            ],
+            ),
           ),
         ],
       ),

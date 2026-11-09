@@ -7,7 +7,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../api/server_client.dart';
 import '../api/server_models.dart';
 import '../common/common.dart';
-import '../config.dart';
 import 'parent_store.dart';
 import 'save_done_screen.dart';
 import 'situation_info.dart';
@@ -178,14 +177,14 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
       if (_tab == 1) {
         await widget.store.saveText(
           situationId: widget.situation.id,
-          author: AppConfig.parentAuthor,
+          author: widget.store.profile.author,
           text: _controller.text.trim(),
         );
       } else {
         final path = _recordedPath!;
         await widget.store.saveVoice(
           situationId: widget.situation.id,
-          author: AppConfig.parentAuthor,
+          author: widget.store.profile.author,
           audio: await _recorder.read(path),
           filename: path.split(RegExp(r'[/\\]')).last,
         );
@@ -262,13 +261,17 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
                               onRetake: _retake,
                             ),
                       const SizedBox(height: AppSpacing.s16),
-                      Text(
-                        '남겨주신 글은 따뜻한 목소리로 읽어드려요.\n직접 녹음한 목소리도 저장할 수 있어요.',
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.caption12.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
+                      _tab == 1
+                          ? const HintRow(
+                              icon: LucideIcons.type,
+                              text: '남겨주신 글은 따뜻한 목소리로 읽어드려요.',
+                            )
+                          : HintRow(
+                              icon: LucideIcons.audioLines,
+                              text:
+                                  '녹음한 목소리 그대로 ${widget.store.profile.nickname}에게 들려드려요.\n'
+                                  '조용한 곳에서 편하게 말해주세요.',
+                            ),
                       if (_error != null) ...[
                         const SizedBox(height: AppSpacing.s16),
                         ErrorNotice(message: _error!),
@@ -301,7 +304,7 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
 
   Widget _textBox() {
     return Container(
-      height: 260,
+      height: VoiceRecordPanel.height,
       padding: const EdgeInsets.all(AppSpacing.s20),
       decoration: _boxDecoration(focused: _focus.hasFocus),
       child: Column(
@@ -321,7 +324,8 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
               ],
               style: AppTextStyles.body16,
               decoration: InputDecoration.collapsed(
-                hintText: '${AppConfig.childNickname}에게 전하고 싶은 마음을 적어 주세요.',
+                hintText:
+                    '${widget.store.profile.nickname}에게 전하고 싶은 마음을 적어 주세요.',
                 hintStyle: AppTextStyles.body16.copyWith(
                   color: AppColors.textSecondary,
                 ),
