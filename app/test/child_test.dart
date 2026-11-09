@@ -158,6 +158,35 @@ void main() {
   });
 
   group('자녀 화면', () {
+    testWidgets('처음엔 비연결로 보이고 연결이 잡히면 연결됨으로 바뀐다', (tester) async {
+      final board = FakeBoard();
+      final connected = Completer<void>();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: ChildScreen(
+            connector: (url) async {
+              await connected.future;
+              return board.connect(url);
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+
+      /// 연결을 시도하는 동안
+      expect(find.text('온기 스피커 연결 안 됨'), findsOneWidget);
+      expect(find.text('온기 스피커 연결됨'), findsNothing);
+      final button = find.widgetWithText(TextButton, '온기에게 말하기');
+      expect(tester.widget<TextButton>(button).onPressed, isNull);
+
+      /// 연결이 잡힌 뒤
+      connected.complete();
+      await _settle(tester);
+      expect(find.text('온기 스피커 연결됨'), findsOneWidget);
+      expect(tester.widget<TextButton>(button).onPressed, isNotNull);
+    });
+
     testWidgets('말하기 버튼은 start를 보낸다', (tester) async {
       final board = await _openChild(tester);
 

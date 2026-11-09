@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../common/common.dart';
+import '../parent/parent_profile.dart';
 
 class RecentMessage {
   const RecentMessage({
@@ -18,31 +19,40 @@ class RecentMessage {
 }
 
 /// 시안의 예시 데이터. 재생 기록 API-09를 붙일 때 실제 데이터로 바꾼다.
-const sampleRecentMessages = [
-  RecentMessage(
-    author: '엄마',
-    situation: '친구와 싸운 날',
-    text: '민준아, 마음이 많이 속상했지?\n엄마는 언제나 네 편이야.',
-    heardAt: '들은 날 · 오늘 · 오후 4:32',
-  ),
-  RecentMessage(
-    author: '엄마',
-    situation: '친구와 싸운 날',
-    text: '민준아, 마음이 많이 속상했지?\n엄마는 언제나 네 편이야.',
-    heardAt: '들은 날 · 오늘 · 오후 4:32',
-  ),
+/// 이름과 호칭은 부모가 첫 설정에서 저장한 값을 쓴다.
+List<RecentMessage> sampleRecentMessages(ParentProfile profile) => [
+  for (var i = 0; i < 2; i++)
+    RecentMessage(
+      author: profile.title,
+      situation: '친구와 싸운 날',
+      text:
+          '${profile.called}, 마음이 많이 속상했지?\n'
+          '${profile.title}는 언제나 네 편이야.',
+      heardAt: '들은 날 · 오늘 · 오후 4:32',
+    ),
 ];
 
 /// 최근에 들은 메시지 카드.
 class RecentMessageCard extends StatelessWidget {
-  const RecentMessageCard({super.key, required this.message});
+  const RecentMessageCard({
+    super.key,
+    required this.message,
+    this.highlighted = false,
+  });
 
   final RecentMessage message;
+
+  /// 4-3 안내처럼 진한 1.5 테두리로 강조한다.
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
     final secondary = AppColors.textSecondary;
     return OngiCard(
+      borderColor: highlighted ? AppColors.textPrimary : AppColors.line,
+      borderWidth: highlighted
+          ? AppSizes.borderSelected
+          : AppSizes.borderDefault,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

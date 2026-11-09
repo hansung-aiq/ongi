@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../common/common.dart';
-import '../config.dart';
+import '../parent/parent_profile.dart';
 
 /// 5-2 듣는 중.
 class ChildListeningScreen extends StatelessWidget {
-  const ChildListeningScreen({super.key, required this.onStop});
+  const ChildListeningScreen({
+    super.key,
+    required this.profile,
+    required this.onStop,
+  });
 
+  /// 부모가 첫 설정에서 저장한 이름·호칭
+  final ParentProfile profile;
   final VoidCallback onStop;
 
   @override
@@ -19,7 +25,7 @@ class ChildListeningScreen extends StatelessWidget {
         Text('듣고 있어', style: AppTextStyles.title28),
         const SizedBox(height: AppSpacing.s24),
         Text(
-          '${AppConfig.childCalled}, 무슨 일이 있었어?',
+          '${profile.called}, 무슨 일이 있었어?',
           textAlign: TextAlign.center,
           style: AppTextStyles.body16.copyWith(color: AppColors.textSecondary),
         ),

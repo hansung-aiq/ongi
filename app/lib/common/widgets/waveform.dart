@@ -14,11 +14,15 @@ class Waveform extends StatefulWidget {
       scale = 1;
 
   /// 공감·재생 화면의 작은 파형
-  const Waveform.small({super.key, this.animate = true, this.opacity = 1})
-    : width = 170,
-      height = 30,
-      barWidth = 3,
-      scale = 0.48;
+  /// [width]를 넓히면 막대 사이만 벌어진다.
+  const Waveform.small({
+    super.key,
+    this.animate = true,
+    this.opacity = 1,
+    this.width = 170,
+  }) : height = 30,
+       barWidth = 3,
+       scale = 0.48;
 
   final double width;
   final double height;

@@ -24,6 +24,9 @@ class ParentProfile {
   /// 끝이 늘 받침 없는 소리라서 뒤에는 '를·가·에게'를 붙이면 된다.
   String get nickname => _hasBatchim(childName) ? '$childName이' : childName;
 
+  /// 부르는 이름. 받침이 있으면 '아', 없으면 '야' (민준아, 서아야).
+  String get called => '$childName${_hasBatchim(childName) ? '아' : '야'}';
+
   static bool _hasBatchim(String word) {
     if (word.isEmpty) return false;
     final code = word.runes.last;

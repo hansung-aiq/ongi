@@ -12,6 +12,7 @@ export 'widgets/hint_row.dart';
 export 'widgets/labeled_field.dart';
 export 'widgets/message_card.dart';
 export 'widgets/mic_halo.dart';
+export 'widgets/onboarding_scaffold.dart';
 export 'widgets/ongi_button.dart';
 export 'widgets/ongi_card.dart';
 export 'widgets/ongi_chip.dart';

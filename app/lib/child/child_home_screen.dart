@@ -3,23 +3,28 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/board_client.dart';
 import '../common/common.dart';
-import '../config.dart';
+import '../parent/parent_profile.dart';
 import 'recent_message_card.dart';
 
 /// 5-1 자녀 홈, 6-1 연결 안 됨.
 class ChildHomeScreen extends StatelessWidget {
   const ChildHomeScreen({
     super.key,
+    required this.profile,
     required this.connection,
     required this.notice,
     required this.onStart,
   });
 
+  /// 부모가 첫 설정에서 저장한 이름·호칭
+  final ParentProfile profile;
   final BoardConnection connection;
   final String? notice;
   final VoidCallback onStart;
 
-  bool get _offline => connection == BoardConnection.disconnected;
+  /// 처음 들어와 연결을 시도하는 동안에도 비연결로 보이고,
+  /// 보드와 연결이 잡히면 그때 연결 상태로 바뀐다.
+  bool get _offline => connection != BoardConnection.connected;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +60,7 @@ class ChildHomeScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.s28),
               Text('최근에 들은 메시지', style: AppTextStyles.subtitle18),
               const SizedBox(height: 14),
-              for (final message in sampleRecentMessages) ...[
+              for (final message in sampleRecentMessages(profile)) ...[
                 RecentMessageCard(message: message),
                 const SizedBox(height: 14),
               ],
@@ -83,10 +88,7 @@ class ChildHomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '안녕, ${AppConfig.childCalled}!',
-                    style: AppTextStyles.title28,
-                  ),
+                  Text('안녕, ${profile.called}!', style: AppTextStyles.title28),
                   const SizedBox(height: AppSpacing.s8),
                   Text(
                     '오늘도 네 이야기를 듣고 싶어.',
