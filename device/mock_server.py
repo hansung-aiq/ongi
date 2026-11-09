@@ -38,7 +38,7 @@ from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-PORT = 8000
+PORT = int(os.environ.get("ONGI_MOCK_PORT", "8000"))   # 11/9: 웹 미리보기용으로 8001 등 (진짜 서버 8000과 같이 켤 때)
 LOCK = threading.Lock()
 now = lambda: datetime.now().replace(microsecond=0).isoformat()
 
