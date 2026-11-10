@@ -112,9 +112,11 @@ class ParentHomeScreen extends StatelessWidget {
   }
 
   static String _ago(DateTime at, DateTime now) {
-    final days = DateTime(now.year, now.month, now.day)
-        .difference(DateTime(at.year, at.month, at.day))
-        .inDays;
+    final days = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).difference(DateTime(at.year, at.month, at.day)).inDays;
     return switch (days) {
       <= 0 => '오늘',
       1 => '어제',

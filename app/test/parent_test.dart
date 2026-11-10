@@ -125,7 +125,9 @@ class FakeServer {
     if (extended && request.method == 'GET' && path == '/needs') {
       return _json(200, {'items': needs});
     }
-    if (extended && request.method == 'DELETE' && path == '/families/1/history') {
+    if (extended &&
+        request.method == 'DELETE' &&
+        path == '/families/1/history') {
       historyDeleted = true;
       playLogs.clear();
       needs.clear();
