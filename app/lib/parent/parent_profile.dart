@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config.dart';
@@ -107,6 +109,25 @@ class OnboardingPrefs {
     await saveProfile(profile);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_doneKey, true);
+  }
+
+  /// 이 기기에 저장한 것을 모두 지운다: 첫 설정 기록, 이름·호칭, 사진, 자녀 첫 안내 기록.
+  /// 다음에 앱을 열면 첫 설정부터 다시 한다. 서버의 메시지는 그대로다.
+  static Future<void> reset() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final path in [
+      prefs.getString(_childPhotoKey),
+      prefs.getString(_parentPhotoKey),
+    ]) {
+      if (path == null) continue;
+      try {
+        final file = File(path);
+        if (await file.exists()) await file.delete();
+      } on Object {
+        /// 사진 파일을 못 지워도 설정 초기화는 계속한다.
+      }
+    }
+    await prefs.clear();
   }
 
   static Future<void> _setOrRemove(

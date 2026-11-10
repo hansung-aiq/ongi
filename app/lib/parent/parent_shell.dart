@@ -7,6 +7,7 @@ import '../api/server_models.dart';
 import '../common/common.dart';
 import '../config.dart';
 import '../settings/settings_screen.dart';
+import '../start/login_screen.dart';
 import '../start/role_select_screen.dart';
 import 'message_list_screen.dart';
 import 'message_write_screen.dart';
@@ -128,6 +129,34 @@ class _ParentShellState extends State<ParentShell> {
     if (mounted) _notify('메시지를 지웠어요');
   }
 
+  /// 3-6 메시지 모두 지우기
+  Future<void> _deleteAll() async {
+    if (_store.messages.isEmpty) {
+      _notify('지울 메시지가 없어요');
+      return;
+    }
+    await _playback.stop();
+    try {
+      final count = await _store.deleteAll();
+      if (mounted) _notify('메시지 $count개를 지웠어요');
+    } on ServerException catch (e) {
+      if (mounted) _notify(e.message, error: true);
+    }
+  }
+
+  /// 3-6 이 기기 처음 상태로: 기기에 저장한 것을 지우고 시작 화면으로 간다.
+  Future<void> _resetDevice() async {
+    final navigator = Navigator.of(context);
+    await _playback.stop();
+    await OnboardingPrefs.reset();
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (_) => LoginScreen(serverClient: widget.serverClient),
+      ),
+      (_) => false,
+    );
+  }
+
   void _notify(String text, {bool error = false}) =>
       showOngiSnackBar(context, text, error: error);
 
@@ -174,6 +203,8 @@ class _ParentShellState extends State<ParentShell> {
         profile: _store.profile,
         isParent: true,
         onProfileChanged: (p) => _store.profile = p,
+        onDeleteAllMessages: _deleteAll,
+        onResetDevice: _resetDevice,
         onChangeMode: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => RoleSelectScreen(serverClient: widget.serverClient),

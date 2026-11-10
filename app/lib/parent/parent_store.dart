@@ -148,6 +148,17 @@ class ParentStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 메시지를 모두 지운다 (API-07을 하나씩). 지운 개수를 돌려준다.
+  /// 중간에 실패하면 거기서 멈추고 [ServerException]을 던진다. 이미 지운 것은 목록에서 빠져 있다.
+  Future<int> deleteAll() async {
+    var count = 0;
+    for (final m in List.of(messages)) {
+      await delete(m.id);
+      count++;
+    }
+    return count;
+  }
+
   void _replace(ParentMessage message) {
     messages = [for (final m in messages) m.id == message.id ? message : m];
     notifyListeners();

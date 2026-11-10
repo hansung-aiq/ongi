@@ -15,6 +15,8 @@ class SettingsScreen extends StatelessWidget {
     required this.isParent,
     required this.onProfileChanged,
     required this.onChangeMode,
+    this.onDeleteAllMessages,
+    this.onResetDevice,
     this.speaker,
     this.pickPhoto = pickProfilePhoto,
   });
@@ -29,6 +31,12 @@ class SettingsScreen extends StatelessWidget {
 
   /// '사용 모드'를 누르면 부른다 (1-2 역할 선택으로 간다).
   final VoidCallback onChangeMode;
+
+  /// '메시지 모두 지우기'를 확인하면 부른다. null이면 줄을 숨긴다 (자녀 앱).
+  final Future<void> Function()? onDeleteAllMessages;
+
+  /// '이 기기 처음 상태로'를 확인하면 부른다. null이면 줄을 숨긴다.
+  final Future<void> Function()? onResetDevice;
 
   /// 보드 연결 상태. null이면 스피커 구역을 숨긴다 (부모 앱).
   final BoardConnection? speaker;
@@ -46,6 +54,66 @@ class SettingsScreen extends StatelessWidget {
     if (updated == null) return;
     await OnboardingPrefs.saveProfile(updated);
     onProfileChanged(updated);
+  }
+
+  /// 지우기 전에 한 번 더 묻는다. '지우기'를 누르면 true.
+  Future<bool> _confirm(
+    BuildContext context, {
+    required String title,
+    required String body,
+    required String action,
+  }) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.bgBase,
+        title: Text(title, style: AppTextStyles.subtitle18),
+        content: Text(
+          body,
+          style: AppTextStyles.body14.copyWith(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              '취소',
+              style: AppTextStyles.label16.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              action,
+              style: AppTextStyles.label16.copyWith(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
+  }
+
+  Future<void> _deleteAll(BuildContext context) async {
+    final ok = await _confirm(
+      context,
+      title: '메시지를 모두 지울까요?',
+      body: '남긴 메시지가 모두 지워지고 스피커에서도 빠져요. 되돌릴 수 없어요.',
+      action: '모두 지우기',
+    );
+    if (ok) await onDeleteAllMessages!();
+  }
+
+  Future<void> _reset(BuildContext context) async {
+    final ok = await _confirm(
+      context,
+      title: '이 기기를 처음 상태로 돌릴까요?',
+      body: '이 기기에 저장한 이름·호칭·사진과 첫 설정 기록을 지우고 시작 화면으로 가요. '
+          '서버에 남긴 메시지는 그대로예요.',
+      action: '처음 상태로',
+    );
+    if (ok) await onResetDevice!();
   }
 
   @override
@@ -117,6 +185,28 @@ class SettingsScreen extends StatelessWidget {
               ),
             ],
           ),
+          if (onDeleteAllMessages != null || onResetDevice != null) ...[
+            const SizedBox(height: AppSpacing.section),
+            _Section(
+              title: '데이터',
+              rows: [
+                if (onDeleteAllMessages != null)
+                  _SettingRow(
+                    title: '메시지 모두 지우기',
+                    subtitle: '남긴 메시지를 한 번에 지워요',
+                    titleColor: AppColors.error,
+                    onTap: () => _deleteAll(context),
+                  ),
+                if (onResetDevice != null)
+                  _SettingRow(
+                    title: '이 기기 처음 상태로',
+                    subtitle: '이름·호칭·사진과 첫 설정 기록을 지워요',
+                    titleColor: AppColors.error,
+                    onTap: () => _reset(context),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -162,9 +252,13 @@ class _SettingRow extends StatelessWidget {
     this.value,
     this.trailing,
     this.onTap,
+    this.titleColor,
   });
 
   final String title;
+
+  /// 지우기처럼 조심해야 하는 줄은 붉은 글자로 보인다.
+  final Color? titleColor;
   final String subtitle;
   final Widget? leading;
 
@@ -190,7 +284,9 @@ class _SettingRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppTextStyles.label16,
+                  style: titleColor == null
+                      ? AppTextStyles.label16
+                      : AppTextStyles.label16.copyWith(color: titleColor),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: AppSpacing.s4),

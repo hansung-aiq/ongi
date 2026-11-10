@@ -4,12 +4,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../api/message_playback.dart';
 import '../api/server_models.dart';
 import '../common/common.dart';
+import 'message_detail_sheet.dart';
 import 'message_menu_sheet.dart';
 import 'parent_store.dart';
 import 'situation_info.dart';
 
 /// 3-2 메시지 전체, 3-3 분류별 메시지.
 /// [category]가 null이면 저장한 메시지만, 아니면 그 분류의 상황을 모두 보여 준다.
+/// 카드를 누르면 자세히 보기(글 전체, 녹음 다시 듣기)를,
 /// 카드의 … 버튼을 누르면 6-2 수정·삭제 메뉴를 띄운다.
 class MessageListScreen extends StatefulWidget {
   const MessageListScreen({
@@ -53,6 +55,26 @@ class _MessageListScreenState extends State<MessageListScreen> {
     final action = await showMessageMenu(context, title: s.name);
     if (!mounted) return;
     setState(() => _menuFor = null);
+    _handle(action, m, s);
+  }
+
+  /// 카드를 누르면 메시지 전체를 보여 준다. 거기서 수정·삭제도 할 수 있다.
+  Future<void> _openDetail(ParentMessage m, Situation s) async {
+    widget.playback.stop();
+    final action = await showMessageDetailSheet(
+      context,
+      message: m,
+      title: s.name,
+      category: categoryLabel(s.category),
+      date: _date(m.createdAt),
+      playback: widget.playback,
+      audioUrl: store.client.audioUrl(m.id),
+    );
+    if (!mounted) return;
+    _handle(action, m, s);
+  }
+
+  void _handle(MessageMenuAction? action, ParentMessage m, Situation s) {
     switch (action) {
       case MessageMenuAction.edit:
         widget.playback.stop();
@@ -192,6 +214,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
       statusMuted: !m.delivered,
       date: _date(m.createdAt),
       highlighted: _menuFor == m.id,
+      onTap: s == null ? null : () => _openDetail(m, s),
       onMore: s == null ? null : () => _openMenu(m, s),
       onPlay: m.isVoice
           ? () => widget.playback.toggle(m.id, store.client.audioUrl(m.id))

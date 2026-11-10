@@ -747,6 +747,69 @@ void settingsAndMenuTests() {
     expect(find.text('전체 2'), findsOneWidget);
   });
 
+  testWidgets('카드를 누르면 글 전체가 보이고, 거기서 지울 수 있다', (tester) async {
+    final server = FakeServer();
+    server.messages[2]['text'] =
+        '민준아, 상 받은 거 정말 축하해! 아빠는 네가 끝까지 해낸 게 제일 자랑스러워. '
+        '오늘 저녁엔 좋아하는 떡볶이 먹으러 가자.';
+    await _openParent(tester, server);
+    await _tapTab(tester, '메시지');
+
+    final card = find.textContaining('상 받은 거 정말 축하해').first;
+    await tester.ensureVisible(card);
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pumpAndSettle();
+
+    final full = server.messages[2]['text']! as String;
+    expect(tester.widget<SelectableText>(find.byType(SelectableText)).data, full);
+    expect(find.textContaining('텍스트 · 전달됨'), findsOneWidget);
+    expect(find.text('다시 듣기'), findsNothing);
+
+    await _tapText(tester, '삭제하기');
+    expect(server.deleted, [3]);
+    expect(find.text('메시지를 지웠어요'), findsOneWidget);
+  });
+
+  testWidgets('3-6 메시지 모두 지우기: 취소하면 그대로, 확인하면 모두 지운다', (tester) async {
+    final server = FakeServer();
+    await _openParent(tester, server);
+    await _tapTab(tester, '설정');
+
+    await _tapText(tester, '메시지 모두 지우기');
+    expect(find.text('메시지를 모두 지울까요?'), findsOneWidget);
+    await _tapText(tester, '취소');
+    expect(server.deleted, isEmpty);
+
+    await _tapText(tester, '메시지 모두 지우기');
+    await _tapText(tester, '모두 지우기');
+    expect(server.deleted, [1, 2, 3]);
+    expect(find.text('메시지 3개를 지웠어요'), findsOneWidget);
+
+    await _tapTab(tester, '메시지');
+    expect(find.text('전체 0'), findsOneWidget);
+  });
+
+  testWidgets('3-6 이 기기 처음 상태로: 기기 저장값을 지우고 시작 화면으로 간다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'parent_onboarding_done': true,
+      'child_onboarding_done': true,
+      'child_name': '서아',
+      'parent_author': 'dad',
+    });
+    final server = FakeServer();
+    await _openParent(tester, server);
+    await _tapTab(tester, '설정');
+
+    await _tapText(tester, '이 기기 처음 상태로');
+    await _tapText(tester, '처음 상태로');
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getKeys(), isEmpty);
+    expect(find.text('시작하기'), findsOneWidget);
+    expect(server.deleted, isEmpty);
+  });
+
   testWidgets('6-2: 수정하기로 글 메시지를 고치면 API-06으로 저장하고 목록으로 돌아온다', (tester) async {
     final server = FakeServer();
     await _openParent(tester, server);

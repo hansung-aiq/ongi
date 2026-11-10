@@ -9,6 +9,7 @@ import '../common/common.dart';
 import '../config.dart';
 import '../parent/parent_profile.dart';
 import '../settings/settings_screen.dart';
+import '../start/login_screen.dart';
 import '../start/role_select_screen.dart';
 import 'child_home_screen.dart';
 import 'child_listening_screen.dart';
@@ -163,6 +164,17 @@ class _ChildScreenState extends State<ChildScreen> {
             isParent: false,
             speaker: _session.connection,
             onProfileChanged: (p) => setState(() => _profile = p),
+            onResetDevice: () async {
+              final navigator = Navigator.of(context);
+              await OnboardingPrefs.reset();
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute<void>(
+                  builder: (_) =>
+                      LoginScreen(serverClient: widget.serverClient),
+                ),
+                (_) => false,
+              );
+            },
             onChangeMode: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) =>
