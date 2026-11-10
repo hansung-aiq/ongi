@@ -876,7 +876,10 @@ void settingsAndMenuTests() {
     await tester.pumpAndSettle();
 
     final full = server.messages[2]['text']! as String;
-    expect(tester.widget<SelectableText>(find.byType(SelectableText)).data, full);
+    expect(
+      tester.widget<SelectableText>(find.byType(SelectableText)).data,
+      full,
+    );
     expect(find.textContaining('텍스트 · 전달됨'), findsOneWidget);
     expect(find.text('다시 듣기'), findsNothing);
 

@@ -115,25 +115,25 @@ class _MessageListScreenState extends State<MessageListScreen> {
             color: AppColors.accent,
             onRefresh: store.refresh,
             child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.screenHorizontal,
-              AppSpacing.s24,
-              AppSpacing.screenHorizontal,
-              AppSpacing.s24,
-            ),
-            children: [
-              ...category == null ? _allCards() : _categoryCards(category!),
-              const SizedBox(height: AppSpacing.s12),
-              Text(
-                '상황마다 하나의 메시지가 ${store.profile.nickname}를 기다리고 있어요.',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.caption12.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenHorizontal,
+                AppSpacing.s24,
+                AppSpacing.screenHorizontal,
+                AppSpacing.s24,
               ),
-            ],
-          ),
+              children: [
+                ...category == null ? _allCards() : _categoryCards(category!),
+                const SizedBox(height: AppSpacing.s12),
+                Text(
+                  '상황마다 하나의 메시지가 ${store.profile.nickname}를 기다리고 있어요.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.caption12.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],

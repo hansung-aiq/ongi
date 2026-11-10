@@ -20,6 +20,7 @@ class AppTheme {
     textSelectionTheme: const TextSelectionThemeData(
       cursorColor: AppColors.textPrimary,
     ),
+
     /// 화면 이동은 플랫폼과 상관없이 같은 움직임 (AppMotion)
     pageTransitionsTheme: const PageTransitionsTheme(
       builders: {

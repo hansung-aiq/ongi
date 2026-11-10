@@ -333,10 +333,7 @@ void main() {
 
       await tester.pump(const Duration(seconds: 4));
       expect(tester.widget<LinearProgressIndicator>(bar).value, 1.0);
-      expect(
-        find.text(keepWords('민준아, 축하해! 아빠는 네가 자랑스러워.')),
-        findsOneWidget,
-      );
+      expect(find.text(keepWords('민준아, 축하해! 아빠는 네가 자랑스러워.')), findsOneWidget);
     });
 
     testWidgets('재생이 끝나 홈으로 오면 온기기록에 담았다고 알려 준다', (tester) async {

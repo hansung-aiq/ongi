@@ -73,6 +73,7 @@ class ChildPlayingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = _authorTitle(signal.author);
+
     /// 글 메시지는 원문, 녹음 메시지는 보드가 받아쓴 글(신호 규격 v1.1). 비어 있으면 안 보인다.
     final text = (signal.text?.trim().isEmpty ?? true) ? null : signal.text;
     return _ResponseLayout(
@@ -184,7 +185,8 @@ class _LetterText extends StatelessWidget {
                 children: [
                   for (var i = 0; i < parts.length; i++)
                     TextSpan(
-                      text: '${keepWords(parts[i])}${i < parts.length - 1 ? ' ' : ''}',
+                      text:
+                          '${keepWords(parts[i])}${i < parts.length - 1 ? ' ' : ''}',
                       style: i < shown
                           ? null
                           : style.copyWith(

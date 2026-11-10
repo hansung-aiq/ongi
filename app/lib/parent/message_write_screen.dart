@@ -231,10 +231,12 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
       return;
     }
     final action = await Navigator.of(context).push<SaveDoneAction>(
-      MaterialPageRoute(builder: (_) => SaveDoneScreen(
-        store: widget.store,
-        situationName: widget.situation.name,
-      )),
+      MaterialPageRoute(
+        builder: (_) => SaveDoneScreen(
+          store: widget.store,
+          situationName: widget.situation.name,
+        ),
+      ),
     );
     if (mounted) Navigator.of(context).pop(action ?? SaveDoneAction.more);
   }
@@ -286,7 +288,7 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
                           : VoiceRecordPanel(
                               stage: _stage,
                               elapsed: _elapsed,
-                level: _meter.current,
+                              level: _meter.current,
                               maxDuration: MessageWriteScreen.maxRecording,
                               playing: _playing,
                               enabled: !_saving,

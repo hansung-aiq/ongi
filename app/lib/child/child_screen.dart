@@ -161,42 +161,43 @@ class _ChildScreenState extends State<ChildScreen> {
       ),
       body: SafeArea(
         bottom: false,
+
         /// 탭을 바꾸면 내용이 짧게 교차한다
         child: AnimatedSwitcher(
           duration: AppMotion.fast,
           child: KeyedSubtree(
             key: ValueKey(_tab),
             child: switch (_tab) {
-          0 => ChildHomeScreen(
-            profile: _profile,
-            connection: _session.connection,
-            notice: _session.notice,
-            onStart: _session.start,
-            heard: _heard,
-            playback: _playback,
-          ),
-          1 => OngiRecordScreen(
-            profile: _profile,
-            heard: _heard,
-            playback: _playback,
-          ),
-          _ => SettingsScreen(
-            profile: _profile,
-            isParent: false,
-            speaker: _session.connection,
-            onProfileChanged: (p) => setState(() => _profile = p),
-            onResetDevice: () async {
-              await OnboardingPrefs.reset();
-              _restart();
-            },
-            onEndpointsChanged: _restart,
-            onChangeMode: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) =>
-                    RoleSelectScreen(serverClient: widget.serverClient),
+              0 => ChildHomeScreen(
+                profile: _profile,
+                connection: _session.connection,
+                notice: _session.notice,
+                onStart: _session.start,
+                heard: _heard,
+                playback: _playback,
               ),
-            ),
-          ),
+              1 => OngiRecordScreen(
+                profile: _profile,
+                heard: _heard,
+                playback: _playback,
+              ),
+              _ => SettingsScreen(
+                profile: _profile,
+                isParent: false,
+                speaker: _session.connection,
+                onProfileChanged: (p) => setState(() => _profile = p),
+                onResetDevice: () async {
+                  await OnboardingPrefs.reset();
+                  _restart();
+                },
+                onEndpointsChanged: _restart,
+                onChangeMode: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        RoleSelectScreen(serverClient: widget.serverClient),
+                  ),
+                ),
+              ),
             },
           ),
         ),
@@ -221,6 +222,7 @@ class _ChildScreenState extends State<ChildScreen> {
       listenable: _session,
       builder: (context, _) {
         final idle = _isIdle(_session.signal);
+
         /// 안드로이드 뒤로 가기: 이야기 중이면 그만하기(stop), 다른 탭이면 홈 탭으로.
         /// 홈 탭에서만 화면을 닫는다.
         return PopScope(
@@ -233,6 +235,7 @@ class _ChildScreenState extends State<ChildScreen> {
               _changeTab(0);
             }
           },
+
           /// 대화 화면 사이: 새 화면이 아래에서 살짝 떠오르며 나타나고, 이전 화면은 빨리 사라진다
           child: AnimatedSwitcher(
             duration: AppMotion.normal,

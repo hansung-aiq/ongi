@@ -47,7 +47,9 @@ class TypingText extends StatelessWidget {
       tween: Tween(begin: 0, end: 1),
       duration: total,
       builder: (context, t, _) {
-        final p = start >= 1 ? 1.0 : ((t - start) / (1 - start)).clamp(0.0, 1.0);
+        final p = start >= 1
+            ? 1.0
+            : ((t - start) / (1 - start)).clamp(0.0, 1.0);
         final shown = (p * length).round();
         return Text.rich(
           TextSpan(

@@ -226,6 +226,7 @@ class _ParentShellState extends State<ParentShell> {
         bottom: false,
         child: ListenableBuilder(
           listenable: _store,
+
           /// 탭을 바꾸면 내용이 짧게 교차한다
           builder: (context, _) => AnimatedSwitcher(
             duration: AppMotion.fast,

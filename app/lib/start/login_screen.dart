@@ -62,7 +62,9 @@ class LoginScreen extends StatelessWidget {
                 child: InkWell(
                   onTap: () => showPrivacySheet(context),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.s4,
+                    ),
                     child: Text.rich(
                       const TextSpan(
                         children: [

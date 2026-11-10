@@ -115,7 +115,8 @@ class SettingsScreen extends StatelessWidget {
     final ok = await _confirm(
       context,
       title: '이 기기를 처음 상태로 돌릴까요?',
-      body: '이 기기에 저장한 이름·호칭·사진과 첫 설정 기록을 지우고 시작 화면으로 가요. '
+      body:
+          '이 기기에 저장한 이름·호칭·사진과 첫 설정 기록을 지우고 시작 화면으로 가요. '
           '서버에 남긴 메시지는 그대로예요.',
       action: '처음 상태로',
     );
@@ -192,7 +193,8 @@ class SettingsScreen extends StatelessWidget {
               if (onEndpointsChanged != null)
                 _SettingRow(
                   title: '연결 주소',
-                  subtitle: Uri.tryParse(Endpoints.serverUrl)?.authority ??
+                  subtitle:
+                      Uri.tryParse(Endpoints.serverUrl)?.authority ??
                       Endpoints.serverUrl,
                   value: Endpoints.customized ? '바꿈' : '기본',
                   onTap: () async {

@@ -60,9 +60,7 @@ class _ConnectionSheetState extends State<_ConnectionSheet> {
       color: AppColors.textSecondary,
     );
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -80,7 +78,10 @@ class _ConnectionSheetState extends State<_ConnectionSheet> {
               const SizedBox(height: AppSpacing.s20),
               Text('연결 주소', style: AppTextStyles.subtitle18),
               const SizedBox(height: AppSpacing.s4),
-              Text('시연 장소의 IP에 맞춰 바꿔요. 저장하면 시작 화면부터 다시 연결해요.', style: secondary),
+              Text(
+                '시연 장소의 IP에 맞춰 바꿔요. 저장하면 시작 화면부터 다시 연결해요.',
+                style: secondary,
+              ),
               const SizedBox(height: AppSpacing.s20),
               Text('서버', style: AppTextStyles.label14),
               const SizedBox(height: AppSpacing.s8),

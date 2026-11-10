@@ -13,7 +13,9 @@ Future<void> showPrivacySheet(BuildContext context) {
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     builder: (context) {
-      final body = AppTextStyles.body14.copyWith(color: AppColors.textSecondary);
+      final body = AppTextStyles.body14.copyWith(
+        color: AppColors.textSecondary,
+      );
       Widget item(String title, String text) => Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.s16),
         child: Column(
