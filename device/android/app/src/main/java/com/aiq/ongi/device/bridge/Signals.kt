@@ -14,6 +14,7 @@ sealed class Signal {
         val author: String,
         val kind: String,          // "voice" / "text"
         val text: String?,         // text면 글 메시지, voice면 보드가 받아쓴 글(11/9, 없으면 null)
+        val seconds: Double? = null, // 메시지 재생 길이(초, 11/10). 앱이 진행 막대·글 연출에 씀. 모르면 null
     ) : Signal()
     data class NotFound(val text: String) : Signal()
     object Idle : Signal()
@@ -26,7 +27,7 @@ sealed class Signal {
         is Empathy -> obj("type" to "empathy", "text" to text, "has_message" to hasMessage, "author" to author)
         is Playing -> obj(
             "type" to "playing", "situation_id" to situationId, "message_id" to messageId,
-            "author" to author, "kind" to kind, "text" to text,
+            "author" to author, "kind" to kind, "text" to text, "seconds" to seconds,
         )
         is NotFound -> obj("type" to "not_found", "text" to text)
         Idle -> obj("type" to "idle")
@@ -40,6 +41,7 @@ sealed class Signal {
     private fun value(v: Any?): String = when (v) {
         null -> "null"
         is Boolean, is Int -> v.toString()
+        is Double -> String.format(java.util.Locale.US, "%.1f", v)
         else -> "\"" + v.toString()
             .replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\""
     }
