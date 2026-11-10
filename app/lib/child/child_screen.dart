@@ -161,7 +161,12 @@ class _ChildScreenState extends State<ChildScreen> {
       ),
       body: SafeArea(
         bottom: false,
-        child: switch (_tab) {
+        /// 탭을 바꾸면 내용이 짧게 교차한다
+        child: AnimatedSwitcher(
+          duration: AppMotion.fast,
+          child: KeyedSubtree(
+            key: ValueKey(_tab),
+            child: switch (_tab) {
           0 => ChildHomeScreen(
             profile: _profile,
             connection: _session.connection,
@@ -192,7 +197,9 @@ class _ChildScreenState extends State<ChildScreen> {
               ),
             ),
           ),
-        },
+            },
+          ),
+        ),
       ),
     );
   }
@@ -226,8 +233,11 @@ class _ChildScreenState extends State<ChildScreen> {
               _changeTab(0);
             }
           },
+          /// 대화 화면 사이: 새 화면이 아래에서 살짝 떠오르며 나타나고, 이전 화면은 빨리 사라진다
           child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
+            duration: AppMotion.normal,
+            reverseDuration: AppMotion.exit,
+            transitionBuilder: AppMotion.fadeRise,
             child: KeyedSubtree(
               key: ValueKey(_session.signal.runtimeType),
               child: _screenFor(_session.signal),

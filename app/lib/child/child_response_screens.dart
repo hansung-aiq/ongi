@@ -8,6 +8,9 @@ import '../config.dart';
 String _authorTitle(String? author) =>
     author == 'dad' ? AppConfig.dadTitle : AppConfig.momTitle;
 
+/// 화면 전환(자녀 대화 화면 사이 320ms)이 거의 끝난 뒤 글자가 나오기 시작한다.
+const childTypingDelay = Duration(milliseconds: 250);
+
 /// 5-4 온기의 공감 한마디.
 class ChildEmpathyScreen extends StatelessWidget {
   const ChildEmpathyScreen({
@@ -35,7 +38,11 @@ class ChildEmpathyScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.s28),
         const Waveform.small(),
         const SizedBox(height: 10),
-        _TypingHeading(signal.text),
+        TypingText(
+          signal.text,
+          style: AppTextStyles.heading20,
+          delay: childTypingDelay,
+        ),
         if (signal.hasMessage) ...[
           const SizedBox(height: AppSpacing.s28),
           _NextVoiceChip(
@@ -115,7 +122,11 @@ class ChildNoMessageScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.s28),
         const Waveform.small(),
         const SizedBox(height: 10),
-        _Heading(text),
+        TypingText(
+          text,
+          style: AppTextStyles.heading20,
+          delay: childTypingDelay,
+        ),
         if (detail != null) ...[const SizedBox(height: 10), _Caption(detail!)],
       ],
     );
@@ -133,21 +144,6 @@ class _Caption extends StatelessWidget {
       text,
       textAlign: TextAlign.center,
       style: AppTextStyles.body14.copyWith(color: AppColors.textSecondary),
-    );
-  }
-}
-
-class _Heading extends StatelessWidget {
-  const _Heading(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      keepWords(text),
-      textAlign: TextAlign.center,
-      style: AppTextStyles.heading20,
     );
   }
 }
@@ -216,47 +212,6 @@ class _LetterText extends StatelessWidget {
               ),
             ),
           ],
-        );
-      },
-    );
-  }
-}
-
-/// 온기가 말하는 것처럼 한 글자씩 나타나는 제목 (5-4).
-/// 아직 안 나온 글자는 투명하게 자리를 차지해서 줄바꿈과 높이가 흔들리지 않는다.
-class _TypingHeading extends StatelessWidget {
-  const _TypingHeading(this.text);
-
-  final String text;
-
-  /// 한 글자에 걸리는 시간. 공감 TTS(약 2초)와 비슷하게 끝나도록 최대 1.8초로 자른다.
-  static const _perChar = Duration(milliseconds: 70);
-  static const _max = Duration(milliseconds: 1800);
-
-  @override
-  Widget build(BuildContext context) {
-    final full = keepWords(text);
-    final length = full.characters.length;
-    final total = _perChar * length;
-    final style = AppTextStyles.heading20;
-    return TweenAnimationBuilder<int>(
-      key: ValueKey(text),
-      tween: IntTween(begin: 0, end: length),
-      duration: total > _max ? _max : total,
-      builder: (context, shown, _) {
-        final chars = full.characters;
-        return Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(text: chars.take(shown).toString()),
-              TextSpan(
-                text: chars.skip(shown).toString(),
-                style: style.copyWith(color: Colors.transparent),
-              ),
-            ],
-          ),
-          textAlign: TextAlign.center,
-          style: style,
         );
       },
     );

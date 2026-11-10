@@ -76,10 +76,13 @@ class ChildThinkingScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.s24),
         const Waveform.large(animate: false, opacity: 0.3),
         const SizedBox(height: 10),
-        Text(
-          keepWords('“$heardText”'),
-          textAlign: TextAlign.center,
+        /// 온기가 받아쓴 내 말이 한 글자씩 나타난다 (짧게, 1.2초 안에)
+        TypingText(
+          '“$heardText”',
           style: AppTextStyles.body16.copyWith(color: AppColors.textSecondary),
+          perChar: const Duration(milliseconds: 45),
+          maxDuration: const Duration(milliseconds: 1200),
+          delay: const Duration(milliseconds: 200),
         ),
       ],
       bottom: [
