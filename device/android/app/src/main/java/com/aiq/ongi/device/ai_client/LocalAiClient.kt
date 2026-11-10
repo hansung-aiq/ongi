@@ -31,7 +31,10 @@ class LocalAiClient(
 
     override fun tts(text: String): ByteArray {
         val s = speech
-        return if (s != null && s.ttsReady) s.speak(text) else fallback.tts(text)
+        // 11/10: 이모지·기호·낱자는 빼고 읽는다 (SpeechText)
+        val say = SpeechText.clean(text)
+        if (say != text) log("TTS 글 정리: \"${text.take(40)}\" → \"${say.take(40)}\"")
+        return if (s != null && s.ttsReady) s.speak(say) else fallback.tts(say)
     }
 
     val hasEmbedder get() = embedder != null

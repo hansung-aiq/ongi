@@ -459,7 +459,11 @@ class OngiFlow(
     /** 소리 얻기 → STT. 소리가 없으면 D-001 */
     private fun sttOf(what: String, get: () -> ByteArray?): String? {
         val wav = try { get() } catch (e: Exception) { log("$what 실패: ${e.message}"); null }
-        if (wav == null) { log("$what: 소리 없음"); sink.send(Signal.Error("D-001")); return null }
+        if (wav == null) {
+            // 11/10: 말하기 시작하자마자 "말하기 끝내기"를 누른 경우 → 오류 안내 없이 처음 화면으로(finally에서 idle)
+            if (mic?.lastEndedByUser == true && what == "마이크") { log("$what: 말하기 끝내기(말 없음) → 처음으로"); return null }
+            log("$what: 소리 없음"); sink.send(Signal.Error("D-001")); return null
+        }
         tSpeechEnd = System.currentTimeMillis()      // 말이 끝난 때 = STT 시작
         val text = try { ai.stt(wav) } catch (e: Exception) { log("STT 실패: ${e.message}"); "" }
         sttMs = System.currentTimeMillis() - tSpeechEnd
