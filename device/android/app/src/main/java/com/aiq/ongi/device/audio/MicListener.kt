@@ -78,10 +78,15 @@ class MicListener(
 
     fun endNow() { endRequested = true }
 
+    /** 마지막 듣기를 앱의 "말하기 끝내기"로 끝냈는지 (말이 없었을 때 오류 대신 조용히 처음으로) */
+    @Volatile var lastEndedByUser = false
+        private set
+
     /** 마이크로 듣기. 말을 안 했거나 실패하면 null */
     @Synchronized
     fun listen(): ByteArray? {
         endRequested = false
+        lastEndedByUser = false
         val spk = speaker?.takeIf { it.alive } ?: run { log("마이크: 오디오 도우미 꺼짐"); return null }
         val file = spk.recFile
         if (!spk.startRecord(MAX_SEC + 1)) return null
@@ -110,6 +115,7 @@ class MicListener(
                 }
                 if (endRequested) {
                     reason = "앱에서 말하기 끝내기"
+                    lastEndedByUser = true
                     ep.endByUser()
                     break
                 }
