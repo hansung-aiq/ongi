@@ -15,6 +15,7 @@ class FirstMessageIntroScreen extends StatelessWidget {
     final profile = session.profile;
     return OnboardingScaffold(
       step: 0,
+      onSkip: () => session.finish(context),
       actions: [
         OngiButton(
           label: '다음',

@@ -12,19 +12,8 @@ class FirstMessageDoneScreen extends StatelessWidget {
   final OnboardingSession session;
 
   /// 첫 설정 화면을 모두 닫고 부모 화면으로 간다.
-  void _finish(BuildContext context, int tab) {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (_) => ParentShell(
-          serverClient: session.serverClient,
-          recorderFactory: session.recorderFactory,
-          initialTab: tab,
-          profile: session.profile,
-        ),
-      ),
-      (_) => false,
-    );
-  }
+  void _finish(BuildContext context, int tab) =>
+      session.finish(context, tab: tab);
 
   @override
   Widget build(BuildContext context) {

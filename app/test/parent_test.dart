@@ -333,6 +333,76 @@ void main() {
     expect(find.text('민준이의 부모님'), findsOneWidget);
   });
 
+  Future<void> openChildInfo(WidgetTester tester, FakeServer server) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: ChildInfoScreen(
+          serverClient: server.client,
+          recorderFactory: FakeRecorder.new,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '민준');
+    await _tapText(tester, '다음');
+  }
+
+  testWidgets('2-3은 메시지가 이미 있는 상황을 건너뛰고 빈 상황을 추천한다', (tester) async {
+    /// 시연 데이터처럼 친구(4)·보고 싶음(10)·자랑(11)에 메시지가 있다.
+    final server = FakeServer();
+    await openChildInfo(tester, server);
+    await _tapText(tester, '다음');
+
+    expect(find.text('시험을 망친 날'), findsOneWidget);
+    expect(find.text('“나 오늘 시험 망쳤어.”'), findsOneWidget);
+    await _tapText(tester, '이 상황에 메시지 남기기');
+    await tester.tap(find.text('텍스트 입력'));
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), '민준아, 엄마는 네 편이야.');
+    await _tapText(tester, '저장하기');
+
+    expect(server.posted.single['situation_id'], 3);
+    expect(find.text('첫 메시지를 남겼어요'), findsOneWidget);
+  });
+
+  testWidgets('모든 상황에 메시지가 있으면 2-3에서 홈으로 간다', (tester) async {
+    final server = FakeServer()..messages.clear();
+    for (var id = 1; id <= 12; id++) {
+      server.messages.add({
+        'id': id,
+        'family_id': 1,
+        'situation_id': id,
+        'author': 'mom',
+        'kind': 'text',
+        'text': '메시지 $id',
+        'audio_path': null,
+        'delivered': true,
+        'created_at': '2026-11-01T09:00:00',
+        'updated_at': '2026-11-01T09:00:00',
+        'deleted': false,
+      });
+    }
+    await openChildInfo(tester, server);
+    await _tapText(tester, '다음');
+
+    expect(find.text('모든 상황에\n이미 메시지가 있어요.'), findsOneWidget);
+    await _tapText(tester, '홈으로');
+    expect(find.text('민준이의 부모님'), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('parent_onboarding_done'), isTrue);
+  });
+
+  testWidgets('2-2·2-3의 건너뛰기는 이름을 저장하고 부모 홈으로 간다', (tester) async {
+    await openChildInfo(tester, FakeServer());
+    await _tapText(tester, '건너뛰기');
+
+    expect(find.text('민준이의 부모님'), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('parent_onboarding_done'), isTrue);
+    expect(prefs.getString('child_name'), '민준');
+  });
+
   testWidgets('작은 화면에서도 첫 설정 화면이 넘치지 않는다', (tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;

@@ -1,5 +1,8 @@
+import 'package:flutter/material.dart';
+
 import '../../api/server_client.dart';
 import '../parent_profile.dart';
+import '../parent_shell.dart';
 import '../parent_store.dart';
 import '../voice_recorder.dart';
 
@@ -20,4 +23,25 @@ class OnboardingSession {
 
   /// 시험할 때 쓰는 가짜 서버. 마친 뒤 부모 홈에도 넘긴다.
   final ServerClient? serverClient;
+
+  /// 첫 설정을 마친 것으로 기록하고(이름·호칭 저장), 첫 설정 화면을 모두 닫은 뒤
+  /// 부모 화면으로 간다. 2-7 완료, 2-2·2-3의 '건너뛰기', 2-3의 '홈으로'가 쓴다.
+  Future<void> finish(
+    BuildContext context, {
+    int tab = ParentShell.homeTab,
+  }) async {
+    final navigator = Navigator.of(context);
+    await OnboardingPrefs.complete(profile);
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (_) => ParentShell(
+          serverClient: serverClient,
+          recorderFactory: recorderFactory,
+          initialTab: tab,
+          profile: profile,
+        ),
+      ),
+      (_) => false,
+    );
+  }
 }
