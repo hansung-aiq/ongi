@@ -188,3 +188,35 @@
 - 새로 저장하면 **201**이다. 같은 `message_id`와 `played_at` 기록이 이미 있으면 새로 만들지 않고 기존 기록을 **200**으로 준다.
 - 지워진 메시지의 기록도 저장한다.
 - 없는 메시지는 E-404.
+
+---
+
+## 5. 11/11 확장 API (server-ext)
+처음 받는 DB는 `schema.sql`에 들어 있다. **이미 쓰던 DB는** `mysql -u root ongi < migrate_1111.sql`을 한 번 실행한다(데이터 그대로).
+
+### API-11 변경분 받기 (바뀐 점)
+- 응답에 `family: {child_name, mom_title, dad_title}`가 함께 온다. 보드는 이 이름으로 아이를 부른다.
+- 부를 때마다 `family.device_last_seen_at`을 서버 시각으로 남긴다(스피커 마지막 연결).
+
+### API-15 가족 조회 `GET /families/{id}` → 200
+- `{id, child_name, mom_title, dad_title, created_at, device_last_seen_at, device_online}`
+- `device_online`: 마지막 연결이 90초 안이면 true (보드는 30초마다 동기화)
+
+### API-16 가족 수정 `PATCH /families/{id}` → 200
+- 바꿀 칸만 보낸다: `child_name`, `mom_title`, `dad_title` (앞뒤 공백 제거, 빈 값 E-400). 아무것도 없으면 E-400
+- 응답은 API-15와 같다
+
+### API-17 필요 기록 올리기 `POST /device/needs` → 201 (보드)
+- `{situation_id, needed_at}` — 아이가 말한 상황에 부모 메시지가 없었을 때. **아이가 한 말은 보내지 않는다**
+- 없는 상황 E-404, 시각 형식 E-400
+
+### API-18 필요한 상황 조회 `GET /needs?family_id=1` → 200 (앱)
+- 최근 14일 동안 찾았는데 **지금도 메시지가 없는** 상황만: `items: [{situation_id, name, category, count, last_needed_at}]`, 최근 순
+- 부모가 그 상황에 메시지를 남기면 목록에서 저절로 빠진다
+
+### API-19 기록 지우기 `DELETE /families/{id}/history` → 200 (앱)
+- 재생 기록(play_log)과 필요 기록(need_log)을 모두 지운다. 메시지는 그대로
+- `{deleted_play_logs, deleted_needs}`
+
+### 시험 (11/11, MariaDB)
+API-15·16·17·18·19와 API-11 family·마지막 연결, 기존 API-03·07 함께 확인. `migrate_1111.sql`을 예전 모양 DB에 적용해 확인.

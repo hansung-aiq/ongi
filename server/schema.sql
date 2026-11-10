@@ -16,6 +16,7 @@ SET NAMES utf8mb4;
 --    주의: 들어 있던 데이터도 모두 지워진다. 배포 DB에서는 실행 전 확인할 것.
 --    FK로 묶인 순서의 반대(자식 → 부모)로 지워야 오류가 나지 않는다.
 -- ----------------------------------------------------------------
+DROP TABLE IF EXISTS need_log;
 DROP TABLE IF EXISTS play_log;
 DROP TABLE IF EXISTS message;
 DROP TABLE IF EXISTS situation;
@@ -32,6 +33,7 @@ CREATE TABLE family (
     mom_title   VARCHAR(100)  NOT NULL DEFAULT '엄마',            -- 엄마 호칭 (미입력 시 '엄마')
     dad_title   VARCHAR(100)  NOT NULL DEFAULT '아빠',            -- 아빠 호칭 (미입력 시 '아빠')
     created_at  DATETIME(6)   NOT NULL DEFAULT CURRENT_TIMESTAMP(6), -- 생성 일시
+    device_last_seen_at DATETIME(6) NULL,                        -- 보드가 마지막으로 변경분을 받아 간 시각 (11/11, API-11이 기록)
 
     PRIMARY KEY (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -112,6 +114,24 @@ CREATE TABLE play_log (
     KEY idx_play_log_played (played_at),
 
     CONSTRAINT fk_play_log_message FOREIGN KEY (message_id) REFERENCES message (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+
+-- ----------------------------------------------------------------
+-- 4-1. need_log (필요 기록, 11/11)
+--    아이가 말했는데 그 상황에 부모 메시지가 없었던 때. 보드가 API-17로 올린다.
+--    아이가 한 말은 저장하지 않고 상황 번호와 시각만 둔다.
+-- ----------------------------------------------------------------
+CREATE TABLE need_log (
+    id            BIGINT       NOT NULL AUTO_INCREMENT,          -- 기록 번호
+    family_id     BIGINT       NOT NULL,                         -- 가족 번호
+    situation_id  TINYINT      NOT NULL,                         -- 상황 번호
+    needed_at     DATETIME(6)  NOT NULL,                         -- 보드가 보낸 시각
+
+    PRIMARY KEY (id),
+    KEY idx_need_log_needed (needed_at),
+    CONSTRAINT fk_need_log_family    FOREIGN KEY (family_id)    REFERENCES family (id),
+    CONSTRAINT fk_need_log_situation FOREIGN KEY (situation_id) REFERENCES situation (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 

@@ -74,14 +74,73 @@ def create_family(body: FamilyCreate, conn=Depends(get_db)):
             (body.child_name, body.mom_title, body.dad_title),
         )
         family_id = cur.lastrowid
-        cur.execute(
-            "SELECT id, child_name, mom_title, dad_title, created_at FROM family WHERE id = %s",
-            (family_id,),
-        )
-        row = cur.fetchone()
+        row = fetch_family(cur, family_id)
     conn.commit()
-    row["created_at"] = to_iso(row["created_at"])
+    return family_out(row)
+
+
+# ---------------------------------------------------------------- 가족 (11/11 확장)
+
+FAMILY_COLUMNS = "id, child_name, mom_title, dad_title, created_at, device_last_seen_at"
+
+# 보드가 30초마다 변경분을 받아 가므로, 이보다 오래 소식이 없으면 '연결 안 됨'으로 본다.
+DEVICE_ONLINE_SECONDS = 90
+
+
+def fetch_family(cur, family_id: int) -> dict:
+    cur.execute(f"SELECT {FAMILY_COLUMNS} FROM family WHERE id = %s", (family_id,))
+    row = cur.fetchone()
+    if row is None:
+        raise ApiError("E-404", "가족을 찾을 수 없어요")
     return row
+
+
+def family_out(row: dict) -> dict:
+    seen = row.get("device_last_seen_at")
+    row["created_at"] = to_iso(row["created_at"])
+    row["device_last_seen_at"] = to_iso(seen) if seen else None
+    row["device_online"] = bool(seen) and (datetime.now() - seen).total_seconds() <= DEVICE_ONLINE_SECONDS
+    return row
+
+
+# API-15 가족 조회: 이름·호칭과 스피커(보드) 마지막 연결 시각
+@app.get("/families/{family_id}", tags=["앱"])
+def get_family(family_id: int, conn=Depends(get_db)):
+    with conn.cursor() as cur:
+        return family_out(fetch_family(cur, family_id))
+
+
+# API-16 가족 수정: 앱 첫 설정(2-1)·설정(3-6)에서 바꾼 자녀 이름을 서버에 저장한다.
+# 보드는 다음 변경분(API-11)의 family로 새 이름을 받는다.
+class FamilyUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    child_name: str | None = Field(default=None, min_length=1, max_length=100)
+    mom_title: str | None = Field(default=None, min_length=1, max_length=100)
+    dad_title: str | None = Field(default=None, min_length=1, max_length=100)
+
+    @field_validator("child_name", "mom_title", "dad_title")
+    @classmethod
+    def strip_value(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if not v:
+            raise ValueError("빈 값은 넣을 수 없어요")
+        return v
+
+
+@app.patch("/families/{family_id}", tags=["앱"])
+def update_family(family_id: int, body: FamilyUpdate, conn=Depends(get_db)):
+    changes = body.model_dump(exclude_none=True)
+    if not changes:
+        raise ApiError("E-400", "바꿀 값이 없어요")
+    with conn.cursor() as cur:
+        fetch_family(cur, family_id)
+        sets = ", ".join(f"{k} = %s" for k in changes)
+        cur.execute(f"UPDATE family SET {sets} WHERE id = %s", (*changes.values(), family_id))
+        row = fetch_family(cur, family_id)
+    conn.commit()
+    return family_out(row)
 
 
 # ---------------------------------------------------------------- 메시지 공통
@@ -375,6 +434,10 @@ def list_changes(since: str | None = None, conn=Depends(get_db)):
     with conn.cursor() as cur:
         cur.execute("SELECT NOW(6) AS server_time")
         server_time = cur.fetchone()["server_time"]
+        # 11/11: 스피커 마지막 연결 시각을 남기고, 자녀 이름·호칭을 함께 보낸다(가족은 1개).
+        cur.execute("UPDATE family SET device_last_seen_at = %s", (server_time,))
+        cur.execute("SELECT child_name, mom_title, dad_title FROM family ORDER BY id LIMIT 1")
+        family = cur.fetchone()
         sql = "SELECT id, situation_id, author, kind, text, deleted, updated_at FROM message"
         params = []
         if since_at is not None:
@@ -382,8 +445,9 @@ def list_changes(since: str | None = None, conn=Depends(get_db)):
             params.append(since_at)
         cur.execute(sql + " ORDER BY updated_at, id", params)
         rows = cur.fetchall()
+    conn.commit()
     messages = [{**r, "deleted": bool(r["deleted"]), "updated_at": to_iso(r["updated_at"])} for r in rows]
-    return {"server_time": to_iso(server_time), "messages": messages}
+    return {"server_time": to_iso(server_time), "family": family, "messages": messages}
 
 
 # API-13 전달 확인: 보드가 받은 메시지 id 목록을 받아 delivered 를 true 로 바꾼다.
@@ -457,3 +521,72 @@ def list_play_logs(family_id: int, conn=Depends(get_db)):
         )
         rows = cur.fetchall()
     return {"items": [{**r, "played_at": to_iso(r["played_at"])} for r in rows]}
+
+
+# ---------------------------------------------------------------- 필요 기록·기록 지우기 (11/11 확장)
+
+# API-17 필요 기록 올리기: 아이가 말한 상황에 부모 메시지가 없었을 때 보드가 올린다.
+# 아이가 한 말은 받지 않는다(상황 번호와 시각만).
+class NeedCreate(BaseModel):
+    situation_id: int
+    needed_at: str
+
+
+@app.post("/device/needs", tags=["보드"], status_code=201)
+def create_need(body: NeedCreate, conn=Depends(get_db)):
+    needed_at = parse_time(body.needed_at)
+    if needed_at is None:
+        raise ApiError("E-400", f"needed_at 형식이 올바르지 않아요 (예: {TIME_EXAMPLE})")
+    with conn.cursor() as cur:
+        cur.execute("SELECT 1 FROM situation WHERE id = %s", (body.situation_id,))
+        if cur.fetchone() is None:
+            raise ApiError("E-404", "상황을 찾을 수 없어요")
+        cur.execute("SELECT id FROM family ORDER BY id LIMIT 1")
+        family = cur.fetchone()
+        if family is None:
+            raise ApiError("E-404", "가족을 찾을 수 없어요")
+        cur.execute(
+            "INSERT INTO need_log (family_id, situation_id, needed_at) VALUES (%s, %s, %s)",
+            (family["id"], body.situation_id, needed_at),
+        )
+        row = {"id": cur.lastrowid, "situation_id": body.situation_id, "needed_at": to_iso(needed_at)}
+    conn.commit()
+    return row
+
+
+# API-18 필요한 상황 조회: 최근 14일 동안 아이가 찾았는데 지금도 메시지가 없는 상황.
+# 부모 홈의 '이런 순간에 메시지를 찾았어요' 카드용. 최근에 찾은 상황부터.
+NEED_DAYS = 14
+
+
+@app.get("/needs", tags=["앱"])
+def list_needs(family_id: int, conn=Depends(get_db)):
+    with conn.cursor() as cur:
+        ensure_family(cur, family_id)
+        cur.execute(
+            "SELECT n.situation_id, s.name, s.category, COUNT(*) AS count, MAX(n.needed_at) AS last_needed_at "
+            "FROM need_log n JOIN situation s ON s.id = n.situation_id "
+            "WHERE n.family_id = %s AND n.needed_at >= NOW(6) - INTERVAL %s DAY "
+            "AND NOT EXISTS (SELECT 1 FROM message m WHERE m.family_id = n.family_id "
+            "                AND m.situation_id = n.situation_id AND m.deleted = FALSE) "
+            "GROUP BY n.situation_id, s.name, s.category ORDER BY last_needed_at DESC",
+            (family_id, NEED_DAYS),
+        )
+        rows = cur.fetchall()
+    return {"items": [{**r, "last_needed_at": to_iso(r["last_needed_at"])} for r in rows]}
+
+
+# API-19 기록 지우기: 재생 기록(play_log)과 필요 기록(need_log)을 모두 지운다. 메시지는 그대로.
+@app.delete("/families/{family_id}/history", tags=["앱"])
+def delete_history(family_id: int, conn=Depends(get_db)):
+    with conn.cursor() as cur:
+        ensure_family(cur, family_id)
+        cur.execute(
+            "DELETE p FROM play_log p JOIN message m ON m.id = p.message_id WHERE m.family_id = %s",
+            (family_id,),
+        )
+        plays = cur.rowcount
+        cur.execute("DELETE FROM need_log WHERE family_id = %s", (family_id,))
+        needs = cur.rowcount
+    conn.commit()
+    return {"deleted_play_logs": plays, "deleted_needs": needs}
