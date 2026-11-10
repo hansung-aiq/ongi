@@ -89,10 +89,13 @@ class ParentStore extends ChangeNotifier {
   /// 11/11 확장(API-15·18)을 불러온다. 서버에 없으면(예전 서버) 조용히 넘어간다.
   /// 서버의 자녀 이름이 이 기기와 다르면(다른 기기에서 바꿈) 서버 이름을 따른다.
   Future<void> _loadExtras() async {
+    // 이 기기에서 바꾼 이름을 아직 서버에 못 보냈으면 먼저 보내고, 서버 이름으로 덮어쓰지 않는다
+    final unsynced = _unsyncedName;
+    if (unsynced != null) await pushChildName(unsynced);
     try {
       family = await client.family(familyId);
       final name = family!.childName;
-      if (name != _profile.childName) {
+      if (_unsyncedName == null && name != _profile.childName) {
         _profile = _profile.copyWith(childName: name);
         await OnboardingPrefs.saveProfile(_profile);
       }
@@ -110,13 +113,18 @@ class ParentStore extends ChangeNotifier {
   /// 자녀 이름을 서버에 저장한다(API-16). 스피커가 이 이름으로 부른다.
   /// 서버가 받지 못해도(예전 서버·연결 끊김) 기기 저장은 그대로라 오류를 내지 않는다.
   Future<void> pushChildName(String name) async {
+    _unsyncedName = name;
     try {
       family = await client.updateChildName(familyId, name);
+      if (_unsyncedName == name) _unsyncedName = null;
       notifyListeners();
     } on ServerException {
-      // 다음에 이름을 바꿀 때 다시 보낸다
+      // 다음 새로고침 때 다시 보낸다(그동안 서버 이름으로 덮어쓰지 않음)
     }
   }
+
+  /// 이 기기에서 바꿨지만 아직 서버에 저장하지 못한 자녀 이름
+  String? _unsyncedName;
 
   /// 재생 기록·필요 기록 지우기 (API-19). 실패하면 [ServerException]
   Future<void> deleteHistory() async {
