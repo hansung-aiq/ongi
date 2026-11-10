@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/server_client.dart';
 import '../common/common.dart';
+import 'privacy_sheet.dart';
 import 'role_select_screen.dart';
 
 /// 1-1 로그인.
@@ -57,10 +58,29 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.s12),
-              Text(
-                '시작하면 이용약관 및 개인정보 처리방침에 동의해요.',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.caption12.copyWith(color: secondary),
+              Center(
+                child: InkWell(
+                  onTap: () => showPrivacySheet(context),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+                    child: Text.rich(
+                      const TextSpan(
+                        children: [
+                          TextSpan(text: '시작하면 '),
+                          TextSpan(
+                            text: '이용약관 및 개인정보 처리방침',
+                            style: TextStyle(
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                          TextSpan(text: '에 동의해요.'),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.caption12.copyWith(color: secondary),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

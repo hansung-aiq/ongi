@@ -112,7 +112,7 @@ class OnboardingPrefs {
   }
 
   /// 이 기기에 저장한 것을 모두 지운다: 첫 설정 기록, 이름·호칭, 사진, 자녀 첫 안내 기록.
-  /// 다음에 앱을 열면 첫 설정부터 다시 한다. 서버의 메시지는 그대로다.
+  /// 다음에 앱을 열면 첫 설정부터 다시 한다. 서버의 메시지와 연결 주소는 그대로다.
   static Future<void> reset() async {
     final prefs = await SharedPreferences.getInstance();
     for (final path in [
@@ -127,7 +127,16 @@ class OnboardingPrefs {
         /// 사진 파일을 못 지워도 설정 초기화는 계속한다.
       }
     }
-    await prefs.clear();
+    for (final key in [
+      _doneKey,
+      _childNameKey,
+      _authorKey,
+      _childPhotoKey,
+      _parentPhotoKey,
+      'child_onboarding_done',
+    ]) {
+      await prefs.remove(key);
+    }
   }
 
   static Future<void> _setOrRemove(

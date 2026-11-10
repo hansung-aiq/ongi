@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../api/board_client.dart';
+import '../../api/endpoints.dart';
 import '../../api/server_client.dart';
 import '../../common/common.dart';
 import '../../config.dart';
@@ -24,7 +25,7 @@ class ChildWelcomeScreen extends StatefulWidget {
 
 class _ChildWelcomeScreenState extends State<ChildWelcomeScreen> {
   late final ServerClient _client =
-      widget.serverClient ?? ServerClient(baseUrl: AppConfig.serverUrl);
+      widget.serverClient ?? ServerClient(baseUrl: Endpoints.serverUrl);
 
   ParentProfile _profile = ParentProfile.fallback;
 

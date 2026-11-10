@@ -60,6 +60,7 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
   Timer? _ticker;
   String? _recordedPath;
   bool _playing = false;
+  final _meter = LevelMeter();
 
   VoiceRecorder get _recorder {
     final existing = _recorderInstance;
@@ -90,6 +91,7 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
     _controller.dispose();
     _focus.dispose();
     _ticker?.cancel();
+    _meter.stop();
     _playDone?.cancel();
     final recorder = _recorderInstance;
     if (recorder != null) {
@@ -126,6 +128,9 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
       _stage = VoiceStage.recording;
       _elapsed = Duration.zero;
     });
+    _meter.start(_recorder.level, () {
+      if (mounted) setState(() {});
+    });
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() => _elapsed += const Duration(seconds: 1));
       if (_elapsed >= MessageWriteScreen.maxRecording) _stopRecording();
@@ -135,12 +140,14 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
   Future<void> _stopRecording() async {
     _ticker?.cancel();
     _ticker = null;
+    _meter.stop();
     try {
       final path = await _recorder.stop();
       if (!mounted) return;
       setState(() {
         _recordedPath = path;
         _stage = VoiceStage.recorded;
+        if (_meter.tooQuiet) _error = LevelMeter.quietWarning;
       });
     } on Exception {
       if (!mounted) return;
@@ -224,7 +231,10 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
       return;
     }
     final action = await Navigator.of(context).push<SaveDoneAction>(
-      MaterialPageRoute(builder: (_) => SaveDoneScreen(store: widget.store)),
+      MaterialPageRoute(builder: (_) => SaveDoneScreen(
+        store: widget.store,
+        situationName: widget.situation.name,
+      )),
     );
     if (mounted) Navigator.of(context).pop(action ?? SaveDoneAction.more);
   }
@@ -276,6 +286,7 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
                           : VoiceRecordPanel(
                               stage: _stage,
                               elapsed: _elapsed,
+                level: _meter.current,
                               maxDuration: MessageWriteScreen.maxRecording,
                               playing: _playing,
                               enabled: !_saving,

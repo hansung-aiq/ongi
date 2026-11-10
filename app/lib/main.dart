@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'api/endpoints.dart';
 import 'common/common.dart';
 import 'start/login_screen.dart';
 
-void main() => runApp(const OngiApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Endpoints.load();
+  runApp(const OngiApp());
+}
 
 class OngiApp extends StatelessWidget {
   const OngiApp({super.key});

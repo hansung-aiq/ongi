@@ -79,6 +79,19 @@ class ParentStore extends ChangeNotifier {
     }
   }
 
+  /// 메시지 목록만 조용히 다시 불러온다 (전달 상태 바뀜 등).
+  /// 실패해도 지금 목록을 그대로 두고 안내하지 않는다. 처음 불러오기 전이면 [load]를 한다.
+  Future<void> refresh() async {
+    if (!loaded) return load();
+    try {
+      messages = await client.messages(familyId);
+      loadError = null;
+      notifyListeners();
+    } on ServerException {
+      /// 잠깐 끊긴 것일 수 있어 다음 새로고침을 기다린다.
+    }
+  }
+
   /// 글 메시지를 저장한다. 실패하면 [ServerException]을 던진다.
   Future<void> saveText({
     required int situationId,

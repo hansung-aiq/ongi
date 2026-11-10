@@ -22,6 +22,7 @@ sealed class BoardSignal {
           author: json['author'] as String,
           kind: json['kind'] as String,
           text: json['text'] as String?,
+          seconds: (json['seconds'] as num?)?.toDouble(),
         ),
         'not_found' => NotFoundSignal(json['text'] as String),
         'safety' => SafetySignal(json['text'] as String),
@@ -65,12 +66,16 @@ class PlayingSignal extends BoardSignal {
     required this.author,
     required this.kind,
     required this.text,
+    this.seconds,
   });
 
   final int situationId;
   final String author;
   final String kind;
   final String? text;
+
+  /// 메시지 재생 길이(초). 신호 규격 v1.2부터 온다. 없으면 null이다.
+  final double? seconds;
 }
 
 class NotFoundSignal extends BoardSignal {

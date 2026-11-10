@@ -48,6 +48,7 @@ class _FirstMessageWriteScreenState extends State<FirstMessageWriteScreen> {
   Timer? _ticker;
   String? _recordedPath;
   bool _playing = false;
+  final _meter = LevelMeter();
 
   static const _recordFailed = '녹음을 저장하지 못했어요. 다시 시도해 주세요.';
 
@@ -80,6 +81,7 @@ class _FirstMessageWriteScreenState extends State<FirstMessageWriteScreen> {
     _controller.dispose();
     _focus.dispose();
     _ticker?.cancel();
+    _meter.stop();
     _playDone?.cancel();
     final recorder = _recorderInstance;
     if (recorder != null) {
@@ -116,6 +118,9 @@ class _FirstMessageWriteScreenState extends State<FirstMessageWriteScreen> {
       _stage = VoiceStage.recording;
       _elapsed = Duration.zero;
     });
+    _meter.start(_recorder.level, () {
+      if (mounted) setState(() {});
+    });
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() => _elapsed += const Duration(seconds: 1));
       if (_elapsed >= MessageWriteScreen.maxRecording) _stopRecording();
@@ -125,12 +130,14 @@ class _FirstMessageWriteScreenState extends State<FirstMessageWriteScreen> {
   Future<void> _stopRecording() async {
     _ticker?.cancel();
     _ticker = null;
+    _meter.stop();
     try {
       final path = await _recorder.stop();
       if (!mounted) return;
       setState(() {
         _recordedPath = path;
         _stage = VoiceStage.recorded;
+        if (_meter.tooQuiet) _error = LevelMeter.quietWarning;
       });
     } on Exception {
       if (!mounted) return;
@@ -242,6 +249,7 @@ class _FirstMessageWriteScreenState extends State<FirstMessageWriteScreen> {
             : VoiceRecordPanel(
                 stage: _stage,
                 elapsed: _elapsed,
+                level: _meter.current,
                 maxDuration: MessageWriteScreen.maxRecording,
                 playing: _playing,
                 enabled: !_saving,

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/board_client.dart';
+import '../api/endpoints.dart';
 import '../common/common.dart';
 import '../parent/parent_profile.dart';
+import 'connection_sheet.dart';
 import 'profile_edit_sheet.dart';
 
 /// 3-6 설정. 부모 앱과 자녀 앱이 함께 쓴다.
@@ -17,6 +19,7 @@ class SettingsScreen extends StatelessWidget {
     required this.onChangeMode,
     this.onDeleteAllMessages,
     this.onResetDevice,
+    this.onEndpointsChanged,
     this.speaker,
     this.pickPhoto = pickProfilePhoto,
   });
@@ -37,6 +40,9 @@ class SettingsScreen extends StatelessWidget {
 
   /// '이 기기 처음 상태로'를 확인하면 부른다. null이면 줄을 숨긴다.
   final Future<void> Function()? onResetDevice;
+
+  /// 연결 주소를 바꾼 뒤 부른다 (시작 화면부터 다시 연결한다). null이면 줄을 숨긴다.
+  final VoidCallback? onEndpointsChanged;
 
   /// 보드 연결 상태. null이면 스피커 구역을 숨긴다 (부모 앱).
   final BoardConnection? speaker;
@@ -183,6 +189,18 @@ class SettingsScreen extends StatelessWidget {
                 value: isParent ? '부모' : '자녀',
                 onTap: onChangeMode,
               ),
+              if (onEndpointsChanged != null)
+                _SettingRow(
+                  title: '연결 주소',
+                  subtitle: Uri.tryParse(Endpoints.serverUrl)?.authority ??
+                      Endpoints.serverUrl,
+                  value: Endpoints.customized ? '바꿈' : '기본',
+                  onTap: () async {
+                    if (await showConnectionSheet(context)) {
+                      onEndpointsChanged!();
+                    }
+                  },
+                ),
             ],
           ),
           if (onDeleteAllMessages != null || onResetDevice != null) ...[

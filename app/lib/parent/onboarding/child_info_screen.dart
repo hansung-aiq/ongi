@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../api/endpoints.dart';
 import '../../api/server_client.dart';
 import '../../common/common.dart';
 import '../../config.dart';
@@ -25,7 +26,7 @@ class ChildInfoScreen extends StatefulWidget {
 
 class _ChildInfoScreenState extends State<ChildInfoScreen> {
   late final ServerClient _client =
-      widget.serverClient ?? ServerClient(baseUrl: AppConfig.serverUrl);
+      widget.serverClient ?? ServerClient(baseUrl: Endpoints.serverUrl);
   late final ParentStore _store = ParentStore(
     client: _client,
     familyId: AppConfig.familyId,

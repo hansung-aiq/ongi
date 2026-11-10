@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../child/heard_messages.dart';
+import '../child/recent_message_card.dart';
 import '../common/common.dart';
 import 'parent_store.dart';
 import 'progress_card.dart';
@@ -11,15 +13,22 @@ class ParentHomeScreen extends StatelessWidget {
     super.key,
     required this.store,
     required this.onCategory,
+    this.heard,
   });
 
   final ParentStore store;
+
+  /// 자녀가 들은 메시지 (API-09). 들은 것이 있으면 진행률 아래에 2개까지 보인다.
+  final HeardMessages? heard;
+
+  static const _recentCount = 2;
   final ValueChanged<String> onCategory;
 
   @override
   Widget build(BuildContext context) {
     final categories = store.categories;
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.screenHorizontal,
         AppSpacing.s16,
@@ -33,6 +42,11 @@ class ParentHomeScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.section),
           ProgressCard(progress: store.progress),
           const SizedBox(height: AppSpacing.section),
+          if (heard case final heard?)
+            ListenableBuilder(
+              listenable: heard,
+              builder: (context, _) => _recentlyHeard(heard),
+            ),
           Text('어떤 순간에 마음을 전할까요?', style: AppTextStyles.subtitle18),
           const SizedBox(height: 14),
           for (var i = 0; i < categories.length; i += 2) ...[
@@ -54,6 +68,29 @@ class ParentHomeScreen extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  /// 아이가 최근에 들은 메시지. 불러오지 못했거나 아직 없으면 구역을 숨긴다.
+  Widget _recentlyHeard(HeardMessages heard) {
+    final cards = heard.error == null
+        ? heard.cards(store.profile).take(_recentCount).toList()
+        : const <RecentMessage>[];
+    if (cards.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          '${store.profile.nickname}가 최근에 들은 메시지',
+          style: AppTextStyles.subtitle18,
+        ),
+        const SizedBox(height: 14),
+        for (final m in cards) ...[
+          RecentMessageCard(message: m, maxLines: 2),
+          const SizedBox(height: AppSpacing.s12),
+        ],
+        const SizedBox(height: AppSpacing.section - AppSpacing.s12),
+      ],
     );
   }
 

@@ -35,7 +35,7 @@ class ChildEmpathyScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.s28),
         const Waveform.small(),
         const SizedBox(height: 10),
-        _Heading(signal.text),
+        _TypingHeading(signal.text),
         if (signal.hasMessage) ...[
           const SizedBox(height: AppSpacing.s28),
           _NextVoiceChip(
@@ -82,13 +82,7 @@ class ChildPlayingScreen extends StatelessWidget {
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-            child: Text(
-              keepWords(text),
-              textAlign: TextAlign.center,
-              style: AppTextStyles.body18.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
+            child: _LetterText(text: text, seconds: signal.seconds),
           ),
         ],
       ],
@@ -154,6 +148,117 @@ class _Heading extends StatelessWidget {
       keepWords(text),
       textAlign: TextAlign.center,
       style: AppTextStyles.heading20,
+    );
+  }
+}
+
+/// 5-5 메시지 글. 재생 길이([seconds])를 알면 편지처럼 문장이 차례로 진해지고
+/// 아래에 얇은 진행 막대가 찬다. 길이를 모르면 글 전체를 그대로 보여 준다.
+class _LetterText extends StatelessWidget {
+  const _LetterText({required this.text, this.seconds});
+
+  final String text;
+  final double? seconds;
+
+  /// 문장 끝(. ! ? ~)과 줄바꿈에서 나눈다. 끝 표시는 앞 문장에 붙여 둔다.
+  static List<String> sentences(String text) => [
+    for (final s in text.split(RegExp(r'(?<=[.!?~。])\s+|\n+')))
+      if (s.trim().isNotEmpty) s.trim(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final style = AppTextStyles.body18.copyWith(color: AppColors.textSecondary);
+    final sec = seconds;
+    if (sec == null || sec <= 0) {
+      return Text(keepWords(text), textAlign: TextAlign.center, style: style);
+    }
+    final parts = sentences(text);
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(text),
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: (sec * 1000).round()),
+      builder: (context, p, _) {
+        /// 지금 읽고 있는 문장까지 진하게, 남은 문장은 흐리게 자리만 보인다.
+        final shown = (p * parts.length).ceil().clamp(1, parts.length);
+        return Column(
+          children: [
+            Text.rich(
+              TextSpan(
+                children: [
+                  for (var i = 0; i < parts.length; i++)
+                    TextSpan(
+                      text: '${keepWords(parts[i])}${i < parts.length - 1 ? ' ' : ''}',
+                      style: i < shown
+                          ? null
+                          : style.copyWith(
+                              color: AppColors.textSecondary.withValues(
+                                alpha: 0.2,
+                              ),
+                            ),
+                    ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+              style: style,
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            SizedBox(
+              width: 160,
+              height: 3,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  value: p,
+                  backgroundColor: AppColors.line,
+                  color: AppColors.accent,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// 온기가 말하는 것처럼 한 글자씩 나타나는 제목 (5-4).
+/// 아직 안 나온 글자는 투명하게 자리를 차지해서 줄바꿈과 높이가 흔들리지 않는다.
+class _TypingHeading extends StatelessWidget {
+  const _TypingHeading(this.text);
+
+  final String text;
+
+  /// 한 글자에 걸리는 시간. 공감 TTS(약 2초)와 비슷하게 끝나도록 최대 1.8초로 자른다.
+  static const _perChar = Duration(milliseconds: 70);
+  static const _max = Duration(milliseconds: 1800);
+
+  @override
+  Widget build(BuildContext context) {
+    final full = keepWords(text);
+    final length = full.characters.length;
+    final total = _perChar * length;
+    final style = AppTextStyles.heading20;
+    return TweenAnimationBuilder<int>(
+      key: ValueKey(text),
+      tween: IntTween(begin: 0, end: length),
+      duration: total > _max ? _max : total,
+      builder: (context, shown, _) {
+        final chars = full.characters;
+        return Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: chars.take(shown).toString()),
+              TextSpan(
+                text: chars.skip(shown).toString(),
+                style: style.copyWith(color: Colors.transparent),
+              ),
+            ],
+          ),
+          textAlign: TextAlign.center,
+          style: style,
+        );
+      },
     );
   }
 }

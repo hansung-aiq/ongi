@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:ongi_app/api/endpoints.dart';
 import 'package:ongi_app/api/message_playback.dart';
 import 'package:ongi_app/api/server_client.dart';
 import 'package:ongi_app/common/common.dart';
 import 'package:ongi_app/parent/message_write_screen.dart';
 import 'package:ongi_app/parent/onboarding/child_info_screen.dart';
 import 'package:ongi_app/parent/onboarding/onboarding_session.dart';
+import 'package:ongi_app/parent/parent_profile.dart';
 import 'package:ongi_app/parent/parent_shell.dart';
 import 'package:ongi_app/parent/voice_recorder.dart';
 import 'package:ongi_app/start/login_screen.dart';
@@ -54,6 +56,9 @@ class FakeServer {
   /// API-07로 지운 메시지 번호
   final deleted = <int>[];
 
+  /// API-09 재생 기록 (자녀가 들은 메시지)
+  final playLogs = <Map<String, Object?>>[];
+
   static Map<String, Object?> _message(
     int id,
     int situationId,
@@ -87,6 +92,9 @@ class FakeServer {
             {'id': id, 'name': name, 'category': category},
         ],
       });
+    }
+    if (request.method == 'GET' && path == '/play-logs') {
+      return _json(200, {'items': playLogs});
     }
     if (request.method == 'GET' && path == '/messages') {
       return _json(200, {'items': messages});
@@ -189,6 +197,12 @@ class FakeRecorder implements VoiceRecorder {
 
   @override
   Future<List<int>> read(String path) async => utf8.encode('m4a!');
+
+  /// 시험에서 소리 크기를 보낸다.
+  final levels = StreamController<double>.broadcast();
+
+  @override
+  Stream<double> get level => levels.stream;
 
   @override
   Future<void> dispose() async {}
@@ -634,6 +648,36 @@ void main() {
     expect(find.text('녹음을 마쳤어요.'), findsOneWidget);
   });
 
+  testWidgets('녹음이 너무 조용하면 저장 전에 알려 준다', (tester) async {
+    final recorder = FakeRecorder();
+    await _openParent(tester, FakeServer(), recorder: recorder);
+    await _openVoiceTab(tester);
+
+    await tester.tap(find.byTooltip('녹음 시작'));
+    await tester.pump();
+    for (final v in [0.02, 0.05, 0.03]) {
+      recorder.levels.add(v);
+      await tester.pump();
+    }
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    await tester.tap(find.byTooltip('녹음 멈추기'));
+    await tester.pumpAndSettle();
+    expect(find.text(LevelMeter.quietWarning), findsOneWidget);
+
+    /// 다시 녹음하면 안내가 사라지고, 소리가 들리면 안내하지 않는다.
+    await _tapText(tester, '다시 녹음');
+    expect(find.text(LevelMeter.quietWarning), findsNothing);
+    await tester.tap(find.byTooltip('녹음 시작'));
+    await tester.pump();
+    for (final v in [0.1, 0.6, 0.4]) {
+      recorder.levels.add(v);
+      await tester.pump();
+    }
+    await tester.tap(find.byTooltip('녹음 멈추기'));
+    await tester.pumpAndSettle();
+    expect(find.text(LevelMeter.quietWarning), findsNothing);
+  });
+
   testWidgets('다시 녹음하면 녹음 전으로 돌아가고 저장할 수 없다', (tester) async {
     final server = FakeServer();
     await _openParent(tester, server);
@@ -769,6 +813,63 @@ void settingsAndMenuTests() {
     await _tapText(tester, '삭제하기');
     expect(server.deleted, [3]);
     expect(find.text('메시지를 지웠어요'), findsOneWidget);
+  });
+
+  testWidgets('부모 홈에 아이가 최근에 들은 메시지가 보인다', (tester) async {
+    final server = FakeServer();
+    await _openParent(tester, server);
+    expect(find.text('민준이가 최근에 들은 메시지'), findsNothing);
+
+    server.playLogs.add({
+      'id': 1,
+      'message_id': 3,
+      'situation_id': 11,
+      'author': 'mom',
+      'played_at': DateTime.now().toIso8601String(),
+    });
+    await _tapTab(tester, '메시지');
+    await _tapTab(tester, '홈');
+    expect(find.text('민준이가 최근에 들은 메시지'), findsOneWidget);
+    expect(find.text('자랑하고 싶은 날'), findsWidgets);
+    expect(find.textContaining('들은 날 · 오늘'), findsOneWidget);
+  });
+
+  testWidgets('메시지 탭에 있으면 전달 상태가 저절로 바뀐다', (tester) async {
+    final server = FakeServer();
+    await _openParent(tester, server);
+    await _tapTab(tester, '메시지');
+    expect(find.text('전달 대기'), findsNWidgets(2));
+
+    server.messages[0]['delivered'] = true;
+    await tester.pump(const Duration(seconds: 11));
+    await tester.pumpAndSettle();
+    expect(find.text('전달 대기'), findsOneWidget);
+  });
+
+  testWidgets('3-6 연결 주소: 틀린 주소는 막고, 저장하면 시작 화면부터 새 주소로', (tester) async {
+    await _openParent(tester, FakeServer());
+    await _tapTab(tester, '설정');
+    await _tapText(tester, '연결 주소');
+
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.at(0), '192.168.0.5:8000');
+    await _tapText(tester, '저장하기');
+    expect(find.textContaining('모양으로 적어 주세요'), findsOneWidget);
+
+    await tester.enterText(fields.at(0), 'http://192.168.0.5:8000/');
+    await tester.enterText(fields.at(1), 'ws://192.168.0.5:8766');
+    await _tapText(tester, '저장하기');
+
+    expect(Endpoints.serverUrl, 'http://192.168.0.5:8000');
+    expect(Endpoints.boardWsUrl, 'ws://192.168.0.5:8766');
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('endpoint_server'), 'http://192.168.0.5:8000');
+    expect(find.text('시작하기'), findsOneWidget);
+
+    /// 기기 초기화를 해도 연결 주소는 남는다.
+    await OnboardingPrefs.reset();
+    expect(prefs.getString('endpoint_server'), 'http://192.168.0.5:8000');
+    await Endpoints.resetToDefault();
   });
 
   testWidgets('3-6 메시지 모두 지우기: 취소하면 그대로, 확인하면 모두 지운다', (tester) async {

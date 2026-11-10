@@ -111,7 +111,11 @@ class _MessageListScreenState extends State<MessageListScreen> {
         const SizedBox(height: AppSpacing.s24),
         _filters(),
         Expanded(
-          child: ListView(
+          child: RefreshIndicator(
+            color: AppColors.accent,
+            onRefresh: store.refresh,
+            child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.screenHorizontal,
               AppSpacing.s24,
@@ -129,6 +133,7 @@ class _MessageListScreenState extends State<MessageListScreen> {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ],

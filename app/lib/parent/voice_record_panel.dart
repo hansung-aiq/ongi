@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../common/common.dart';
+import 'voice_recorder.dart';
 
 enum VoiceStage {
   /// 녹음 전: 마이크를 누르면 시작
@@ -28,7 +29,11 @@ class VoiceRecordPanel extends StatelessWidget {
     required this.onStop,
     required this.onPlayToggle,
     required this.onRetake,
+    this.level = 0,
   });
+
+  /// 녹음 중 소리 크기 (0~1). 막대로 보여 준다.
+  final double level;
 
   final VoiceStage stage;
 
@@ -100,6 +105,8 @@ class VoiceRecordPanel extends StatelessWidget {
     Text('녹음 중이에요.', style: AppTextStyles.label16),
     _gap,
     const Waveform.small(),
+    const SizedBox(height: AppSpacing.s12),
+    _LevelBar(level: level),
     _gap,
     Text(
       '${format(elapsed)} / ${format(maxDuration)}',
@@ -133,4 +140,32 @@ class VoiceRecordPanel extends StatelessWidget {
       ],
     ),
   ];
+}
+
+/// 녹음 중 소리 크기 막대. 너무 작으면 회색, 들리면 주황.
+class _LevelBar extends StatelessWidget {
+  const _LevelBar({required this.level});
+
+  final double level;
+
+  @override
+  Widget build(BuildContext context) {
+    final loud = level >= LevelMeter.quietPeak;
+    return Semantics(
+      label: '소리 크기',
+      value: '${(level * 100).round()}',
+      child: SizedBox(
+        width: 160,
+        height: 6,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: LinearProgressIndicator(
+            value: level,
+            backgroundColor: AppColors.line,
+            color: loud ? AppColors.accent : AppColors.dotOffline,
+          ),
+        ),
+      ),
+    );
+  }
 }

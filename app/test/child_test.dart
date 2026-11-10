@@ -301,6 +301,62 @@ void main() {
       expect(find.textContaining('꼭 맞는'), findsNothing);
     });
 
+    testWidgets('이야기 중에 뒤로 가기를 누르면 stop을 보내고 화면은 닫지 않는다', (tester) async {
+      final board = await _openChild(tester);
+
+      board.send({'type': 'listening'});
+      await _settle(tester);
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+
+      expect(board.sent, ['stop']);
+      expect(find.text('듣고 있어'), findsOneWidget);
+    });
+
+    testWidgets('재생 길이가 오면 진행 막대가 차고 글은 끝까지 보인다', (tester) async {
+      final board = await _openChild(tester);
+
+      board.send({
+        'type': 'playing',
+        'situation_id': 11,
+        'message_id': 3,
+        'author': 'dad',
+        'kind': 'text',
+        'text': '민준아, 축하해! 아빠는 네가 자랑스러워.',
+        'seconds': 4.0,
+      });
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      final bar = find.byType(LinearProgressIndicator);
+      expect(bar, findsOneWidget);
+      expect(tester.widget<LinearProgressIndicator>(bar).value, lessThan(0.5));
+
+      await tester.pump(const Duration(seconds: 4));
+      expect(tester.widget<LinearProgressIndicator>(bar).value, 1.0);
+      expect(
+        find.text(keepWords('민준아, 축하해! 아빠는 네가 자랑스러워.')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('재생이 끝나 홈으로 오면 온기기록에 담았다고 알려 준다', (tester) async {
+      final board = await _openChild(tester);
+
+      board.send({
+        'type': 'playing',
+        'situation_id': 11,
+        'message_id': 3,
+        'author': 'dad',
+        'kind': 'text',
+        'text': '축하해',
+      });
+      await _settle(tester);
+      board.send({'type': 'idle'});
+      await _settle(tester);
+
+      expect(find.text('아빠 메시지를 온기기록에 담았어'), findsOneWidget);
+    });
+
     testWidgets('말하기 끝내기와 그만 들을래, X는 stop을 보낸다', (tester) async {
       final board = await _openChild(tester);
 

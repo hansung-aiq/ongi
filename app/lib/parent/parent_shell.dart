@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../api/endpoints.dart';
 import '../api/message_playback.dart';
 import '../api/server_client.dart';
 import '../api/server_models.dart';
+import '../child/heard_messages.dart';
 import '../common/common.dart';
 import '../config.dart';
 import '../settings/settings_screen.dart';
@@ -26,7 +30,12 @@ class ParentShell extends StatefulWidget {
     this.initialTab = homeTab,
     this.profile = ParentProfile.fallback,
     this.audioPlayer,
+    this.refreshEvery = const Duration(seconds: 10),
   });
+
+  /// 홈·메시지 탭에 있는 동안 목록을 다시 불러오는 간격.
+  /// 보드가 메시지를 받으면(30초마다 동기화) '전달됨'으로 바뀐 것이 보이게 한다.
+  final Duration refreshEvery;
 
   static const homeTab = 0;
   static const messagesTab = 1;
@@ -52,11 +61,17 @@ class ParentShell extends StatefulWidget {
 
 class _ParentShellState extends State<ParentShell> {
   late final ServerClient _client =
-      widget.serverClient ?? ServerClient(baseUrl: AppConfig.serverUrl);
+      widget.serverClient ?? ServerClient(baseUrl: Endpoints.serverUrl);
   late final ParentStore _store = ParentStore(
     client: _client,
     familyId: AppConfig.familyId,
     profile: widget.profile,
+  )..load();
+
+  /// 자녀가 들은 메시지 (부모 홈에 보인다)
+  late final HeardMessages _heard = HeardMessages(
+    client: _client,
+    familyId: AppConfig.familyId,
   )..load();
 
   late final MessagePlayback _playback = MessagePlayback(
@@ -66,11 +81,24 @@ class _ParentShellState extends State<ParentShell> {
 
   late int _tab = widget.initialTab;
 
+  Timer? _refresher;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresher = Timer.periodic(widget.refreshEvery, (_) {
+      if (_tab != 2) _store.refresh();
+      if (_tab == 0) _heard.load();
+    });
+  }
+
   /// 메시지 탭에서 고른 분류. null이면 전체다.
   String? _category;
 
   @override
   void dispose() {
+    _refresher?.cancel();
+    _heard.dispose();
     _playback.dispose();
     _store.dispose();
     if (widget.serverClient == null) _client.close();
@@ -146,9 +174,14 @@ class _ParentShellState extends State<ParentShell> {
 
   /// 3-6 이 기기 처음 상태로: 기기에 저장한 것을 지우고 시작 화면으로 간다.
   Future<void> _resetDevice() async {
+    await OnboardingPrefs.reset();
+    await _restart();
+  }
+
+  /// 시작 화면부터 다시 (연결 주소를 바꿨을 때도 쓴다)
+  Future<void> _restart() async {
     final navigator = Navigator.of(context);
     await _playback.stop();
-    await OnboardingPrefs.reset();
     navigator.pushAndRemoveUntil(
       MaterialPageRoute<void>(
         builder: (_) => LoginScreen(serverClient: widget.serverClient),
@@ -169,6 +202,8 @@ class _ParentShellState extends State<ParentShell> {
 
   void _changeTab(int tab) {
     if (tab != 1) _playback.stop();
+    if (tab != 2) _store.refresh();
+    if (tab == 0) _heard.load();
     setState(() {
       _tab = tab;
       if (tab == 1) _category = null;
@@ -205,6 +240,7 @@ class _ParentShellState extends State<ParentShell> {
         onProfileChanged: (p) => _store.profile = p,
         onDeleteAllMessages: _deleteAll,
         onResetDevice: _resetDevice,
+        onEndpointsChanged: _restart,
         onChangeMode: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => RoleSelectScreen(serverClient: widget.serverClient),
@@ -221,7 +257,15 @@ class _ParentShellState extends State<ParentShell> {
       );
     }
     return switch (_tab) {
-      0 => ParentHomeScreen(store: _store, onCategory: _openCategory),
+      0 => RefreshIndicator(
+        color: AppColors.accent,
+        onRefresh: () => Future.wait([_store.refresh(), _heard.load()]),
+        child: ParentHomeScreen(
+          store: _store,
+          onCategory: _openCategory,
+          heard: _heard,
+        ),
+      ),
       _ => MessageListScreen(
         store: _store,
         category: _category,

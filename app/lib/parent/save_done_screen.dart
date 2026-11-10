@@ -18,9 +18,12 @@ enum SaveDoneAction {
 
 /// 3-5 저장 완료
 class SaveDoneScreen extends StatelessWidget {
-  const SaveDoneScreen({super.key, required this.store});
+  const SaveDoneScreen({super.key, required this.store, this.situationName});
 
   final ParentStore store;
+
+  /// 방금 저장한 상황 이름. 있으면 언제 전해질지 함께 보여 준다.
+  final String? situationName;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +58,9 @@ class SaveDoneScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.s12),
                       Text(
-                        '$nickname가 필요한 순간,\n$title의 마음을 그대로 전해드릴게요.',
+                        situationName == null
+                            ? '$nickname가 필요한 순간,\n$title의 마음을 그대로 전해드릴게요.'
+                            : '$nickname가 \'$situationName\'에 온기에게 말하면,\n$title의 마음을 그대로 전해드릴게요.',
                         textAlign: TextAlign.center,
                         style: AppTextStyles.body16.copyWith(color: secondary),
                       ),
