@@ -70,6 +70,10 @@ class ServerSync(
             flushPlayLogs()
             val since = db.getState("since") ?: "2000-01-01T00:00:00"
             val res = JSONObject(http("GET", "/device/changes?since=" + URLEncoder.encode(since, "UTF-8")))
+            // 11/11: 앱에서 정한 아이 이름(서버 family)을 받는다. 예전 서버면 family가 없어 그대로 둔다
+            res.optJSONObject("family")?.optString("child_name")?.takeIf { it.isNotBlank() }?.let {
+                if (it != Config.CHILD_NAME) { log("동기화: 아이 이름 ${Config.CHILD_NAME} → $it (앱 설정)"); Config.CHILD_NAME = it }
+            }
             val arr = res.optJSONArray("messages") ?: JSONArray()
             val acked = mutableListOf<Int>()
             var changed = false
@@ -126,6 +130,22 @@ class ServerSync(
         val pl = store.addPlayLog(messageId)
         log("재생 기록: message_id=$messageId, ${pl.playedAt}")
         worker.execute { try { flushPlayLogs() } catch (_: Exception) {} }
+    }
+
+    /**
+     * 11/11: 아이가 말한 상황에 부모 메시지가 없었음 → 서버 '필요 기록'(API-17).
+     * 상황 번호와 시각만 보낸다. 실패하면 버린다(부모에게 알려 주는 용도라 놓쳐도 동작에는 상관없음)
+     */
+    fun reportNeed(situationId: Int) {
+        val at = store.nowText()
+        worker.execute {
+            try {
+                http("POST", "/device/needs", JSONObject().put("situation_id", situationId).put("needed_at", at).toString())
+                log("필요 기록 보냄(API-17): 상황 $situationId")
+            } catch (e: Exception) {
+                log("필요 기록 못 보냄(버림): ${e.message}")
+            }
+        }
     }
 
     private fun flushPlayLogs() {

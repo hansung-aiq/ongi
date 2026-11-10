@@ -30,8 +30,16 @@ object Config {
      *  이 폴더가 없으면 models 폴더(MODEL_DIR)에서 찾는다 */
     const val SPEECH_DIR = "/data/local/tmp/ongi/speech"
 
-    /** 아이 이름 (연결 문장에 씀). 나중에 앱 2-1 자녀 정보 설정에서 받는다. 지금은 시연용 */
+    /** 아이 이름 (연결 문장에 씀). 11/11부터 서버 변경분(API-11 family)의 이름을 받아 바꾼다(앱 2-1·3-6에서 정함) */
     @Volatile var CHILD_NAME = "민준"
+
+    /** '민준이' / '서아' — 받침이 있을 때만 '이'를 붙인 부르는 말 */
+    fun childNameI(): String {
+        val n = CHILD_NAME
+        val last = n.lastOrNull() ?: return n
+        val batchim = last in '가'..'힣' && (last - '가') % 28 != 0
+        return if (batchim) "${n}이" else n
+    }
 
     /** 공감 한마디와 부모 메시지 사이 연결 문장 (11/5). {부모} = 엄마/아빠, {이름} = 아이 이름. LLM이 만들지 않는 정해 둔 문장 */
     const val BRIDGE_VOICE = "{부모}가 {이름}이한테 남긴 말이 있어. 들려줄게"

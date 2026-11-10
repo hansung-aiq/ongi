@@ -198,6 +198,8 @@ class OngiFlow(
         // 6. 재생 규칙
         val d = responder.decide(judged, infer, text, byKeyword = hits.isNotEmpty())
         log("결정: ${d.log}")
+        // 11/11: 판단한 상황에 부모 메시지가 없으면 서버에 '필요 기록'(상황 번호·시각만, 아이 말은 안 보냄)
+        judged?.let { s -> if (d !is Decision.Play && store.find(s) == null) sync.reportNeed(s) }
 
         // 7. 신호 보내고 재생 (공감 한마디는 TTS로 wav를 만들고 시간을 잰다)
         val tJudged = System.currentTimeMillis()
@@ -291,7 +293,8 @@ class OngiFlow(
     private fun bridge(m: com.aiq.ongi.device.store.ParentMessage): String {
         val parent = if (m.author == "dad") "아빠" else "엄마"
         val t = if (m.kind == "voice") Config.BRIDGE_VOICE else Config.BRIDGE_TEXT
-        return t.replace("{부모}", parent).replace("{이름}", Config.CHILD_NAME)
+        // 11/11: 받침 없는 이름은 '이'를 붙이지 않는다 (민준이한테 / 서아한테)
+        return t.replace("{부모}", parent).replace("{이름}이", Config.childNameI()).replace("{이름}", Config.CHILD_NAME)
     }
 
     /** 마지막 TTS 결과 (공감 한마디 wav) */
