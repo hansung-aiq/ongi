@@ -102,17 +102,18 @@ class VoiceRecordPanel extends StatelessWidget {
   ];
 
   List<Widget> _recording() => [
+    /// 소리 막대를 넣어도 패널 높이가 그대로이도록 간격을 줄였다 (16·16·16 → 12·6+6·12·12).
     Text('녹음 중이에요.', style: AppTextStyles.label16),
-    _gap,
-    const Waveform.small(),
     const SizedBox(height: AppSpacing.s12),
+    const Waveform.small(),
+    const SizedBox(height: 6),
     _LevelBar(level: level),
-    _gap,
+    const SizedBox(height: AppSpacing.s12),
     Text(
       '${format(elapsed)} / ${format(maxDuration)}',
       style: AppTextStyles.body16.copyWith(color: AppColors.textSecondary),
     ),
-    _gap,
+    const SizedBox(height: AppSpacing.s12),
     RoundIconButton(
       icon: Icons.stop_rounded,
       tooltip: '녹음 멈추기',
