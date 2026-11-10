@@ -42,6 +42,9 @@ class OngiFlow(
     private val worker = Executors.newSingleThreadExecutor()
 
     @Volatile private var running = false
+
+    /** 진짜 마이크로 듣는 중 (11/10 P1: 이때 온 stop은 취소가 아니라 "말 끝") */
+    @Volatile private var micListening = false
     private var task: Future<*>? = null
 
     /** 앱의 start. testText는 시험 모드 입력(마이크 대신 글) */
@@ -67,11 +70,19 @@ class OngiFlow(
         }
     }
 
-    /** 앱의 stop. 하던 일을 멈추고 idle */
+    /**
+     * 앱의 stop. 하던 일을 멈추고 idle.
+     * 11/10 P1: 마이크로 듣는 중(5-2 "말하기 끝내기")이면 멈추지 않고 들은 데까지를 말 끝으로 처리한다.
+     */
     @Synchronized
     fun stop() {
         if (!running) {
             sink.send(Signal.Idle)
+            return
+        }
+        if (micListening && mic != null) {
+            log("앱 stop(듣는 중) → 말 끝으로 처리")
+            mic.endNow()
             return
         }
         speaker?.stop()
@@ -231,7 +242,7 @@ class OngiFlow(
                 val started = spk != null && turn != null && spk.startPlay(turn).also { if (it) log("스피커: turn.wav 재생 시작") }
                 pause(ms(empathySec, Config.EMPATHY_MS))
                 val m = d.message
-                sink.send(Signal.Playing(m.situationId, m.id, m.author, m.kind, m.text))
+                sink.send(Signal.Playing(m.situationId, m.id, m.author, m.kind, m.text, seconds = messageSec))
                 if (started) {
                     val err = spk!!.waitPlay((((messageSec ?: 10.0) + 5) * 1000).toLong())
                     log(if (err == null) "스피커: 재생 끝" else "스피커: 재생 실패 → $err")
@@ -419,9 +430,9 @@ class OngiFlow(
     private fun listen(testText: String?): String? {
         val t = testText?.trim()
         return when {
-            t == null && !Config.testMode -> sttOf("마이크") { mic?.listen() }
+            t == null && !Config.testMode -> sttOf("마이크") { micListen() }
             t == null -> { pause(Config.LISTEN_MS); sink.send(Signal.Error("D-001")); null }
-            t == "mic" -> sttOf("마이크") { mic?.listen() }
+            t == "mic" -> sttOf("마이크") { micListen() }
             t.startsWith("mic:") -> {
                 val sec = t.removePrefix("mic:").trim().toIntOrNull() ?: 5
                 log("마이크: ${sec}초 녹음 시작 (도우미 tinycap)")
@@ -437,6 +448,12 @@ class OngiFlow(
             }
             else -> { pause(Config.LISTEN_MS); tSpeechEnd = System.currentTimeMillis(); t }
         }
+    }
+
+    /** 진짜 마이크로 듣기. 듣는 동안 온 stop은 [stop]에서 말 끝으로 바뀐다 */
+    private fun micListen(): ByteArray? {
+        micListening = true
+        return try { mic?.listen() } finally { micListening = false }
     }
 
     /** 소리 얻기 → STT. 소리가 없으면 D-001 */

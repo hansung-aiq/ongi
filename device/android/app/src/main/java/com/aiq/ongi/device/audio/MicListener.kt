@@ -58,6 +58,12 @@ class MicListener(
                 else -> false
             }
         }
+        /** 앱에서 끝냈을 때: VAD가 늦게 잡을 수 있어 들은 데까지 모두 쓴다 */
+        fun endByUser() {
+            if (!speechSeen && t >= 0.5) { speechSeen = true }
+            lastSpeechAt = t
+        }
+
         fun result(): ByteArray? {
             vad?.reset()
             if (!speechSeen) return null
@@ -67,9 +73,15 @@ class MicListener(
         }
     }
 
+    /** 앱에서 "말하기 끝내기"를 눌렀다 (11/10 P1). 듣던 것을 바로 말 끝으로 처리 */
+    @Volatile private var endRequested = false
+
+    fun endNow() { endRequested = true }
+
     /** 마이크로 듣기. 말을 안 했거나 실패하면 null */
     @Synchronized
     fun listen(): ByteArray? {
+        endRequested = false
         val spk = speaker?.takeIf { it.alive } ?: run { log("마이크: 오디오 도우미 꺼짐"); return null }
         val file = spk.recFile
         if (!spk.startRecord(MAX_SEC + 1)) return null
@@ -95,6 +107,11 @@ class MicListener(
                         reason = if (ep.speechSeen) "말 끝(${END_SILENCE_MS}ms 조용)" else "${NO_SPEECH_SEC}초 동안 말 없음"
                         break
                     }
+                }
+                if (endRequested) {
+                    reason = "앱에서 말하기 끝내기"
+                    ep.endByUser()
+                    break
                 }
             }
         } finally {
