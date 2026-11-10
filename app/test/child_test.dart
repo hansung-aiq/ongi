@@ -175,7 +175,8 @@ void main() {
       await tester.pump();
 
       /// 연결을 시도하는 동안
-      expect(find.text('온기 스피커 연결 안 됨'), findsOneWidget);
+      expect(find.text('온기 스피커 연결 중'), findsOneWidget);
+      expect(find.text('온기 스피커 연결 안 됨'), findsNothing);
       expect(find.text('온기 스피커 연결됨'), findsNothing);
       final button = find.widgetWithText(TextButton, '온기에게 말하기');
       expect(tester.widget<TextButton>(button).onPressed, isNull);
@@ -251,7 +252,7 @@ void main() {
       expect(find.textContaining('이어서'), findsNothing);
     });
 
-    testWidgets('녹음 재생은 글을 보여 주지 않는다', (tester) async {
+    testWidgets('녹음 재생에 글이 없으면 글을 보여 주지 않는다', (tester) async {
       final board = await _openChild(tester);
 
       board.send({
@@ -269,6 +270,23 @@ void main() {
       expect(find.byType(Waveform), findsOneWidget);
     });
 
+    testWidgets('녹음 재생에 받아쓴 글이 오면 글도 보여 준다', (tester) async {
+      final board = await _openChild(tester);
+
+      board.send({
+        'type': 'playing',
+        'situation_id': 4,
+        'message_id': 1,
+        'author': 'mom',
+        'kind': 'voice',
+        'text': '엄마는 언제나 네 편이야',
+      });
+      await _settle(tester);
+
+      expect(find.byType(Waveform), findsOneWidget);
+      expect(find.text(keepWords('엄마는 언제나 네 편이야')), findsOneWidget);
+    });
+
     testWidgets('메시지 없음과 안전 응답은 받은 글을 그대로 보여 준다', (tester) async {
       final board = await _openChild(tester);
 
@@ -283,7 +301,7 @@ void main() {
       expect(find.textContaining('꼭 맞는'), findsNothing);
     });
 
-    testWidgets('말하기 끝내기와 그만 듣기, X는 stop을 보낸다', (tester) async {
+    testWidgets('말하기 끝내기와 그만 들을래, X는 stop을 보낸다', (tester) async {
       final board = await _openChild(tester);
 
       board.send({'type': 'listening'});
@@ -293,7 +311,7 @@ void main() {
 
       board.send({'type': 'not_found', 'text': '그런 날도 있지'});
       await _settle(tester);
-      await tester.tap(find.text('그만 듣기'));
+      await tester.tap(find.text('그만 들을래'));
       await tester.pump();
       await tester.tap(find.byTooltip('닫기'));
       await tester.pump();

@@ -33,9 +33,10 @@ class ChildHomeScreen extends StatelessWidget {
 
   static const _recentCount = 2;
 
-  /// 처음 들어와 연결을 시도하는 동안에도 비연결로 보이고,
-  /// 보드와 연결이 잡히면 그때 연결 상태로 바뀐다.
-  bool get _offline => connection != BoardConnection.connected;
+  /// 처음 들어와 연결을 시도하는 동안은 '연결 중'으로 보이고,
+  /// 연결에 실패하거나 끊기면 '연결 안 됨'으로 바뀐다. 말하기 버튼은 연결됐을 때만 눌린다.
+  bool get _connecting => connection == BoardConnection.connecting;
+  bool get _offline => connection == BoardConnection.disconnected;
 
   @override
   Widget build(BuildContext context) {
@@ -73,8 +74,14 @@ class ChildHomeScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         OngiChip(
-          label: _offline ? '온기 스피커 연결 안 됨' : '온기 스피커 연결됨',
-          dotColor: _offline ? AppColors.dotOffline : AppColors.accent,
+          label: _connecting
+              ? '온기 스피커 연결 중'
+              : _offline
+              ? '온기 스피커 연결 안 됨'
+              : '온기 스피커 연결됨',
+          dotColor: _connecting || _offline
+              ? AppColors.dotOffline
+              : AppColors.accent,
         ),
         const SizedBox(height: 14),
         Row(
@@ -159,7 +166,9 @@ class ChildHomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s16),
           Text(
-            _offline
+            _connecting
+                ? '온기 스피커와 연결하고 있어.\n잠깐만 기다려줘.'
+                : _offline
                 ? '스피커 전원과 와이파이를 확인해줘.\n연결되면 다시 이야기할 수 있어.'
                 : '기쁜 일도, 속상한 일도 괜찮아. 편하게 이야기해줘.',
             style: AppTextStyles.body14.copyWith(

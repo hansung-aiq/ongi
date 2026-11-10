@@ -66,7 +66,8 @@ class ChildPlayingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = _authorTitle(signal.author);
-    final text = signal.kind == 'text' ? signal.text : null;
+    /// 글 메시지는 원문, 녹음 메시지는 보드가 받아쓴 글(신호 규격 v1.1). 비어 있으면 안 보인다.
+    final text = (signal.text?.trim().isEmpty ?? true) ? null : signal.text;
     return _ResponseLayout(
       navTitle: '$title의 메시지',
       picture: ProfileAvatar(size: 96, imagePath: parentPhoto),
@@ -237,7 +238,7 @@ class _ResponseLayout extends StatelessWidget {
                   ),
                 ),
               ),
-              OngiButton(label: '그만 듣기', onPressed: onStop),
+              OngiButton(label: '그만 들을래', onPressed: onStop),
             ],
           ),
         ),
