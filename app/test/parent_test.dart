@@ -1024,7 +1024,7 @@ void settingsAndMenuTests() {
 
     await _tapText(tester, '기록 지우기');
     expect(find.text('기록을 지울까요?'), findsOneWidget);
-    await _tapText(tester, '기록 지우기');
+    await _tapText(tester, '지우기');
     expect(server.historyDeleted, isTrue);
     expect(find.text('기록을 지웠어요'), findsOneWidget);
   });

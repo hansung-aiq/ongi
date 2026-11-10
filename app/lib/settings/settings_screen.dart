@@ -125,7 +125,7 @@ class SettingsScreen extends StatelessWidget {
       context,
       title: '기록을 지울까요?',
       body: '아이가 들은 메시지 기록과, 메시지를 찾았던 기록이 지워져요. 남긴 메시지는 그대로예요.',
-      action: '기록 지우기',
+      action: '지우기',
     );
     if (ok) await onDeleteHistory!();
   }
