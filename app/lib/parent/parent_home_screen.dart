@@ -14,7 +14,11 @@ class ParentHomeScreen extends StatelessWidget {
     required this.store,
     required this.onCategory,
     this.heard,
+    this.onWriteFor,
   });
+
+  /// 아이가 찾았던 상황에 바로 메시지를 남기러 간다 (11/11)
+  final ValueChanged<int>? onWriteFor;
 
   final ParentStore store;
 
@@ -42,6 +46,7 @@ class ParentHomeScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.section),
           ProgressCard(progress: store.progress),
           const SizedBox(height: AppSpacing.section),
+          _needed(),
           if (heard case final heard?)
             ListenableBuilder(
               listenable: heard,
@@ -69,6 +74,52 @@ class ParentHomeScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static const _needCount = 3;
+
+  /// 11/11: 아이가 온기에게 말했는데 메시지가 없었던 상황(API-18). 없으면 구역을 숨긴다.
+  /// 카드를 누르면 그 상황에 메시지를 남기러 간다.
+  Widget _needed() {
+    final needs = store.needs.take(_needCount).toList();
+    final onWrite = onWriteFor;
+    if (needs.isEmpty || onWrite == null) return const SizedBox.shrink();
+    final now = DateTime.now();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          '${store.profile.nickname}가 이런 순간에 메시지를 찾았어요',
+          style: AppTextStyles.subtitle18,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '아직 남긴 메시지가 없는 상황이에요. 지금 남겨 보세요.',
+          style: AppTextStyles.body14.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 14),
+        for (final n in needs) ...[
+          EmptySituationCard(
+            title: n.name,
+            subtitle: '${_ago(n.lastNeededAt, now)} · 최근 ${n.count}번 찾았어요',
+            onTap: () => onWrite(n.situationId),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+        ],
+        const SizedBox(height: AppSpacing.section - AppSpacing.s12),
+      ],
+    );
+  }
+
+  static String _ago(DateTime at, DateTime now) {
+    final days = DateTime(now.year, now.month, now.day)
+        .difference(DateTime(at.year, at.month, at.day))
+        .inDays;
+    return switch (days) {
+      <= 0 => '오늘',
+      1 => '어제',
+      _ => '$days일 전',
+    };
   }
 
   /// 아이가 최근에 들은 메시지. 불러오지 못했거나 아직 없으면 구역을 숨긴다.

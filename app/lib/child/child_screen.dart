@@ -87,6 +87,7 @@ class _ChildScreenState extends State<ChildScreen> {
     if (signal is PlayingSignal) _lastPlayed = signal;
     if (idle && !_wasIdle) {
       _heard.load();
+      _syncName();
       final played = _lastPlayed;
       if (played != null && signal is IdleSignal && mounted) {
         showOngiSnackBar(
@@ -109,6 +110,26 @@ class _ChildScreenState extends State<ChildScreen> {
     _shownFailures = _playback.failures;
     if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
     showOngiSnackBar(context, childPlaybackFailed, error: true);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _syncName();
+  }
+
+  /// 11/11: 부모가 정한 자녀 이름(서버 API-15)을 따른다. 자녀 폰이 부모 폰과 달라도 같은 이름이 된다.
+  /// 서버에 없으면(예전 서버·연결 안 됨) 지금 이름 그대로.
+  Future<void> _syncName() async {
+    try {
+      final name = (await _client.family(AppConfig.familyId)).childName;
+      if (!mounted || name == _profile.childName) return;
+      final updated = _profile.copyWith(childName: name);
+      await OnboardingPrefs.saveProfile(updated);
+      if (mounted) setState(() => _profile = updated);
+    } on ServerException {
+      // 그대로 둔다
+    }
   }
 
   void _changeTab(int tab) {

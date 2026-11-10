@@ -147,8 +147,54 @@ class ServerClient {
     ];
   }
 
+  /// API-15 가족 조회 (이름, 스피커 마지막 연결)
+  Future<Family> family(int familyId) async {
+    final json = await _send(() => _client.get(_uri('/families/$familyId')));
+    return _parse(() => Family.fromJson(json));
+  }
+
+  /// API-16 자녀 이름 바꾸기. 스피커는 다음 동기화(30초 안)에 새 이름을 받는다.
+  Future<Family> updateChildName(int familyId, String childName) async {
+    final json = await _send(
+      () => _client.patch(
+        _uri('/families/$familyId'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({'child_name': childName}),
+      ),
+    );
+    return _parse(() => Family.fromJson(json));
+  }
+
+  /// API-18 아이가 찾았는데 메시지가 없던 상황 (최근 14일, 최근 순)
+  Future<List<Need>> needs(int familyId) async {
+    final json = await _send(
+      () => _client.get(_uri('/needs', {'family_id': '$familyId'})),
+    );
+    return _parse(
+      () => [
+        for (final item in json['items'] as List)
+          Need.fromJson(item as Map<String, dynamic>),
+      ],
+    );
+  }
+
+  /// API-19 재생 기록·필요 기록 지우기 (메시지는 그대로)
+  Future<void> deleteHistory(int familyId) async {
+    await _send(() => _client.delete(_uri('/families/$familyId/history')));
+  }
+
   /// 녹음 메시지의 소리 파일 주소 (API-12). 앱에서 다시 들을 때 쓴다.
   Uri audioUrl(int messageId) => _uri('/device/audio/$messageId');
+
+  /// 11/11 확장 응답은 예전 서버·다른 서버에서 모양이 다를 수 있어,
+  /// 읽다가 실패하면 [ServerException]으로 바꿔 화면이 멈추지 않게 한다.
+  T _parse<T>(T Function() read) {
+    try {
+      return read();
+    } on Object {
+      throw const ServerException('서버 응답을 읽을 수 없어요');
+    }
+  }
 
   Uri _uri(String path, [Map<String, String>? query]) =>
       Uri.parse('$baseUrl$path').replace(queryParameters: query);

@@ -32,6 +32,8 @@ class OnboardingSession {
   }) async {
     final navigator = Navigator.of(context);
     await OnboardingPrefs.complete(profile);
+    // 11/11: 자녀 이름을 서버에도 저장 → 스피커가 이 이름으로 부른다(서버가 못 받아도 계속)
+    await store.pushChildName(profile.childName);
     navigator.pushAndRemoveUntil(
       MaterialPageRoute<void>(
         builder: (_) => ParentShell(

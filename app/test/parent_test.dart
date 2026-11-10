@@ -59,6 +59,27 @@ class FakeServer {
   /// API-09 재생 기록 (자녀가 들은 메시지)
   final playLogs = <Map<String, Object?>>[];
 
+  /// true면 11/11 확장 API(가족·필요 기록·기록 지우기)에 답한다. false면 예전 서버처럼 404
+  bool extended = false;
+  String childName = '민준';
+  String? deviceLastSeenAt;
+  bool deviceOnline = false;
+  final needs = <Map<String, Object?>>[];
+
+  /// API-16으로 받은 이름
+  final renamed = <String>[];
+  bool historyDeleted = false;
+
+  Map<String, Object?> get _family => {
+    'id': 1,
+    'child_name': childName,
+    'mom_title': '엄마',
+    'dad_title': '아빠',
+    'created_at': '2026-11-01T09:00:00',
+    'device_last_seen_at': deviceLastSeenAt,
+    'device_online': deviceOnline,
+  };
+
   static Map<String, Object?> _message(
     int id,
     int situationId,
@@ -92,6 +113,23 @@ class FakeServer {
             {'id': id, 'name': name, 'category': category},
         ],
       });
+    }
+    if (extended && path == '/families/1') {
+      if (request.method == 'PATCH') {
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        childName = body['child_name'] as String;
+        renamed.add(childName);
+      }
+      return _json(200, _family);
+    }
+    if (extended && request.method == 'GET' && path == '/needs') {
+      return _json(200, {'items': needs});
+    }
+    if (extended && request.method == 'DELETE' && path == '/families/1/history') {
+      historyDeleted = true;
+      playLogs.clear();
+      needs.clear();
+      return _json(200, {'deleted_play_logs': 0, 'deleted_needs': 0});
     }
     if (request.method == 'GET' && path == '/play-logs') {
       return _json(200, {'items': playLogs});
@@ -391,6 +429,13 @@ void main() {
     expect(find.text('민준이의 부모님'), findsOneWidget);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('parent_onboarding_done'), isTrue);
+  });
+
+  testWidgets('첫 설정을 마치면 자녀 이름을 서버에도 저장한다 (확장 서버)', (tester) async {
+    final server = FakeServer()..extended = true;
+    await openChildInfo(tester, server);
+    await _tapText(tester, '건너뛰기');
+    expect(server.renamed, ['민준']);
   });
 
   testWidgets('2-2·2-3의 건너뛰기는 이름을 저장하고 부모 홈으로 간다', (tester) async {
@@ -943,6 +988,59 @@ void settingsAndMenuTests() {
     await OnboardingPrefs.reset();
     expect(prefs.getString('endpoint_server'), 'http://192.168.0.5:8000');
     await Endpoints.resetToDefault();
+  });
+
+  testWidgets('부모 홈: 아이가 찾았는데 메시지가 없던 상황을 누르면 바로 남기러 간다', (tester) async {
+    final server = FakeServer()..extended = true;
+    server.needs.add({
+      'situation_id': 1,
+      'name': '학교 가기 싫은 날',
+      'category': '학교·학업',
+      'count': 2,
+      'last_needed_at': DateTime.now().toIso8601String().substring(0, 19),
+    });
+    await _openParent(tester, server);
+
+    expect(find.text('민준이가 이런 순간에 메시지를 찾았어요'), findsOneWidget);
+    expect(find.text('오늘 · 최근 2번 찾았어요'), findsOneWidget);
+    await _tapText(tester, '학교 가기 싫은 날');
+    expect(find.text('음성 녹음'), findsOneWidget);
+    expect(find.text('학교 가기 싫은 날'), findsWidgets);
+  });
+
+  testWidgets('3-6 스피커 마지막 연결과 기록 지우기 (확장 서버)', (tester) async {
+    final server = FakeServer()
+      ..extended = true
+      ..deviceOnline = true
+      ..deviceLastSeenAt = DateTime.now().toIso8601String().substring(0, 19);
+    await _openParent(tester, server);
+    await _tapTab(tester, '설정');
+
+    expect(find.text('온기 스피커'), findsOneWidget);
+    expect(find.text('마지막 연결 방금'), findsOneWidget);
+    expect(find.text('연결됨'), findsOneWidget);
+
+    await _tapText(tester, '기록 지우기');
+    expect(find.text('기록을 지울까요?'), findsOneWidget);
+    await _tapText(tester, '기록 지우기');
+    expect(server.historyDeleted, isTrue);
+    expect(find.text('기록을 지웠어요'), findsOneWidget);
+  });
+
+  testWidgets('자녀 이름: 설정에서 바꾸면 서버에 저장하고, 서버 이름이 다르면 서버를 따른다', (tester) async {
+    final server = FakeServer()
+      ..extended = true
+      ..childName = '하준';
+    await _openParent(tester, server);
+    expect(find.text('하준이의 부모님'), findsOneWidget);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('child_name'), '하준');
+
+    await _tapTab(tester, '설정');
+    await _tapText(tester, '하준');
+    await tester.enterText(find.byType(TextField), '서아');
+    await _tapText(tester, '저장하기');
+    expect(server.renamed, ['서아']);
   });
 
   testWidgets('3-6 메시지 모두 지우기: 취소하면 그대로, 확인하면 모두 지운다', (tester) async {

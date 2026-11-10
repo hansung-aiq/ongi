@@ -84,3 +84,56 @@ class PlayLog {
   final String author;
   final DateTime playedAt;
 }
+
+/// API-15 가족 (11/11). 이름은 앱 첫 설정·설정에서 정하고, 스피커가 받아 아이를 부른다.
+class Family {
+  const Family({
+    required this.childName,
+    this.deviceLastSeenAt,
+    this.deviceOnline = false,
+  });
+
+  factory Family.fromJson(Map<String, dynamic> json) => Family(
+    childName: json['child_name'] as String,
+    deviceLastSeenAt: switch (json['device_last_seen_at']) {
+      final String at => DateTime.parse(at),
+      _ => null,
+    },
+    deviceOnline: json['device_online'] as bool? ?? false,
+  );
+
+  final String childName;
+
+  /// 스피커(보드)가 마지막으로 서버에서 메시지를 받아 간 시각. 한 번도 없으면 null
+  final DateTime? deviceLastSeenAt;
+
+  /// 마지막 연결이 90초 안이면 true
+  final bool deviceOnline;
+}
+
+/// API-18 아이가 찾았는데 메시지가 없던 상황 (11/11)
+class Need {
+  const Need({
+    required this.situationId,
+    required this.name,
+    required this.category,
+    required this.count,
+    required this.lastNeededAt,
+  });
+
+  factory Need.fromJson(Map<String, dynamic> json) => Need(
+    situationId: json['situation_id'] as int,
+    name: json['name'] as String,
+    category: json['category'] as String,
+    count: json['count'] as int,
+    lastNeededAt: DateTime.parse(json['last_needed_at'] as String),
+  );
+
+  final int situationId;
+  final String name;
+  final String category;
+
+  /// 최근 14일 동안 찾은 횟수
+  final int count;
+  final DateTime lastNeededAt;
+}

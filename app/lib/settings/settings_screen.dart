@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/board_client.dart';
 import '../api/endpoints.dart';
+import '../api/server_models.dart';
 import '../common/common.dart';
 import '../parent/parent_profile.dart';
 import 'connection_sheet.dart';
@@ -20,6 +21,8 @@ class SettingsScreen extends StatelessWidget {
     this.onDeleteAllMessages,
     this.onResetDevice,
     this.onEndpointsChanged,
+    this.onDeleteHistory,
+    this.speakerFamily,
     this.speaker,
     this.pickPhoto = pickProfilePhoto,
   });
@@ -43,6 +46,12 @@ class SettingsScreen extends StatelessWidget {
 
   /// 연결 주소를 바꾼 뒤 부른다 (시작 화면부터 다시 연결한다). null이면 줄을 숨긴다.
   final VoidCallback? onEndpointsChanged;
+
+  /// '기록 지우기'(재생 기록·필요 기록)를 확인하면 부른다. null이면 줄을 숨긴다.
+  final Future<void> Function()? onDeleteHistory;
+
+  /// 부모 앱: 서버가 아는 스피커 마지막 연결(API-15). null이면 스피커 구역을 숨긴다.
+  final Family? speakerFamily;
 
   /// 보드 연결 상태. null이면 스피커 구역을 숨긴다 (부모 앱).
   final BoardConnection? speaker;
@@ -111,6 +120,30 @@ class SettingsScreen extends StatelessWidget {
     if (ok) await onDeleteAllMessages!();
   }
 
+  Future<void> _deleteHistoryConfirm(BuildContext context) async {
+    final ok = await _confirm(
+      context,
+      title: '기록을 지울까요?',
+      body: '아이가 들은 메시지 기록과, 메시지를 찾았던 기록이 지워져요. 남긴 메시지는 그대로예요.',
+      action: '기록 지우기',
+    );
+    if (ok) await onDeleteHistory!();
+  }
+
+  /// '3분 전 연결' / '연결된 적 없어요'
+  static String lastSeenLabel(Family family, DateTime now) {
+    final at = family.deviceLastSeenAt;
+    if (at == null) return '아직 연결된 적 없어요';
+    final minutes = now.difference(at).inMinutes;
+    final ago = switch (minutes) {
+      < 1 => '방금',
+      < 60 => '$minutes분 전',
+      < 60 * 24 => '${minutes ~/ 60}시간 전',
+      _ => '${minutes ~/ (60 * 24)}일 전',
+    };
+    return '마지막 연결 $ago';
+  }
+
   Future<void> _reset(BuildContext context) async {
     final ok = await _confirm(
       context,
@@ -165,6 +198,19 @@ class SettingsScreen extends StatelessWidget {
               color: AppColors.textSecondary,
             ),
           ),
+          if (speakerFamily case final family?) ...[
+            const SizedBox(height: AppSpacing.section),
+            _Section(
+              title: '스피커',
+              rows: [
+                _SettingRow(
+                  title: '온기 스피커',
+                  subtitle: lastSeenLabel(family, DateTime.now()),
+                  trailing: _SpeakerStatus(connected: family.deviceOnline),
+                ),
+              ],
+            ),
+          ],
           if (speaker != null) ...[
             const SizedBox(height: AppSpacing.section),
             _Section(
@@ -205,7 +251,9 @@ class SettingsScreen extends StatelessWidget {
                 ),
             ],
           ),
-          if (onDeleteAllMessages != null || onResetDevice != null) ...[
+          if (onDeleteAllMessages != null ||
+              onDeleteHistory != null ||
+              onResetDevice != null) ...[
             const SizedBox(height: AppSpacing.section),
             _Section(
               title: '데이터',
@@ -216,6 +264,13 @@ class SettingsScreen extends StatelessWidget {
                     subtitle: '남긴 메시지를 한 번에 지워요',
                     titleColor: AppColors.error,
                     onTap: () => _deleteAll(context),
+                  ),
+                if (onDeleteHistory != null)
+                  _SettingRow(
+                    title: '기록 지우기',
+                    subtitle: '들은 메시지·찾은 상황 기록을 지워요',
+                    titleColor: AppColors.error,
+                    onTap: () => _deleteHistoryConfirm(context),
                   ),
                 if (onResetDevice != null)
                   _SettingRow(

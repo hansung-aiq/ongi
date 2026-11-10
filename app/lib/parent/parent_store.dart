@@ -30,6 +30,12 @@ class ParentStore extends ChangeNotifier {
   List<Situation> situations = const [];
   List<ParentMessage> messages = const [];
 
+  /// 가족(이름·스피커 마지막 연결, API-15). 예전 서버라 없으면 null
+  Family? family;
+
+  /// 아이가 찾았는데 메시지가 없던 상황 (API-18). 예전 서버면 빈 목록
+  List<Need> needs = const [];
+
   /// 불러오기에 실패했을 때의 안내 문구
   String? loadError;
 
@@ -77,6 +83,46 @@ class ParentStore extends ChangeNotifier {
     } finally {
       notifyListeners();
     }
+    if (loadError == null) await _loadExtras();
+  }
+
+  /// 11/11 확장(API-15·18)을 불러온다. 서버에 없으면(예전 서버) 조용히 넘어간다.
+  /// 서버의 자녀 이름이 이 기기와 다르면(다른 기기에서 바꿈) 서버 이름을 따른다.
+  Future<void> _loadExtras() async {
+    try {
+      family = await client.family(familyId);
+      final name = family!.childName;
+      if (name != _profile.childName) {
+        _profile = _profile.copyWith(childName: name);
+        await OnboardingPrefs.saveProfile(_profile);
+      }
+    } on ServerException {
+      family = null;
+    }
+    try {
+      needs = await client.needs(familyId);
+    } on ServerException {
+      needs = const [];
+    }
+    notifyListeners();
+  }
+
+  /// 자녀 이름을 서버에 저장한다(API-16). 스피커가 이 이름으로 부른다.
+  /// 서버가 받지 못해도(예전 서버·연결 끊김) 기기 저장은 그대로라 오류를 내지 않는다.
+  Future<void> pushChildName(String name) async {
+    try {
+      family = await client.updateChildName(familyId, name);
+      notifyListeners();
+    } on ServerException {
+      // 다음에 이름을 바꿀 때 다시 보낸다
+    }
+  }
+
+  /// 재생 기록·필요 기록 지우기 (API-19). 실패하면 [ServerException]
+  Future<void> deleteHistory() async {
+    await client.deleteHistory(familyId);
+    needs = const [];
+    notifyListeners();
   }
 
   /// 메시지 목록만 조용히 다시 불러온다 (전달 상태 바뀜 등).
@@ -89,7 +135,9 @@ class ParentStore extends ChangeNotifier {
       notifyListeners();
     } on ServerException {
       /// 잠깐 끊긴 것일 수 있어 다음 새로고침을 기다린다.
+      return;
     }
+    await _loadExtras();
   }
 
   /// 글 메시지를 저장한다. 실패하면 [ServerException]을 던진다.

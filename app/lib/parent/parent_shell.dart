@@ -87,7 +87,7 @@ class _ParentShellState extends State<ParentShell> {
   void initState() {
     super.initState();
     _refresher = Timer.periodic(widget.refreshEvery, (_) {
-      if (_tab != 2) _store.refresh();
+      _store.refresh();
       if (_tab == 0) _heard.load();
     });
   }
@@ -157,6 +157,17 @@ class _ParentShellState extends State<ParentShell> {
     if (mounted) _notify('메시지를 지웠어요');
   }
 
+  /// 3-6 기록 지우기 (재생 기록·필요 기록, API-19)
+  Future<void> _deleteHistory() async {
+    try {
+      await _store.deleteHistory();
+      await _heard.load();
+      if (mounted) _notify('기록을 지웠어요');
+    } on ServerException catch (e) {
+      if (mounted) _notify(e.message, error: true);
+    }
+  }
+
   /// 3-6 메시지 모두 지우기
   Future<void> _deleteAll() async {
     if (_store.messages.isEmpty) {
@@ -202,7 +213,7 @@ class _ParentShellState extends State<ParentShell> {
 
   void _changeTab(int tab) {
     if (tab != 1) _playback.stop();
-    if (tab != 2) _store.refresh();
+    _store.refresh();
     if (tab == 0) _heard.load();
     setState(() {
       _tab = tab;
@@ -242,8 +253,14 @@ class _ParentShellState extends State<ParentShell> {
       return SettingsScreen(
         profile: _store.profile,
         isParent: true,
-        onProfileChanged: (p) => _store.profile = p,
+        onProfileChanged: (p) {
+          final renamed = p.childName != _store.profile.childName;
+          _store.profile = p;
+          if (renamed) _store.pushChildName(p.childName);
+        },
         onDeleteAllMessages: _deleteAll,
+        onDeleteHistory: _deleteHistory,
+        speakerFamily: _store.family,
         onResetDevice: _resetDevice,
         onEndpointsChanged: _restart,
         onChangeMode: () => Navigator.of(context).push(
@@ -269,6 +286,10 @@ class _ParentShellState extends State<ParentShell> {
           store: _store,
           onCategory: _openCategory,
           heard: _heard,
+          onWriteFor: (id) {
+            final s = _store.situation(id);
+            if (s != null) _write(s);
+          },
         ),
       ),
       _ => MessageListScreen(
