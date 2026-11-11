@@ -149,52 +149,51 @@ class _Caption extends StatelessWidget {
   }
 }
 
-/// 5-5 메시지 글. 재생 길이([seconds])를 알면 편지처럼 문장이 차례로 진해지고
-/// 아래에 얇은 진행 막대가 찬다. 길이를 모르면 글 전체를 그대로 보여 준다.
+/// 5-5 메시지 글. 한 글자씩 타이핑되듯 나타난다.
+/// 재생 길이([seconds])를 알면 소리에 맞춰 글자가 나오고 아래 얇은 진행 막대가 찬다.
+/// 길이를 모르면 보드 TTS 속도(1초에 약 10자)에 맞춰 95ms로 나온다. 아직 안 나온 글자는 투명하게 자리를 차지해 줄바꿈이 흔들리지 않는다.
 class _LetterText extends StatelessWidget {
   const _LetterText({required this.text, this.seconds});
 
   final String text;
   final double? seconds;
 
-  /// 문장 끝(. ! ? ~)과 줄바꿈에서 나눈다. 끝 표시는 앞 문장에 붙여 둔다.
-  static List<String> sentences(String text) => [
-    for (final s in text.split(RegExp(r'(?<=[.!?~。])\s+|\n+')))
-      if (s.trim().isNotEmpty) s.trim(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final style = AppTextStyles.body18.copyWith(color: AppColors.textSecondary);
     final sec = seconds;
     if (sec == null || sec <= 0) {
-      return Text(keepWords(text), textAlign: TextAlign.center, style: style);
+      return TypingText(
+        text,
+        style: style,
+        delay: childTypingDelay,
+        perChar: const Duration(milliseconds: 95),
+        maxDuration: const Duration(seconds: 30),
+      );
     }
-    final parts = sentences(text);
+    final full = keepWords(text);
+    final chars = full.characters;
+    final length = chars.length;
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      return Text(full, textAlign: TextAlign.center, style: style);
+    }
     return TweenAnimationBuilder<double>(
       key: ValueKey(text),
       tween: Tween(begin: 0, end: 1),
       duration: Duration(milliseconds: (sec * 1000).round()),
       builder: (context, p, _) {
-        /// 지금 읽고 있는 문장까지 진하게, 남은 문장은 흐리게 자리만 보인다.
-        final shown = (p * parts.length).ceil().clamp(1, parts.length);
+        /// 소리보다 조금 앞서(0.9 지점에서) 글이 다 나오게 한다.
+        final shown = ((p / 0.9).clamp(0.0, 1.0) * length).round();
         return Column(
           children: [
             Text.rich(
               TextSpan(
                 children: [
-                  for (var i = 0; i < parts.length; i++)
-                    TextSpan(
-                      text:
-                          '${keepWords(parts[i])}${i < parts.length - 1 ? ' ' : ''}',
-                      style: i < shown
-                          ? null
-                          : style.copyWith(
-                              color: AppColors.textSecondary.withValues(
-                                alpha: 0.2,
-                              ),
-                            ),
-                    ),
+                  TextSpan(text: chars.take(shown).toString()),
+                  TextSpan(
+                    text: chars.skip(shown).toString(),
+                    style: style.copyWith(color: Colors.transparent),
+                  ),
                 ],
               ),
               textAlign: TextAlign.center,
