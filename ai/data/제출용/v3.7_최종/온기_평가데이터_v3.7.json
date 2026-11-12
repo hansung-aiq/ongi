@@ -1,0 +1,1283 @@
+[
+ {
+  "no": 1,
+  "function": "상황 말하기",
+  "query": "있잖아 오늘 시험 망했잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 오늘 시험 망했잖아요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>오늘 시험을 잘 못 봐서 속상하구나<maum_end>"
+ },
+ {
+  "no": 2,
+  "function": "상황 말하기",
+  "query": "아빠 수학 시험 완전 망쳤다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 수학 시험 완전 망쳤다 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>수학 시험을 망쳐서 속상했구나<maum_end>"
+ },
+ {
+  "no": 3,
+  "function": "상황 말하기",
+  "query": "오늘 받아쓰기 망쳤어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 받아쓰기 망쳤어 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>오늘 받아쓰기를 잘 못 봐서 속상하구나<maum_end>"
+ },
+ {
+  "no": 4,
+  "function": "상황 말하기",
+  "query": "아빠 영어 시험 완전 망쳤어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 영어 시험 완전 망쳤어요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>영어 시험을 잘 못 봐서 속상하구나<maum_end>"
+ },
+ {
+  "no": 5,
+  "function": "상황 말하기",
+  "query": "나 단원평가 완전 망쳤거든요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 단원평가 완전 망쳤거든요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>단원평가를 망쳐서 마음이 무겁구나<maum_end>"
+ },
+ {
+  "no": 6,
+  "function": "상황 말하기",
+  "query": "있잖아 시험 잘 못 봤다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 시험 잘 못 봤다 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>시험을 잘 못 봤구나<maum_end>"
+ },
+ {
+  "no": 7,
+  "function": "상황 말하기",
+  "query": "나 오늘 수학 시험 못 봤어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 수학 시험 못 봤어요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>오늘 수학 시험을 잘 못 봤구나<maum_end>"
+ },
+ {
+  "no": 8,
+  "function": "상황 말하기",
+  "query": "있잖아 오늘 영어 시험 못 봤어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 오늘 영어 시험 못 봤어 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>오늘 영어 시험을 잘 못 봤구나<maum_end>"
+ },
+ {
+  "no": 9,
+  "function": "상황 말하기",
+  "query": "나 오늘 시험 점수 낮게 나왔잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 시험 점수 낮게 나왔잖아 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>오늘 시험 점수 때문에 속상하구나<maum_end>"
+ },
+ {
+  "no": 10,
+  "function": "상황 말하기",
+  "query": "온기야 수학 점수가 낮게 나왔잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 수학 점수가 낮게 나왔잖아요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>수학 점수가 낮게 나왔구나<maum_end>"
+ },
+ {
+  "no": 11,
+  "function": "상황 말하기",
+  "query": "엄마 받아쓰기 점수가 낮게 나왔잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 받아쓰기 점수가 낮게 나왔잖아요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>점수가 낮아서 속상했구나<maum_end>"
+ },
+ {
+  "no": 12,
+  "function": "상황 말하기",
+  "query": "있잖아 영어 점수 낮게 나왔거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 영어 점수 낮게 나왔거든 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>영어 점수가 낮게 나왔구나<maum_end>"
+ },
+ {
+  "no": 13,
+  "function": "상황 말하기",
+  "query": "있잖아 오늘 시험 빵점 맞았거든요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 오늘 시험 빵점 맞았거든요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>점수 때문에 많이 속상했구나<maum_end>"
+ },
+ {
+  "no": 14,
+  "function": "상황 말하기",
+  "query": "엄마 시험 망쳤다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 시험 망쳤다 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>시험을 망쳤구나<maum_end>"
+ },
+ {
+  "no": 15,
+  "function": "상황 말하기",
+  "query": "엄마 수학 시험 망했어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 수학 시험 망했어요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>수학 시험을 망쳐서 마음이 무겁구나<maum_end>"
+ },
+ {
+  "no": 16,
+  "function": "상황 말하기",
+  "query": "아빠 나 받아쓰기 완전 망쳤잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 나 받아쓰기 완전 망쳤잖아 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>받아쓰기를 망쳤구나<maum_end>"
+ },
+ {
+  "no": 17,
+  "function": "상황 말하기",
+  "query": "엄마 영어 시험 망쳤다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 영어 시험 망쳤다 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>영어 시험을 망쳤구나<maum_end>"
+ },
+ {
+  "no": 18,
+  "function": "상황 말하기",
+  "query": "엄마 나 단원평가 망쳤잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 나 단원평가 망쳤잖아 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>단원평가를 잘 못 봐서 속상하구나<maum_end>"
+ },
+ {
+  "no": 19,
+  "function": "상황 말하기",
+  "query": "있잖아 시험 잘 못 봤잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 시험 잘 못 봤잖아요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>시험을 못 봐서 속상했구나<maum_end>"
+ },
+ {
+  "no": 20,
+  "function": "상황 말하기",
+  "query": "나 오늘 수학 시험 잘 못 봤단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 수학 시험 잘 못 봤단 말이야 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>수학 시험을 못 봐서 속상했구나<maum_end>"
+ },
+ {
+  "no": 21,
+  "function": "상황 말하기",
+  "query": "아까 영어 시험 못 봤다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아까 영어 시험 못 봤다 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>영어 시험을 못 봐서 속상했구나<maum_end>"
+ },
+ {
+  "no": 22,
+  "function": "상황 말하기",
+  "query": "오늘 시험 점수가 낮게 나왔거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 시험 점수가 낮게 나왔거든 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>오늘 시험 점수가 낮게 나왔구나<maum_end>"
+ },
+ {
+  "no": 23,
+  "function": "상황 말하기",
+  "query": "엄마 나 수학 점수 낮게 나왔잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 나 수학 점수 낮게 나왔잖아요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>점수가 낮아서 속상했구나<maum_end>"
+ },
+ {
+  "no": 24,
+  "function": "상황 말하기",
+  "query": "온기야 나 받아쓰기 점수 낮게 나왔거든요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 나 받아쓰기 점수 낮게 나왔거든요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>점수가 생각보다 낮았구나<maum_end>"
+ },
+ {
+  "no": 25,
+  "function": "상황 말하기",
+  "query": "있잖아 나 영어 점수가 낮게 나왔어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 나 영어 점수가 낮게 나왔어요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>점수가 낮아서 속상했구나<maum_end>"
+ },
+ {
+  "no": 26,
+  "function": "상황 말하기",
+  "query": "있잖아 받아쓰기 빵점 맞았거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 받아쓰기 빵점 맞았거든 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>시험을 망친 날이구나<maum_end>"
+ },
+ {
+  "no": 27,
+  "function": "상황 말하기",
+  "query": "온기야 시험 완전 망쳤다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 시험 완전 망쳤다 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>시험을 망친 날이구나<maum_end>"
+ },
+ {
+  "no": 28,
+  "function": "상황 말하기",
+  "query": "수학 시험 완전 망쳤거든요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 수학 시험 완전 망쳤거든요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>수학 시험을 잘 못 봐서 속상하구나<maum_end>"
+ },
+ {
+  "no": 29,
+  "function": "상황 말하기",
+  "query": "온기야 받아쓰기 완전 망쳤거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 받아쓰기 완전 망쳤거든 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>받아쓰기를 망친 날이구나<maum_end>"
+ },
+ {
+  "no": 30,
+  "function": "상황 말하기",
+  "query": "엄마 나 영어 시험 망쳤어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 나 영어 시험 망쳤어요 Response:",
+  "output": "<maum_0>(situation=3, feeling=1)<maum_sep>영어 시험을 망친 날이구나<maum_end>"
+ },
+ {
+  "no": 31,
+  "function": "상황 말하기",
+  "query": "엄마 친구랑 싸웠단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 친구랑 싸웠단 말이야 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구랑 다퉈서 마음이 안 좋구나<maum_end>"
+ },
+ {
+  "no": 32,
+  "function": "상황 말하기",
+  "query": "오늘 친구랑 다퉜단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 친구랑 다퉜단 말이야 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>오늘 친구랑 다퉜구나<maum_end>"
+ },
+ {
+  "no": 33,
+  "function": "상황 말하기",
+  "query": "나 오늘 친구랑 크게 싸웠잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 친구랑 크게 싸웠잖아 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>오늘 친구랑 싸웠구나<maum_end>"
+ },
+ {
+  "no": 34,
+  "function": "상황 말하기",
+  "query": "나 아까 친구랑 크게 다퉜거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아까 친구랑 크게 다퉜거든 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구랑 다퉜구나<maum_end>"
+ },
+ {
+  "no": 35,
+  "function": "상황 말하기",
+  "query": "나 오늘 친구랑 또 싸웠잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 친구랑 또 싸웠잖아 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>오늘 친구랑 싸웠구나<maum_end>"
+ },
+ {
+  "no": 36,
+  "function": "상황 말하기",
+  "query": "아빠 친구랑 또 다퉜단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 친구랑 또 다퉜단 말이야 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구랑 다툰 날이구나<maum_end>"
+ },
+ {
+  "no": 37,
+  "function": "상황 말하기",
+  "query": "아까 친구랑 싸움 났단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아까 친구랑 싸움 났단 말이야 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구랑 싸운 날이구나<maum_end>"
+ },
+ {
+  "no": 38,
+  "function": "상황 말하기",
+  "query": "나 친구랑 말다툼했거든요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 친구랑 말다툼했거든요 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구랑 다툰 날이구나<maum_end>"
+ },
+ {
+  "no": 39,
+  "function": "상황 말하기",
+  "query": "있잖아 나 짝꿍이랑 싸웠잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 나 짝꿍이랑 싸웠잖아요 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 싸웠구나<maum_end>"
+ },
+ {
+  "no": 40,
+  "function": "상황 말하기",
+  "query": "아빠 나 짝꿍이랑 다퉜단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 나 짝꿍이랑 다퉜단 말이야 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 다퉜구나<maum_end>"
+ },
+ {
+  "no": 41,
+  "function": "상황 말하기",
+  "query": "아빠 나 짝꿍이랑 크게 싸웠다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 나 짝꿍이랑 크게 싸웠다 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 싸워서 속상했구나<maum_end>"
+ },
+ {
+  "no": 42,
+  "function": "상황 말하기",
+  "query": "아까 짝꿍이랑 크게 다퉜잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아까 짝꿍이랑 크게 다퉜잖아 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 다퉜구나<maum_end>"
+ },
+ {
+  "no": 43,
+  "function": "상황 말하기",
+  "query": "나 아까 짝꿍이랑 또 싸웠어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아까 짝꿍이랑 또 싸웠어 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 다퉈서 마음이 안 좋구나<maum_end>"
+ },
+ {
+  "no": 44,
+  "function": "상황 말하기",
+  "query": "온기야 나 짝꿍이랑 또 다퉜다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 나 짝꿍이랑 또 다퉜다 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 다퉈서 마음이 무겁구나<maum_end>"
+ },
+ {
+  "no": 45,
+  "function": "상황 말하기",
+  "query": "온기야 나 짝꿍이랑 싸움 났거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 나 짝꿍이랑 싸움 났거든 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 싸움이 났구나<maum_end>"
+ },
+ {
+  "no": 46,
+  "function": "상황 말하기",
+  "query": "있잖아 짝꿍이랑 말다툼했잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 짝꿍이랑 말다툼했잖아 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>짝꿍이랑 다퉈서 속상했구나<maum_end>"
+ },
+ {
+  "no": 47,
+  "function": "상황 말하기",
+  "query": "오늘 친구들이랑 싸웠잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 친구들이랑 싸웠잖아요 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>오늘 친구들이랑 싸운 날이구나<maum_end>"
+ },
+ {
+  "no": 48,
+  "function": "상황 말하기",
+  "query": "있잖아 친구들이랑 다퉜거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 친구들이랑 다퉜거든 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 다퉈서 속상했구나<maum_end>"
+ },
+ {
+  "no": 49,
+  "function": "상황 말하기",
+  "query": "나 아까 친구들이랑 크게 싸웠거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아까 친구들이랑 크게 싸웠거든 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 싸운 날이구나<maum_end>"
+ },
+ {
+  "no": 50,
+  "function": "상황 말하기",
+  "query": "온기야 친구들이랑 크게 다퉜어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 친구들이랑 크게 다퉜어요 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 다퉜구나<maum_end>"
+ },
+ {
+  "no": 51,
+  "function": "상황 말하기",
+  "query": "아빠 친구들이랑 또 싸웠어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 친구들이랑 또 싸웠어 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 싸웠구나<maum_end>"
+ },
+ {
+  "no": 52,
+  "function": "상황 말하기",
+  "query": "나 오늘 친구들이랑 또 다퉜다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 친구들이랑 또 다퉜다 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>오늘 친구들이랑 다퉜구나<maum_end>"
+ },
+ {
+  "no": 53,
+  "function": "상황 말하기",
+  "query": "온기야 친구들이랑 싸움 났잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 친구들이랑 싸움 났잖아 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 싸운 날이구나<maum_end>"
+ },
+ {
+  "no": 54,
+  "function": "상황 말하기",
+  "query": "아빠 나 친구들이랑 말다툼했거든요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 나 친구들이랑 말다툼했거든요 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>친구들이랑 다툰 날이구나<maum_end>"
+ },
+ {
+  "no": 55,
+  "function": "상황 말하기",
+  "query": "온기야 나 반 친구랑 싸웠어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 나 반 친구랑 싸웠어 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>반 친구랑 다퉈서 마음이 안 좋구나<maum_end>"
+ },
+ {
+  "no": 56,
+  "function": "상황 말하기",
+  "query": "나 오늘 반 친구랑 다퉜어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 반 친구랑 다퉜어요 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>오늘 반 친구랑 다퉈서 마음이 무겁구나<maum_end>"
+ },
+ {
+  "no": 57,
+  "function": "상황 말하기",
+  "query": "나 아까 반 친구랑 크게 싸웠어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아까 반 친구랑 크게 싸웠어요 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>반 친구랑 다퉈서 마음이 안 좋구나<maum_end>"
+ },
+ {
+  "no": 58,
+  "function": "상황 말하기",
+  "query": "나 아까 반 친구랑 크게 다퉜거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아까 반 친구랑 크게 다퉜거든 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>반 친구랑 다퉜구나<maum_end>"
+ },
+ {
+  "no": 59,
+  "function": "상황 말하기",
+  "query": "아까 반 친구랑 또 싸웠단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아까 반 친구랑 또 싸웠단 말이야 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>반 친구랑 싸워서 속상했구나<maum_end>"
+ },
+ {
+  "no": 60,
+  "function": "상황 말하기",
+  "query": "있잖아 오늘 반 친구랑 또 다퉜잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 오늘 반 친구랑 또 다퉜잖아요 Response:",
+  "output": "<maum_0>(situation=4, feeling=1)<maum_sep>오늘 반 친구랑 다퉜구나<maum_end>"
+ },
+ {
+  "no": 61,
+  "function": "상황 말하기",
+  "query": "나 오늘 엄마 보고 싶어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 엄마 보고 싶어 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마가 곁에 있으면 좋겠구나<maum_end>"
+ },
+ {
+  "no": 62,
+  "function": "상황 말하기",
+  "query": "온기야 나 엄마 너무 보고 싶어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 나 엄마 너무 보고 싶어요 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>그리운 마음이 드는구나<maum_end>"
+ },
+ {
+  "no": 63,
+  "function": "상황 말하기",
+  "query": "오늘 엄마 진짜 보고 싶잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 엄마 진짜 보고 싶잖아 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마가 곁에 있으면 좋겠구나<maum_end>"
+ },
+ {
+  "no": 64,
+  "function": "상황 말하기",
+  "query": "밤 되니까 엄마 많이 보고 싶잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 밤 되니까 엄마 많이 보고 싶잖아 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 곁에 있으면 좋겠구나<maum_end>"
+ },
+ {
+  "no": 65,
+  "function": "상황 말하기",
+  "query": "온기야 엄마 목소리 듣고 싶어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 엄마 목소리 듣고 싶어 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마 목소리가 듣고 싶구나<maum_end>"
+ },
+ {
+  "no": 66,
+  "function": "상황 말하기",
+  "query": "나 오늘 엄마 그리워요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 엄마 그리워요 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>오늘 그리운 마음이 드는구나<maum_end>"
+ },
+ {
+  "no": 67,
+  "function": "상황 말하기",
+  "query": "지금 엄마 생각나",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 지금 엄마 생각나 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 생각이 많이 나는구나<maum_end>"
+ },
+ {
+  "no": 68,
+  "function": "상황 말하기",
+  "query": "온기야 아빠 보고 싶단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 아빠 보고 싶단 말이야 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 생각이 많이 나는구나<maum_end>"
+ },
+ {
+  "no": 69,
+  "function": "상황 말하기",
+  "query": "온기야 나 아빠 너무 보고 싶단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 나 아빠 너무 보고 싶단 말이야 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 생각이 많이 나는구나<maum_end>"
+ },
+ {
+  "no": 70,
+  "function": "상황 말하기",
+  "query": "오늘따라 아빠 진짜 보고 싶잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘따라 아빠 진짜 보고 싶잖아 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>오늘 아빠가 보고 싶어서 마음이 허전하구나<maum_end>"
+ },
+ {
+  "no": 71,
+  "function": "상황 말하기",
+  "query": "있잖아 아빠 많이 보고 싶다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 아빠 많이 보고 싶다 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 생각이 많이 나는구나<maum_end>"
+ },
+ {
+  "no": 72,
+  "function": "상황 말하기",
+  "query": "나 지금 아빠 목소리 듣고 싶단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 지금 아빠 목소리 듣고 싶단 말이야 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 많이 그립구나<maum_end>"
+ },
+ {
+  "no": 73,
+  "function": "상황 말하기",
+  "query": "있잖아 아빠 그립단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 아빠 그립단 말이야 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 많이 그립구나<maum_end>"
+ },
+ {
+  "no": 74,
+  "function": "상황 말하기",
+  "query": "있잖아 아빠 생각난단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 아빠 생각난단 말이야 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>그리운 마음이 드는구나<maum_end>"
+ },
+ {
+  "no": 75,
+  "function": "상황 말하기",
+  "query": "나 엄마 아빠 보고 싶어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 엄마 아빠 보고 싶어 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마 아빠가 생각이 많이 나는구나<maum_end>"
+ },
+ {
+  "no": 76,
+  "function": "상황 말하기",
+  "query": "오늘따라 엄마 아빠 너무 보고 싶잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘따라 엄마 아빠 너무 보고 싶잖아요 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마 아빠가 생각이 많이 나는구나<maum_end>"
+ },
+ {
+  "no": 77,
+  "function": "상황 말하기",
+  "query": "밤 되니까 엄마 아빠 진짜 보고 싶어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 밤 되니까 엄마 아빠 진짜 보고 싶어요 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마 아빠가 곁에 있으면 좋겠구나<maum_end>"
+ },
+ {
+  "no": 78,
+  "function": "상황 말하기",
+  "query": "나 지금 엄마 아빠 많이 보고 싶잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 지금 엄마 아빠 많이 보고 싶잖아요 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마 아빠가 보고 싶어서 마음이 허전하구나<maum_end>"
+ },
+ {
+  "no": 79,
+  "function": "상황 말하기",
+  "query": "오늘따라 엄마 아빠 목소리 듣고 싶단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘따라 엄마 아빠 목소리 듣고 싶단 말이야 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마 아빠가 곁에 있으면 좋겠구나<maum_end>"
+ },
+ {
+  "no": 80,
+  "function": "상황 말하기",
+  "query": "있잖아 엄마 아빠 그립거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 엄마 아빠 그립거든 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>그리운 마음이 드는구나<maum_end>"
+ },
+ {
+  "no": 81,
+  "function": "상황 말하기",
+  "query": "엄마 아빠 자꾸 생각나",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 아빠 자꾸 생각나 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마 아빠가 자꾸 생각나는구나<maum_end>"
+ },
+ {
+  "no": 82,
+  "function": "상황 말하기",
+  "query": "오늘따라 우리 엄마 보고 싶잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘따라 우리 엄마 보고 싶잖아요 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마가 보고 싶어서 마음이 허전하구나<maum_end>"
+ },
+ {
+  "no": 83,
+  "function": "상황 말하기",
+  "query": "있잖아 우리 엄마 너무 보고 싶어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 우리 엄마 너무 보고 싶어요 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 많이 보고 싶구나<maum_end>"
+ },
+ {
+  "no": 84,
+  "function": "상황 말하기",
+  "query": "온기야 나 우리 엄마 진짜 보고 싶잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 나 우리 엄마 진짜 보고 싶잖아 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 곁에 있으면 좋겠구나<maum_end>"
+ },
+ {
+  "no": 85,
+  "function": "상황 말하기",
+  "query": "갑자기 우리 엄마 많이 보고 싶어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 갑자기 우리 엄마 많이 보고 싶어 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 곁에 있으면 좋겠구나<maum_end>"
+ },
+ {
+  "no": 86,
+  "function": "상황 말하기",
+  "query": "우리 엄마 목소리 듣고 싶어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 우리 엄마 목소리 듣고 싶어 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 많이 그립구나<maum_end>"
+ },
+ {
+  "no": 87,
+  "function": "상황 말하기",
+  "query": "나 지금 우리 엄마 그립다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 지금 우리 엄마 그립다 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>엄마가 많이 보고 싶구나<maum_end>"
+ },
+ {
+  "no": 88,
+  "function": "상황 말하기",
+  "query": "오늘 우리 엄마 자꾸 생각나",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 우리 엄마 자꾸 생각나 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>오늘 엄마가 많이 보고 싶구나<maum_end>"
+ },
+ {
+  "no": 89,
+  "function": "상황 말하기",
+  "query": "밤 되니까 우리 아빠 보고 싶다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 밤 되니까 우리 아빠 보고 싶다 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 많이 보고 싶구나<maum_end>"
+ },
+ {
+  "no": 90,
+  "function": "상황 말하기",
+  "query": "지금 우리 아빠 너무 보고 싶어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 지금 우리 아빠 너무 보고 싶어 Response:",
+  "output": "<maum_0>(situation=10, feeling=5)<maum_sep>아빠가 곁에 있으면 좋겠구나<maum_end>"
+ },
+ {
+  "no": 91,
+  "function": "상황 말하기",
+  "query": "나 상 받았잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 상 받았잖아 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>자랑하고 싶은 날이구나<maum_end>"
+ },
+ {
+  "no": 92,
+  "function": "상황 말하기",
+  "query": "온기야 학교에서 상 받았단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 학교에서 상 받았단 말이야 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>뿌듯한 날이구나<maum_end>"
+ },
+ {
+  "no": 93,
+  "function": "상황 말하기",
+  "query": "나 아까 대회에서 상 받았어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아까 대회에서 상 받았어요 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>열심히 한 보람이 있구나<maum_end>"
+ },
+ {
+  "no": 94,
+  "function": "상황 말하기",
+  "query": "있잖아 나 그림 대회에서 상장 받았잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 나 그림 대회에서 상장 받았잖아 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>그림 대회에서 상을 받다니 정말 기쁘구나<maum_end>"
+ },
+ {
+  "no": 95,
+  "function": "상황 말하기",
+  "query": "글짓기 대회에서 상 받았잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 글짓기 대회에서 상 받았잖아요 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>글짓기 대회에서 상을 받다니 정말 기쁘구나<maum_end>"
+ },
+ {
+  "no": 96,
+  "function": "상황 말하기",
+  "query": "나 아까 칭찬받았잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아까 칭찬받았잖아 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>칭찬을 받았구나<maum_end>"
+ },
+ {
+  "no": 97,
+  "function": "상황 말하기",
+  "query": "아빠 나 선생님한테 칭찬 많이 받았다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 나 선생님한테 칭찬 많이 받았다 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>기분 좋은 날이구나<maum_end>"
+ },
+ {
+  "no": 98,
+  "function": "상황 말하기",
+  "query": "온기야 나 학교에서 칭찬 많이 받았거든요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 나 학교에서 칭찬 많이 받았거든요 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>칭찬받은 날이구나<maum_end>"
+ },
+ {
+  "no": 99,
+  "function": "상황 말하기",
+  "query": "아빠 백 점 맞았어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 백 점 맞았어 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>열심히 한 보람이 있구나<maum_end>"
+ },
+ {
+  "no": 100,
+  "function": "상황 말하기",
+  "query": "있잖아 나 시험 백 점 맞았잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 나 시험 백 점 맞았잖아 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>기분 좋은 날이구나<maum_end>"
+ },
+ {
+  "no": 101,
+  "function": "상황 말하기",
+  "query": "있잖아 오늘 수학 시험 백 점 맞았거든요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 오늘 수학 시험 백 점 맞았거든요 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>오늘 자랑하고 싶은 날이구나<maum_end>"
+ },
+ {
+  "no": 102,
+  "function": "상황 말하기",
+  "query": "엄마 나 받아쓰기 백 점 받았다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 나 받아쓰기 백 점 받았다 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>받아쓰기 백 점이라 기쁘구나<maum_end>"
+ },
+ {
+  "no": 103,
+  "function": "상황 말하기",
+  "query": "아빠 나 일등 했거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 나 일등 했거든 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>열심히 한 보람이 있구나<maum_end>"
+ },
+ {
+  "no": 104,
+  "function": "상황 말하기",
+  "query": "있잖아 나 달리기 일등 했단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 나 달리기 일등 했단 말이야 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>달리기 일등이라 뿌듯하구나<maum_end>"
+ },
+ {
+  "no": 105,
+  "function": "상황 말하기",
+  "query": "온기야 나 반에서 일등 했어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 나 반에서 일등 했어요 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>자랑하고 싶은 날이구나<maum_end>"
+ },
+ {
+  "no": 106,
+  "function": "상황 말하기",
+  "query": "나 오늘 대회에서 일등 했다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 대회에서 일등 했다 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>일등이라니 정말 기쁘구나<maum_end>"
+ },
+ {
+  "no": 107,
+  "function": "상황 말하기",
+  "query": "나 아까 상장 받았잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아까 상장 받았잖아 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>상을 받았구나<maum_end>"
+ },
+ {
+  "no": 108,
+  "function": "상황 말하기",
+  "query": "아까 학교에서 상장 받았잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아까 학교에서 상장 받았잖아 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>학교에서 상을 받다니 정말 기쁘구나<maum_end>"
+ },
+ {
+  "no": 109,
+  "function": "상황 말하기",
+  "query": "아까 대회에서 상 받았잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아까 대회에서 상 받았잖아요 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>자랑하고 싶은 날이구나<maum_end>"
+ },
+ {
+  "no": 110,
+  "function": "상황 말하기",
+  "query": "아빠 나 그림 대회에서 상 받았단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 나 그림 대회에서 상 받았단 말이야 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>그림 대회에서 상을 받았구나<maum_end>"
+ },
+ {
+  "no": 111,
+  "function": "상황 말하기",
+  "query": "있잖아 나 글짓기 대회에서 상장 받았어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 나 글짓기 대회에서 상장 받았어요 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>글짓기 대회에서 상을 받았구나<maum_end>"
+ },
+ {
+  "no": 112,
+  "function": "상황 말하기",
+  "query": "엄마 나 칭찬받았단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 나 칭찬받았단 말이야 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>칭찬받아서 뿌듯하구나<maum_end>"
+ },
+ {
+  "no": 113,
+  "function": "상황 말하기",
+  "query": "온기야 나 선생님한테 칭찬 많이 받았잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 나 선생님한테 칭찬 많이 받았잖아 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>칭찬받은 날이구나<maum_end>"
+ },
+ {
+  "no": 114,
+  "function": "상황 말하기",
+  "query": "나 아까 학교에서 칭찬받았어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아까 학교에서 칭찬받았어 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>학교에서 칭찬을 받았구나<maum_end>"
+ },
+ {
+  "no": 115,
+  "function": "상황 말하기",
+  "query": "나 아까 백 점 받았어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아까 백 점 받았어요 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>백 점을 맞았구나<maum_end>"
+ },
+ {
+  "no": 116,
+  "function": "상황 말하기",
+  "query": "있잖아 오늘 시험 백 점 맞았다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 오늘 시험 백 점 맞았다 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>오늘 시험 백 점이라 기쁘구나<maum_end>"
+ },
+ {
+  "no": 117,
+  "function": "상황 말하기",
+  "query": "엄마 나 수학 시험 백 점 맞았어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 나 수학 시험 백 점 맞았어 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>수학 시험 백 점을 맞았구나<maum_end>"
+ },
+ {
+  "no": 118,
+  "function": "상황 말하기",
+  "query": "나 오늘 받아쓰기 백 점 맞았어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 오늘 받아쓰기 백 점 맞았어요 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>오늘 열심히 한 보람이 있구나<maum_end>"
+ },
+ {
+  "no": 119,
+  "function": "상황 말하기",
+  "query": "온기야 일등 했다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 일등 했다 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>일등을 했구나<maum_end>"
+ },
+ {
+  "no": 120,
+  "function": "상황 말하기",
+  "query": "아빠 달리기 일등 했잖아요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 달리기 일등 했잖아요 Response:",
+  "output": "<maum_0>(situation=11, feeling=6)<maum_sep>달리기 일등을 했구나<maum_end>"
+ },
+ {
+  "no": 121,
+  "function": "일반 대화",
+  "query": "짝꿍이 선생님한테 혼났대",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 짝꿍이 선생님한테 혼났대 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 122,
+  "function": "일반 대화",
+  "query": "동생이 시험 망쳤대",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 동생이 시험 망쳤대 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 123,
+  "function": "일반 대화",
+  "query": "형이 친구랑 싸웠대",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 형이 친구랑 싸웠대 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 124,
+  "function": "일반 대화",
+  "query": "친구들끼리 다퉜대",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 친구들끼리 다퉜대 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 125,
+  "function": "일반 대화",
+  "query": "누나가 상 받았대",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 누나가 상 받았대 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 126,
+  "function": "일반 대화",
+  "query": "동생이 상 받았어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 동생이 상 받았어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 127,
+  "function": "일반 대화",
+  "query": "형 생일이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 형 생일이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 128,
+  "function": "일반 대화",
+  "query": "엄마 생일 선물 샀어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 생일 선물 샀어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 129,
+  "function": "일반 대화",
+  "query": "친구랑 눈싸움했어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 친구랑 눈싸움했어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 130,
+  "function": "일반 대화",
+  "query": "동생이 울고 있어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 동생이 울고 있어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 131,
+  "function": "일반 대화",
+  "query": "양파 때문에 눈물 나",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 양파 때문에 눈물 나 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 132,
+  "function": "일반 대화",
+  "query": "엄마 언제 와",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 엄마 언제 와 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 133,
+  "function": "일반 대화",
+  "query": "아빠 이거 봐 봐",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 아빠 이거 봐 봐 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 134,
+  "function": "일반 대화",
+  "query": "오늘 시험 봤어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 시험 봤어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 135,
+  "function": "일반 대화",
+  "query": "학교 끝났어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 학교 끝났어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 136,
+  "function": "일반 대화",
+  "query": "친구랑 놀이터에서 놀았어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 친구랑 놀이터에서 놀았어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 137,
+  "function": "일반 대화",
+  "query": "잠옷 입었어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 잠옷 입었어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 138,
+  "function": "일반 대화",
+  "query": "이제 잘게",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 이제 잘게 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 139,
+  "function": "일반 대화",
+  "query": "숙제 다 했어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 숙제 다 했어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 140,
+  "function": "일반 대화",
+  "query": "창밖에 눈이 내려",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 창밖에 눈이 내려 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 141,
+  "function": "일반 대화",
+  "query": "방금 샤워했어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 방금 샤워했어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 142,
+  "function": "일반 대화",
+  "query": "동생이랑 레고 조립했어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 동생이랑 레고 조립했어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 143,
+  "function": "일반 대화",
+  "query": "체육복을 세탁기에 넣었어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 체육복을 세탁기에 넣었어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 144,
+  "function": "일반 대화",
+  "query": "오늘 점심은 김밥이었어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 점심은 김밥이었어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 145,
+  "function": "일반 대화",
+  "query": "잠깐 멈춰줘",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 잠깐 멈춰줘 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 146,
+  "function": "일반 대화",
+  "query": "알람 꺼줘",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 알람 꺼줘 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 147,
+  "function": "일반 대화",
+  "query": "빗소리 틀어줘",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 빗소리 틀어줘 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 148,
+  "function": "일반 대화",
+  "query": "밝기 낮춰줘",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 밝기 낮춰줘 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 149,
+  "function": "일반 대화",
+  "query": "방금 노래 한 번 더 들려줘",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 방금 노래 한 번 더 들려줘 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 150,
+  "function": "일반 대화",
+  "query": "오늘 달이 보여",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 달이 보여 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 151,
+  "function": "일반 대화",
+  "query": "무지개는 어떻게 생겨",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 무지개는 어떻게 생겨 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 152,
+  "function": "일반 대화",
+  "query": "내일 체육 있어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 내일 체육 있어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 153,
+  "function": "일반 대화",
+  "query": "주말에 비 와",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 주말에 비 와 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 154,
+  "function": "일반 대화",
+  "query": "바다는 왜 짜",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 바다는 왜 짜 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 155,
+  "function": "일반 대화",
+  "query": "수고했어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 수고했어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 156,
+  "function": "일반 대화",
+  "query": "푹 쉬어",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 푹 쉬어 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 157,
+  "function": "일반 대화",
+  "query": "또 만나",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 또 만나 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 158,
+  "function": "일반 대화",
+  "query": "편안한 밤 되세요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 편안한 밤 되세요 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 159,
+  "function": "일반 대화",
+  "query": "잘 갔다 올게",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 잘 갔다 올게 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 160,
+  "function": "일반 대화",
+  "query": "오늘 학교 가기 너무 싫잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 학교 가기 너무 싫잖아 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 161,
+  "function": "일반 대화",
+  "query": "나 학교 안 가고 싶단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 학교 안 가고 싶단 말이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 162,
+  "function": "일반 대화",
+  "query": "학교 쉬고 싶단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 학교 쉬고 싶단 말이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 163,
+  "function": "일반 대화",
+  "query": "나 아빠한테 엄청 혼났단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 아빠한테 엄청 혼났단 말이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 164,
+  "function": "일반 대화",
+  "query": "있잖아 선생님한테 야단맞았단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 선생님한테 야단맞았단 말이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 165,
+  "function": "일반 대화",
+  "query": "오늘 선생님한테 꾸중 들었잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 선생님한테 꾸중 들었잖아 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 166,
+  "function": "일반 대화",
+  "query": "오늘 애들이 나 따돌린단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 애들이 나 따돌린단 말이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 167,
+  "function": "일반 대화",
+  "query": "오늘 반 애들이 나만 빼고 놀았단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 반 애들이 나만 빼고 놀았단 말이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 168,
+  "function": "일반 대화",
+  "query": "오늘 반 애들이 나 따돌리거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 반 애들이 나 따돌리거든 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 169,
+  "function": "일반 대화",
+  "query": "온기야 비교당했단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 비교당했단 말이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 170,
+  "function": "일반 대화",
+  "query": "오늘 친구랑 비교당했어요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 친구랑 비교당했어요 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 171,
+  "function": "일반 대화",
+  "query": "온기야 비교당했다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 비교당했다 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 172,
+  "function": "일반 대화",
+  "query": "오늘 진짜 울 것 같잖아",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 진짜 울 것 같잖아 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 173,
+  "function": "일반 대화",
+  "query": "오늘 눈물 난단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 눈물 난단 말이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 174,
+  "function": "일반 대화",
+  "query": "오늘 자꾸 눈물이 나",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 자꾸 눈물이 나 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 175,
+  "function": "일반 대화",
+  "query": "있잖아 진짜 아무것도 하기 싫다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 진짜 아무것도 하기 싫다 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 176,
+  "function": "일반 대화",
+  "query": "온기야 아무것도 안 하고 싶거든",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 온기야 아무것도 안 하고 싶거든 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 177,
+  "function": "일반 대화",
+  "query": "있잖아 진짜 다 귀찮단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 진짜 다 귀찮단 말이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 178,
+  "function": "일반 대화",
+  "query": "무서운 꿈 꿨다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 무서운 꿈 꿨다 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 179,
+  "function": "일반 대화",
+  "query": "나 진짜 못 자겠다",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 나 진짜 못 자겠다 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 180,
+  "function": "일반 대화",
+  "query": "잠이 안 온단 말이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 잠이 안 온단 말이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 181,
+  "function": "일반 대화",
+  "query": "내일 내 생일이에요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 내일 내 생일이에요 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 182,
+  "function": "일반 대화",
+  "query": "있잖아 오늘 내 생일이에요",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 있잖아 오늘 내 생일이에요 Response:",
+  "output": "<maum_1>()<maum_end>"
+ },
+ {
+  "no": 183,
+  "function": "일반 대화",
+  "query": "오늘 내 생일이야",
+  "prompt": "<|im_start|>Below is the query from the users, please choose the correct function and generate the parameters to call the function. Query: 오늘 내 생일이야 Response:",
+  "output": "<maum_1>()<maum_end>"
+ }
+]

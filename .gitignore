@@ -41,3 +41,17 @@ app/ios/Pods/
 *.safetensors
 *.onnx
 *.wav
+*_검사결과.csv
+
+# 키워드 측정 결과 (measure_keywords.py)
+keyword_결과.csv
+
+# 임베딩 기준 벡터·Colab 결과 묶음 (anchors_meta.json만 올림)
+*.f32
+ongi_embed*.zip
+
+# 개인 작업 파일 (SUDA apk 분석 등, 올리지 않음)
+_local/
+
+# Qualcomm Genie·QNN 라이브러리 (SUDA 앱에서 꺼냄, 올리지 않음 — 컨텍스트 4-2-2 참고)
+device/android/app/src/main/jniLibs/

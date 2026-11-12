@@ -1,0 +1,150 @@
+package com.aiq.ongi.device.store
+
+import android.content.ContentValues
+import android.database.Cursor
+import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+/** 부모 메시지 한 개 */
+data class ParentMessage(
+    val id: Int,
+    val situationId: Int,
+    val author: String,     // "mom" / "dad"
+    val kind: String,       // "voice" / "text"
+    val text: String?,      // 글 메시지 내용. voice면 보드가 받아쓴 글(11/9, 없으면 null)
+    val audioPath: String? = null,   // 받은 녹음 파일 (voice)
+    val updatedAt: String? = null,
+)
+
+/** 아직 서버에 못 보낸 재생 기록 */
+data class PlayLog(val id: Long, val messageId: Int, val playedAt: String)
+
+/**
+ * 보드 안 부모 메시지 저장소 (DEV-09, SQLite messages / play_logs).
+ * 시연 4개 상황(3·4·10·11) 중 메시지가 없는 상황에만 시연용 메시지를 넣는다(11/5, 앱 켤 때마다 확인).
+ * 서버에서 같은 상황 메시지가 오면 대체된다.
+ */
+class MessageStore(private val db: OngiDb) {
+
+    /** 서버 시각 - 보드 시각(초). 보드는 인터넷이 없어 시계가 틀릴 수 있어서, 동기화 때 서버 시각으로 맞춘다 */
+    @Volatile var clockOffsetSec: Long = db.getState("clock_offset_sec")?.toLongOrNull() ?: 0L
+        set(v) { field = v; db.setState("clock_offset_sec", v.toString()) }
+
+    /** 서버 기준 지금 시각 (공통지침 4-6 형식 2026-11-02T20:15:00) */
+    fun nowText(): String =
+        LocalDateTime.now().plusSeconds(clockOffsetSec).withNano(0).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+
+    init { seedDemoIfEmpty() }
+
+    /** 그 상황의 메시지 (상황과 메시지는 1:1, 여러 개면 가장 최근 것) */
+    @Synchronized
+    fun find(situationId: Int): ParentMessage? =
+        db.readableDatabase.rawQuery(
+            "SELECT * FROM messages WHERE situation_id = ? ORDER BY demo ASC, updated_at DESC LIMIT 1",
+            arrayOf(situationId.toString()),
+        ).use { c -> if (c.moveToFirst()) c.toMessage() else null }
+
+    @Synchronized
+    fun all(): List<ParentMessage> =
+        db.readableDatabase.rawQuery("SELECT * FROM messages ORDER BY situation_id", null).use { c ->
+            buildList { while (c.moveToNext()) add(c.toMessage()) }
+        }
+
+    /** 서버 메시지 저장(있으면 덮어씀). 같은 상황의 시연용·옛 메시지는 지운다 */
+    @Synchronized
+    fun upsert(m: ParentMessage) {
+        val w = db.writableDatabase
+        w.beginTransaction()
+        try {
+            w.delete("messages", "situation_id = ? AND id != ?", arrayOf(m.situationId.toString(), m.id.toString()))
+            w.insertWithOnConflict("messages", null, ContentValues().apply {
+                put("id", m.id); put("situation_id", m.situationId); put("author", m.author)
+                put("kind", m.kind); put("text", m.text); put("audio_path", m.audioPath)
+                put("updated_at", m.updatedAt); put("demo", 0)
+            }, android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE)
+            w.setTransactionSuccessful()
+        } finally {
+            w.endTransaction()
+        }
+    }
+
+    /**
+     * 녹음 메시지의 받아쓴 글 저장 (11/9, 재생 화면에 글로 보여 주기).
+     * updated_at은 바꾸지 않는다(동기화 기준). 서버에서 같은 메시지가 바뀌어 오면 upsert가 text를 null로 덮어 다시 받아쓴다
+     */
+    @Synchronized
+    fun setTranscript(id: Int, text: String) {
+        db.writableDatabase.update("messages", ContentValues().apply { put("text", text) },
+            "id = ? AND kind = 'voice'", arrayOf(id.toString()))
+    }
+
+    /** 서버에서 삭제된 메시지 → 보드에서도 지우고 녹음 파일도 지움 */
+    @Synchronized
+    fun delete(id: Int) {
+        db.readableDatabase.rawQuery("SELECT audio_path FROM messages WHERE id = ?", arrayOf(id.toString())).use { c ->
+            if (c.moveToFirst()) c.getString(0)?.let { File(it).delete() }
+        }
+        db.writableDatabase.delete("messages", "id = ?", arrayOf(id.toString()))
+    }
+
+    // ---- 재생 기록 ----
+
+    @Synchronized
+    fun addPlayLog(messageId: Int): PlayLog {
+        val at = nowText()
+        val id = db.writableDatabase.insert("play_logs", null, ContentValues().apply {
+            put("message_id", messageId); put("played_at", at); put("reported", 0)
+        })
+        return PlayLog(id, messageId, at)
+    }
+
+    @Synchronized
+    fun unreportedPlayLogs(): List<PlayLog> =
+        db.readableDatabase.rawQuery("SELECT id, message_id, played_at FROM play_logs WHERE reported = 0 ORDER BY id", null).use { c ->
+            buildList { while (c.moveToNext()) add(PlayLog(c.getLong(0), c.getInt(1), c.getString(2))) }
+        }
+
+    @Synchronized
+    fun markReported(logId: Long) {
+        db.writableDatabase.update("play_logs", ContentValues().apply { put("reported", 1) }, "id = ?", arrayOf(logId.toString()))
+    }
+
+    @Synchronized
+    fun playLogCount(): Int =
+        db.readableDatabase.rawQuery("SELECT COUNT(*) FROM play_logs", null).use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
+
+    private fun seedDemoIfEmpty() {
+        // 11/7: 서버와 한 번이라도 동기화했으면 시연용 메시지를 다시 채우지 않음
+        // (부모가 앱에서 지운 상황이 앱을 다시 켤 때 시연용으로 되살아나 재생되는 것을 막음)
+        if (db.getState("since") != null) return
+        val demo = listOf(
+            ParentMessage(4, 3, "mom", "text", "민준아, 시험 때문에 속상하구나. 엄마도 3학년 때 받아쓰기에서 빵점을 받고, 집에 오는 길 내내 울었어. 그때 외할머니가 \"틀린 건 다음에 맞히면 돼\" 하셨는데, 그 말이 아직도 생각나. 엄마는 점수보다 끝까지 해 본 민준이가 더 자랑스러워."),
+            ParentMessage(1, 4, "mom", "voice", null),
+            ParentMessage(2, 10, "mom", "voice", null),
+            ParentMessage(3, 11, "dad", "text", "민준아, 상 받은 거 정말 축하해! 일곱 살 때 자전거를 배우면서 열 번도 넘게 넘어지고도, 울면서 다시 페달을 밟던 네 모습이 아빠는 아직도 생생해. 이 상도 그렇게 포기하지 않은 민준이가 만든 거야. 곁에서 안아 주지는 못해도, 아빠는 민준이가 정말 자랑스러워."),
+        )
+        val w = db.writableDatabase
+        for (m in demo) {
+            val has = db.readableDatabase.rawQuery(
+                "SELECT COUNT(*) FROM messages WHERE situation_id = ? OR id = ?",
+                arrayOf(m.situationId.toString(), m.id.toString()),
+            ).use { c -> c.moveToFirst() && c.getInt(0) > 0 }
+            if (has) continue
+            w.insert("messages", null, ContentValues().apply {
+            put("id", m.id); put("situation_id", m.situationId); put("author", m.author)
+            put("kind", m.kind); put("text", m.text); put("demo", 1)
+            })
+        }
+    }
+
+    private fun Cursor.toMessage() = ParentMessage(
+        id = getInt(getColumnIndexOrThrow("id")),
+        situationId = getInt(getColumnIndexOrThrow("situation_id")),
+        author = getString(getColumnIndexOrThrow("author")),
+        kind = getString(getColumnIndexOrThrow("kind")),
+        text = getString(getColumnIndexOrThrow("text")),
+        audioPath = getString(getColumnIndexOrThrow("audio_path")),
+        updatedAt = getString(getColumnIndexOrThrow("updated_at")),
+    )
+}

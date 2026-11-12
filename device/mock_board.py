@@ -36,8 +36,11 @@ PORT = 8765
 
 # 시연용 고정 데이터 (공통지침 규칙 7)
 MESSAGES = {
-    4: {"message_id": 1, "author": "mom", "kind": "voice", "text": None, "seconds": 6},
-    10: {"message_id": 2, "author": "mom", "kind": "voice", "text": None, "seconds": 6},
+    # 11/9: voice의 text = 진짜 보드가 녹음을 받아쓴 글(신호 규격서 v1.1 AB-06). 앱 화면 시험용
+    4: {"message_id": 1, "author": "mom", "kind": "voice", "seconds": 6,
+        "text": "민준아 친구랑 싸워서 마음이 많이 상했지 엄마도 어릴 때 단짝이랑 일주일이나 말을 안 한 적이 있어 엄마는 언제나 민준이 편이야"},
+    10: {"message_id": 2, "author": "mom", "kind": "voice", "seconds": 6,
+         "text": "민준아 엄마가 보고 싶을 땐 우리 노란 담요를 꼭 안아 엄마는 곁에 없어도 늘 민준이를 생각하고 있어 사랑해 우리 아들"},
     11: {"message_id": 3, "author": "dad", "kind": "text",
          "text": "민준아, 상 받은 거 정말 축하해. 아빠는 네가 노력한 게 제일 자랑스러워.", "seconds": 6},
 }
