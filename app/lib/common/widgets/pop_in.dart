@@ -66,3 +66,45 @@ class PopIn extends StatelessWidget {
     );
   }
 }
+
+/// 아래에서 살짝(12px) 떠오르며 나타난다. [delay]로 여러 줄을 차례로 띄운다.
+class RiseIn extends StatelessWidget {
+  const RiseIn({
+    super.key,
+    required this.child,
+    this.delay = Duration.zero,
+    this.duration = AppMotion.normal,
+    this.distance = 12,
+  });
+
+  final Widget child;
+  final Duration delay;
+  final Duration duration;
+  final double distance;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return child;
+    final total = delay + duration;
+    final start = total.inMicroseconds == 0
+        ? 0.0
+        : delay.inMicroseconds / total.inMicroseconds;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: total,
+      builder: (context, t, child) {
+        final p = AppMotion.enterCurve.transform(
+          start >= 1 ? 1 : ((t - start) / (1 - start)).clamp(0.0, 1.0),
+        );
+        return Opacity(
+          opacity: p,
+          child: Transform.translate(
+            offset: Offset(0, distance * (1 - p)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}

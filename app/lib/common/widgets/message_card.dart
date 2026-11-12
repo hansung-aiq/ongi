@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app_colors.dart';
+import '../app_motion.dart';
 import '../app_spacing.dart';
 import '../app_text_styles.dart';
 import 'ongi_card.dart';
@@ -127,9 +128,26 @@ class MessageCard extends StatelessWidget {
                     OngiChip(label: typeLabel, icon: typeIcon),
                     if (statusLabel != null) ...[
                       const SizedBox(width: AppSpacing.s8),
-                      Opacity(
-                        opacity: statusMuted ? AppSizes.disabledOpacity : 1,
-                        child: OngiChip(label: statusLabel!),
+
+                      /// '전달 대기' → '전달됨'으로 바뀌면 칩이 작게 시작해 진해지며 바뀐다
+                      AnimatedSwitcher(
+                        duration: AppMotion.normal,
+                        switchInCurve: AppMotion.popCurve,
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: ScaleTransition(
+                            scale: Tween(
+                              begin: 0.8,
+                              end: 1.0,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        ),
+                        child: Opacity(
+                          key: ValueKey(statusLabel),
+                          opacity: statusMuted ? AppSizes.disabledOpacity : 1,
+                          child: OngiChip(label: statusLabel!),
+                        ),
                       ),
                     ],
                   ],
