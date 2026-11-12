@@ -204,6 +204,7 @@ class _ChildScreenState extends State<ChildScreen> {
       signal: signal,
       parentPhoto: _profile.photoFor(author),
       onStop: () => _confirmStopPlaying(author),
+      childNickname: _profile.nickname,
     ),
     NotFoundSignal(:final text) => ChildNoMessageScreen(
       text: text,

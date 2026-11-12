@@ -14,7 +14,11 @@ class TypingText extends StatelessWidget {
     this.perChar = const Duration(milliseconds: 60),
     this.maxDuration = const Duration(milliseconds: 1800),
     this.delay = Duration.zero,
+    this.strutStyle,
   });
+
+  /// 편지지 가로줄과 맞추려고 줄 높이를 고정할 때 쓴다
+  final StrutStyle? strutStyle;
 
   final String text;
   final TextStyle style;
@@ -35,7 +39,12 @@ class TypingText extends StatelessWidget {
     final chars = full.characters;
     final length = chars.length;
     if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
-      return Text(full, textAlign: textAlign, style: style);
+      return Text(
+        full,
+        textAlign: textAlign,
+        style: style,
+        strutStyle: strutStyle,
+      );
     }
     final typing = perChar * length;
     final total = delay + (typing > maxDuration ? maxDuration : typing);
@@ -63,6 +72,7 @@ class TypingText extends StatelessWidget {
           ),
           textAlign: textAlign,
           style: style,
+          strutStyle: strutStyle,
         );
       },
     );

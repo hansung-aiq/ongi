@@ -11,6 +11,7 @@ export 'widgets/error_notice.dart';
 export 'widgets/goal_progress_card.dart';
 export 'widgets/hint_row.dart';
 export 'widgets/labeled_field.dart';
+export 'widgets/letter_paper.dart';
 export 'widgets/message_card.dart';
 export 'widgets/mic_halo.dart';
 export 'widgets/onboarding_scaffold.dart';
