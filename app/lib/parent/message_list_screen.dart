@@ -1,0 +1,235 @@
+import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../api/message_playback.dart';
+import '../api/server_models.dart';
+import '../common/common.dart';
+import 'message_detail_sheet.dart';
+import 'message_menu_sheet.dart';
+import 'parent_store.dart';
+import 'situation_info.dart';
+
+/// 3-2 메시지 전체, 3-3 분류별 메시지.
+/// [category]가 null이면 저장한 메시지만, 아니면 그 분류의 상황을 모두 보여 준다.
+/// 카드를 누르면 자세히 보기(글 전체, 녹음 다시 듣기)를,
+/// 카드의 … 버튼을 누르면 6-2 수정·삭제 메뉴를 띄운다.
+class MessageListScreen extends StatefulWidget {
+  const MessageListScreen({
+    super.key,
+    required this.store,
+    required this.category,
+    required this.onCategoryChanged,
+    required this.onWrite,
+    required this.onEdit,
+    required this.onDelete,
+    required this.playback,
+  });
+
+  final ParentStore store;
+  final String? category;
+  final ValueChanged<String?> onCategoryChanged;
+  final ValueChanged<Situation> onWrite;
+
+  /// 6-2 수정하기
+  final void Function(ParentMessage message, Situation situation) onEdit;
+
+  /// 6-2 삭제하기
+  final ValueChanged<ParentMessage> onDelete;
+
+  /// 녹음 메시지 다시 듣기
+  final MessagePlayback playback;
+
+  @override
+  State<MessageListScreen> createState() => _MessageListScreenState();
+}
+
+class _MessageListScreenState extends State<MessageListScreen> {
+  /// 메뉴를 연 메시지. 메뉴가 열려 있는 동안 카드를 붉게 표시한다.
+  int? _menuFor;
+
+  ParentStore get store => widget.store;
+  String? get category => widget.category;
+
+  Future<void> _openMenu(ParentMessage m, Situation s) async {
+    setState(() => _menuFor = m.id);
+    final action = await showMessageMenu(context, title: s.name);
+    if (!mounted) return;
+    setState(() => _menuFor = null);
+    _handle(action, m, s);
+  }
+
+  /// 카드를 누르면 메시지 전체를 보여 준다. 거기서 수정·삭제도 할 수 있다.
+  Future<void> _openDetail(ParentMessage m, Situation s) async {
+    widget.playback.stop();
+    final action = await showMessageDetailSheet(
+      context,
+      message: m,
+      title: s.name,
+      category: categoryLabel(s.category),
+      date: _date(m.createdAt),
+      playback: widget.playback,
+      audioUrl: store.client.audioUrl(m.id),
+    );
+    if (!mounted) return;
+    _handle(action, m, s);
+  }
+
+  void _handle(MessageMenuAction? action, ParentMessage m, Situation s) {
+    switch (action) {
+      case MessageMenuAction.edit:
+        widget.playback.stop();
+        widget.onEdit(m, s);
+      case MessageMenuAction.delete:
+        widget.playback.stop();
+        widget.onDelete(m);
+      case null:
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.playback,
+      builder: (context, _) => _list(),
+    );
+  }
+
+  Widget _list() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.screenHorizontal,
+            AppSpacing.s8,
+            AppSpacing.screenHorizontal,
+            0,
+          ),
+          child: TopNavBar(title: '메시지'),
+        ),
+        const SizedBox(height: AppSpacing.s24),
+        _filters(),
+        Expanded(
+          child: RefreshIndicator(
+            color: AppColors.accent,
+            onRefresh: store.refresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenHorizontal,
+                AppSpacing.s24,
+                AppSpacing.screenHorizontal,
+                AppSpacing.s24,
+              ),
+              children: [
+                ...category == null ? _allCards() : _categoryCards(category!),
+                const SizedBox(height: AppSpacing.s12),
+                Text(
+                  '상황마다 하나의 메시지가 ${store.profile.nickname}를 기다리고 있어요.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.caption12.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _filters() {
+    return SizedBox(
+      height: AppSizes.chipHeight,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenHorizontal,
+        ),
+        children: [
+          OngiChip(
+            label: '전체 ${store.messages.length}',
+            selected: category == null,
+            onTap: () => widget.onCategoryChanged(null),
+          ),
+          for (final c in store.categories) ...[
+            const SizedBox(width: AppSpacing.s8),
+            OngiChip(
+              label:
+                  '${categoryLabel(c)} ${store.savedIn(c)}/${store.situationsIn(c).length}',
+              selected: category == c,
+              onTap: () => widget.onCategoryChanged(c),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _allCards() {
+    if (store.messages.isEmpty) {
+      return [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s24),
+          child: Text(
+            '아직 남긴 메시지가 없어요.\n분류를 골라 첫 메시지를 남겨 보세요.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.body14.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ];
+    }
+    return [
+      for (final m in store.messages)
+        _spaced(_messageCard(m, store.situation(m.situationId), full: true)),
+    ];
+  }
+
+  List<Widget> _categoryCards(String category) {
+    return [
+      for (final s in store.situationsIn(category))
+        _spaced(switch (store.messageFor(s.id)) {
+          final m? => _messageCard(m, s, full: false),
+          null => EmptySituationCard(
+            title: s.name,
+            onTap: () => widget.onWrite(s),
+          ),
+        }),
+    ];
+  }
+
+  Widget _spaced(Widget card) => Padding(
+    padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+    child: card,
+  );
+
+  /// [full]이면 3-2 모양(분류 표시), 아니면 3-3 모양.
+  Widget _messageCard(ParentMessage m, Situation? s, {required bool full}) {
+    return MessageCard(
+      title: s?.name ?? '상황 ${m.situationId}',
+      category: full && s != null ? categoryLabel(s.category) : null,
+      body: m.text,
+      typeLabel: m.isVoice ? '음성' : '텍스트',
+      typeIcon: m.isVoice ? LucideIcons.mic : LucideIcons.type,
+      statusLabel: m.delivered ? '전달됨' : '전달 대기',
+      statusMuted: !m.delivered,
+      date: _date(m.createdAt),
+      highlighted: _menuFor == m.id,
+      onTap: s == null ? null : () => _openDetail(m, s),
+      onMore: s == null ? null : () => _openMenu(m, s),
+      onPlay: m.isVoice
+          ? () => widget.playback.toggle(m.id, store.client.audioUrl(m.id))
+          : null,
+      playing: widget.playback.isPlaying(m.id),
+    );
+  }
+
+  static String _date(DateTime d) =>
+      '${d.year}.${_two(d.month)}.${_two(d.day)}';
+
+  static String _two(int n) => n.toString().padLeft(2, '0');
+}
