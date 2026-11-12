@@ -24,6 +24,8 @@ export 'widgets/ongi_segmented_tabs.dart';
 export 'widgets/ongi_snack_bar.dart';
 export 'widgets/ongi_text_field.dart';
 export 'widgets/page_heading.dart';
+export 'widgets/pop_in.dart';
+export 'widgets/press_scale.dart';
 export 'widgets/profile_avatar.dart';
 export 'widgets/round_icon_button.dart';
 export 'widgets/selection_card.dart';

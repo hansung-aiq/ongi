@@ -56,6 +56,8 @@ class ChildEmpathyScreen extends StatelessWidget {
 }
 
 /// 5-5 부모 메시지 재생.
+/// 끝까지 들어야 재생 기록(온기기록)이 남으므로, 실수로 멈추지 않게 X는 숨기고
+/// '그만 들을래'와 뒤로 가기는 확인 창을 거친다(확인 창은 [ChildScreen]이 띄운다).
 class ChildPlayingScreen extends StatelessWidget {
   const ChildPlayingScreen({
     super.key,
@@ -78,8 +80,17 @@ class ChildPlayingScreen extends StatelessWidget {
     final text = (signal.text?.trim().isEmpty ?? true) ? null : signal.text;
     return _ResponseLayout(
       navTitle: '$title의 메시지',
-      picture: ProfileAvatar(size: 96, imagePath: parentPhoto),
+
+      /// 온기 로고가 있던 자리에 부모 사진이 커지며 나타난다(목소리 주인이 바뀌는 순간)
+      picture: PopIn(
+        from: 0.85,
+        curve: AppMotion.enterCurve,
+        child: ProfileAvatar(size: 96, imagePath: parentPhoto),
+      ),
       name: title,
+
+      /// 재생 중에는 X를 숨긴다. '그만 들을래'는 한 번 더 묻는다([onStop]이 확인 창을 띄움).
+      showClose: false,
       onStop: onStop,
       children: [
         const SizedBox(height: AppSpacing.s16),
@@ -259,7 +270,11 @@ class _ResponseLayout extends StatelessWidget {
     required this.name,
     required this.onStop,
     required this.children,
+    this.showClose = true,
   });
+
+  /// 위쪽 X. 재생 중(5-5)에는 숨긴다.
+  final bool showClose;
 
   final String navTitle;
   final Widget picture;
@@ -281,7 +296,7 @@ class _ResponseLayout extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TopNavBar(title: navTitle, onClose: onStop),
+              TopNavBar(title: navTitle, onClose: showClose ? onStop : null),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.only(

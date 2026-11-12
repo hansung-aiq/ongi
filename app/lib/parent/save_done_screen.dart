@@ -49,7 +49,10 @@ class SaveDoneScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Center(child: OngiLogo(size: 96)),
+                      /// 로고가 살짝 튕기며 나타나고 뒤에서 따뜻한 원이 한 번 퍼진다
+                      const Center(
+                        child: PopIn(ring: true, child: OngiLogo(size: 96)),
+                      ),
                       const SizedBox(height: AppSpacing.section),
                       Text(
                         '메시지를 남겼어요',
@@ -65,7 +68,16 @@ class SaveDoneScreen extends StatelessWidget {
                         style: AppTextStyles.body16.copyWith(color: secondary),
                       ),
                       const SizedBox(height: AppSpacing.section),
-                      ProgressCard(progress: store.progress),
+                      ProgressCard(
+                        progress: store.progress,
+
+                        /// 방금 저장해서 하나 늘었다 → 그 전 숫자부터 굴러간다(이미 목표를 넘었으면 그대로)
+                        from:
+                            store.messages.length <= ParentStore.goal &&
+                                store.progress > 0
+                            ? store.progress - 1
+                            : null,
+                      ),
                       const SizedBox(height: AppSpacing.section),
                       Text(
                         '$nickname를 위한 온기가 차곡차곡 쌓이고 있어요.',

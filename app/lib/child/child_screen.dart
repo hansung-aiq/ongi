@@ -85,6 +85,10 @@ class _ChildScreenState extends State<ChildScreen> {
     final idle = _isIdle(signal);
     if (!idle && _wasIdle) _playback.stop();
     if (signal is PlayingSignal) _lastPlayed = signal;
+    if (_askingStop && signal is! PlayingSignal && mounted) {
+      /// 묻는 사이 재생이 끝났다 → 확인 창만 닫는다(멈춤은 보내지 않음)
+      Navigator.of(context, rootNavigator: true).pop(false);
+    }
     if (idle && !_wasIdle) {
       _heard.load();
       _syncName();
@@ -102,6 +106,49 @@ class _ChildScreenState extends State<ChildScreen> {
 
   /// 이번 이야기에서 재생한 부모 메시지. 홈으로 돌아올 때 온기기록 안내에 쓴다.
   PlayingSignal? _lastPlayed;
+
+  /// 재생 중 멈춤 확인 창이 떠 있는지. 그사이 재생이 끝나면 창을 저절로 닫는다.
+  bool _askingStop = false;
+
+  /// 5-5 재생 중 '그만 들을래'·뒤로 가기: 끝까지 들어야 온기기록에 남으니 한 번 더 묻는다.
+  Future<void> _confirmStopPlaying(String author) async {
+    if (_askingStop) return;
+    _askingStop = true;
+    final title = AppConfig.parentTitle(author);
+    final stop = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.bgBase,
+        title: Text('$title 메시지를 그만 들을까?', style: AppTextStyles.subtitle18),
+        content: Text(
+          '끝까지 들어야 온기기록에 담겨.',
+          style: AppTextStyles.body14.copyWith(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              '계속 들을래',
+              style: AppTextStyles.label16.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              '그만 들을래',
+              style: AppTextStyles.label16.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    _askingStop = false;
+    if (stop == true && _session.signal is PlayingSignal) _session.stop();
+  }
 
   /// 녹음을 재생하지 못하면 아래에 안내를 띄운다. 같은 실패는 한 번만 알린다.
   /// 들은 메시지 창이 열려 있으면 창 안에서 알려 주므로 여기서는 띄우지 않는다.
@@ -156,7 +203,7 @@ class _ChildScreenState extends State<ChildScreen> {
     PlayingSignal(:final author) => ChildPlayingScreen(
       signal: signal,
       parentPhoto: _profile.photoFor(author),
-      onStop: _session.stop,
+      onStop: () => _confirmStopPlaying(author),
     ),
     NotFoundSignal(:final text) => ChildNoMessageScreen(
       text: text,
@@ -244,13 +291,16 @@ class _ChildScreenState extends State<ChildScreen> {
       builder: (context, _) {
         final idle = _isIdle(_session.signal);
 
-        /// 안드로이드 뒤로 가기: 이야기 중이면 그만하기(stop), 다른 탭이면 홈 탭으로.
+        /// 안드로이드 뒤로 가기: 이야기 중이면 그만하기(stop, 재생 중이면 한 번 더 묻기), 다른 탭이면 홈 탭으로.
         /// 홈 탭에서만 화면을 닫는다.
         return PopScope(
           canPop: idle && _tab == 0,
           onPopInvokedWithResult: (didPop, _) {
             if (didPop) return;
-            if (!idle) {
+            final signal = _session.signal;
+            if (signal is PlayingSignal) {
+              _confirmStopPlaying(signal.author);
+            } else if (!idle) {
               _session.stop();
             } else {
               _changeTab(0);

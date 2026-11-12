@@ -372,6 +372,86 @@ void main() {
       expect(board.sent, ['stop', 'stop', 'stop']);
     });
 
+    testWidgets('재생 중에는 X가 없고, 그만 들을래는 한 번 더 묻는다', (tester) async {
+      final board = await _openChild(tester);
+      final dialogStop = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('그만 들을래'),
+      );
+
+      board.send({
+        'type': 'playing',
+        'situation_id': 4,
+        'message_id': 7,
+        'author': 'dad',
+        'kind': 'text',
+        'text': '민준아, 속상했겠다.',
+      });
+      await _settle(tester);
+      expect(find.byTooltip('닫기'), findsNothing);
+
+      /// 계속 들을래 → 멈추지 않는다
+      await tester.tap(find.text('그만 들을래'));
+      await _settle(tester);
+      expect(find.text('아빠 메시지를 그만 들을까?'), findsOneWidget);
+      await tester.tap(find.text('계속 들을래'));
+      await _settle(tester);
+      expect(board.sent, isEmpty);
+      expect(find.byType(AlertDialog), findsNothing);
+
+      /// 뒤로 가기도 같은 확인 창 → 그만 들을래 → stop
+      await tester.binding.handlePopRoute();
+      await _settle(tester);
+      expect(find.text('아빠 메시지를 그만 들을까?'), findsOneWidget);
+      await tester.tap(dialogStop);
+      await _settle(tester);
+      expect(board.sent, ['stop']);
+    });
+
+    testWidgets('확인 창이 떠 있는 사이 재생이 끝나면 창만 닫힌다', (tester) async {
+      final board = await _openChild(tester);
+
+      board.send({
+        'type': 'playing',
+        'situation_id': 4,
+        'message_id': 7,
+        'author': 'mom',
+        'kind': 'text',
+        'text': '괜찮아',
+      });
+      await _settle(tester);
+      await tester.tap(find.text('그만 들을래'));
+      await _settle(tester);
+      expect(find.text('엄마 메시지를 그만 들을까?'), findsOneWidget);
+
+      board.send({'type': 'idle'});
+      await _settle(tester);
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(board.sent, isEmpty);
+      expect(find.text('온기에게 말하기'), findsOneWidget);
+    });
+
+    testWidgets('생각하는 중은 판단이 빨라도 0.8초는 보인다', (tester) async {
+      final board = await _openChild(tester);
+
+      board.send({'type': 'thinking', 'text': '오늘 친구랑 싸웠어'});
+      board.send({
+        'type': 'empathy',
+        'text': '속상했구나',
+        'has_message': false,
+        'author': null,
+      });
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('생각하는 중...'), findsOneWidget);
+      expect(find.text(keepWords('속상했구나')), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 400));
+      await _settle(tester);
+      expect(find.text(keepWords('속상했구나')), findsOneWidget);
+      expect(find.text('생각하는 중...'), findsNothing);
+    });
+
     testWidgets('오류 신호는 안내를 띄우고 다음 말하기에서 지운다', (tester) async {
       final board = await _openChild(tester);
 
