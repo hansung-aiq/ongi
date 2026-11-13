@@ -12,6 +12,14 @@ class AppColors {
   static const textOnDarkSecondary = Color(0xFFD7CBBE);
 
   static const line = Color(0xFFEADFCF);
+
+  /// 편지지(5-5 재생, 3-4 작성, 5-7 온기기록). 바탕보다 아주 조금 따뜻한 종이색과 옅은 줄
+  static const paper = Color(0xFFFFFBF2);
+  static const paperRule = Color(0xFFF1E6D3);
+
+  /// 우표처럼 보이는 상황 이름 칩
+  static const stampBg = Color(0xFFFFF3E0);
+  static const stampText = Color(0xFF9A5B12);
   static const accent = Color(0xFFF5A623);
 
   static const error = Color(0xFFC8442E);

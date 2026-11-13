@@ -44,7 +44,11 @@ class RecentMessageCard extends StatelessWidget {
     this.showPlay = false,
     this.maxLines,
     this.onTap,
+    this.letter = false,
   });
+
+  /// 5-7 온기기록: 받은 편지처럼 종이색 바탕, 작은 편지 아이콘, 받은 날 위 점선.
+  final bool letter;
 
   final RecentMessage message;
 
@@ -72,6 +76,7 @@ class RecentMessageCard extends StatelessWidget {
     final text = message.text;
     return OngiCard(
       onTap: onTap,
+      color: letter ? AppColors.paper : AppColors.surface,
       borderColor: highlighted ? AppColors.textPrimary : AppColors.line,
       borderWidth: highlighted
           ? AppSizes.borderSelected
@@ -87,12 +92,24 @@ class RecentMessageCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      message.author,
-                      style: AppTextStyles.caption12.copyWith(
-                        color: secondary,
-                        height: 1.25,
-                      ),
+                    Row(
+                      children: [
+                        if (letter) ...[
+                          const Icon(
+                            LucideIcons.mail,
+                            size: 12,
+                            color: AppColors.stampText,
+                          ),
+                          const SizedBox(width: AppSpacing.s4),
+                        ],
+                        Text(
+                          message.author,
+                          style: AppTextStyles.caption12.copyWith(
+                            color: secondary,
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 3),
                     Text(message.situation, style: AppTextStyles.label16),
@@ -119,6 +136,10 @@ class RecentMessageCard extends StatelessWidget {
                 else
                   Waveform.small(animate: playing),
                 const SizedBox(height: AppSpacing.s12),
+                if (letter) ...[
+                  const DashedDivider(),
+                  const SizedBox(height: AppSpacing.s8),
+                ],
                 Text(
                   message.heardAt,
                   style: AppTextStyles.caption12.copyWith(color: secondary),

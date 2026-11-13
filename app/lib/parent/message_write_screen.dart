@@ -329,56 +329,73 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
     );
   }
 
-  /// 입력 중이면 가이드의 '입력창 선택됨'처럼 진한 1.5 테두리가 된다.
-  BoxDecoration _boxDecoration({required bool focused}) => BoxDecoration(
-    color: AppColors.surface,
-    borderRadius: BorderRadius.circular(AppRadius.card),
-    border: Border.all(
-      color: focused ? AppColors.textPrimary : AppColors.line,
-      width: focused ? AppSizes.borderSelected : AppSizes.borderDefault,
-    ),
-  );
+  /// 글 한 줄 높이(16 × 1.5). 편지지 가로줄 간격과 같다.
+  static const _lineHeight = 24.0;
 
+  /// 편지지 모양 입력칸: "민준이에게" → 글 → 글자 수 · "아빠가".
+  /// 입력 중이면 가이드의 '입력창 선택됨'처럼 진한 1.5 테두리가 된다.
   Widget _textBox() {
-    return Container(
+    final profile = widget.store.profile;
+    final focused = _focus.hasFocus;
+    return SizedBox(
       height: VoiceRecordPanel.height,
-      padding: const EdgeInsets.all(AppSpacing.s20),
-      decoration: _boxDecoration(focused: _focus.hasFocus),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focus,
-              enabled: !_saving,
-              expands: true,
-              maxLines: null,
-              textAlignVertical: TextAlignVertical.top,
-              keyboardType: TextInputType.multiline,
-              inputFormatters: [
-                LengthLimitingTextInputFormatter(MessageWriteScreen.maxLength),
-              ],
-              style: AppTextStyles.body16,
-              decoration: InputDecoration.collapsed(
-                hintText:
-                    '${widget.store.profile.nickname}에게 전하고 싶은 마음을 적어 주세요.',
-                hintStyle: AppTextStyles.body16.copyWith(
-                  color: AppColors.textSecondary,
+      child: LetterPaper(
+        lineHeight: _lineHeight,
+
+        /// 글자 수·서명 줄(8 + 18)에는 줄을 긋지 않는다
+        ruleBottom: 26,
+        borderColor: focused ? AppColors.textPrimary : AppColors.line,
+        borderWidth: focused ? AppSizes.borderSelected : AppSizes.borderDefault,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: _lineHeight,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: LetterTo('${profile.nickname}에게'),
+              ),
+            ),
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                focusNode: _focus,
+                enabled: !_saving,
+                expands: true,
+                maxLines: null,
+                textAlignVertical: TextAlignVertical.top,
+                keyboardType: TextInputType.multiline,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(
+                    MessageWriteScreen.maxLength,
+                  ),
+                ],
+                style: AppTextStyles.body16,
+                strutStyle: LetterPaper.strut(AppTextStyles.body16),
+                decoration: InputDecoration.collapsed(
+                  hintText: '${profile.nickname}에게 전하고 싶은 마음을 적어 주세요.',
+                  hintStyle: AppTextStyles.body16.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(
-            '${_controller.text.characters.length}/${MessageWriteScreen.maxLength}자',
-            textAlign: TextAlign.right,
-            style: AppTextStyles.caption12.copyWith(
-              color: AppColors.textSecondary,
-              height: 1.25,
+            const SizedBox(height: AppSpacing.s8),
+            Row(
+              children: [
+                Text(
+                  '${_controller.text.characters.length}/${MessageWriteScreen.maxLength}자',
+                  style: AppTextStyles.caption12.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.25,
+                  ),
+                ),
+                const Spacer(),
+                LetterFrom('${profile.title}가'),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
