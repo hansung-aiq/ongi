@@ -32,6 +32,15 @@ class GenieLlm(private val log: (String) -> Unit) : AutoCloseable {
                     log("LLM: 설정 파일을 읽을 수 없음 → 가짜 LLM 사용 ($configPath)")
                     return@execute
                 }
+                // 11/14: 양자화 모델(QNN 2.40)은 NPU 쪽 파일(libQnnHtpV68Skel.so)도 같은 버전이어야 함
+                //  → 모델 폴더를 ADSP_LIBRARY_PATH 맨 앞에 둔다(LlmClient가 라이브러리를 읽기 전에)
+                File(configPath).parentFile?.absolutePath?.let { dir ->
+                    val v = listOf(dir, System.getenv("ADSP_LIBRARY_PATH") ?: "",
+                        "/vendor/lib/rfsa/adsp", "/vendor/dsp/cdsp", "/vendor/dsp", "/system/lib/rfsa/adsp", "/dsp")
+                        .filter { it.isNotBlank() }.distinct().joinToString(";")
+                    android.system.Os.setenv("ADSP_LIBRARY_PATH", v, true)
+                    log("LLM: ADSP_LIBRARY_PATH=$v")
+                }
                 val t0 = System.currentTimeMillis()
                 val c = LlmClient()
                 val rc = c.Init(configPath)
@@ -52,7 +61,7 @@ class GenieLlm(private val log: (String) -> Unit) : AutoCloseable {
     fun infer(text: String): String {
         val c = client
         check(ready && c != null) { "Genie 준비 안 됨" }
-        // context 128 토큰: 고정 29 + 출력 최대 30 → 아이 말 69토큰(약 98자)까지 안전. 넉넉히 60자로 자른다 (11/2 count_tokens.py)
+        // 예제 모델 context 128 / 우리 양자화 모델 1024. 아이 말은 60자로 자른다 (11/2 count_tokens.py)
         val query = text.trim().removeSuffix(".").removeSuffix("?").take(MAX_QUERY_CHARS)
         val prompt = Config.LLM_PROMPT_PREFIX + TEMPLATE_HEAD + query + TEMPLATE_TAIL
         val f: Future<String> = worker.submit<String> {
