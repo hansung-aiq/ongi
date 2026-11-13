@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../app_colors.dart';
 import '../app_spacing.dart';
 import '../app_text_styles.dart';
+import 'press_scale.dart';
 
 enum OngiButtonVariant { primary, secondary, onDark }
 
 /// 주 버튼과 보조 버튼. [onPressed]가 null이면 비활성으로 보인다.
+/// 누르면 0.97로 살짝 작아지고 가볍게 진동한다.
 class OngiButton extends StatelessWidget {
   const OngiButton({
     super.key,
@@ -82,7 +84,12 @@ class OngiButton extends StatelessWidget {
       width: double.infinity,
       height: AppSizes.buttonHeight,
       child: TextButton(
-        onPressed: onPressed,
+        onPressed: onPressed == null
+            ? null
+            : () {
+                tapHaptic();
+                onPressed!();
+              },
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith(_background),
           foregroundColor: WidgetStateProperty.resolveWith(_foreground),
@@ -106,6 +113,8 @@ class OngiButton extends StatelessWidget {
     if (variant == OngiButtonVariant.onDark && onPressed == null) {
       return Opacity(opacity: AppSizes.disabledOpacity, child: button);
     }
-    return button;
+
+    /// 누르는 동안 살짝 작아지고, 누르면 가볍게 진동한다
+    return PressScale(enabled: onPressed != null, child: button);
   }
 }

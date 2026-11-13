@@ -68,6 +68,7 @@ class OngiRecordScreen extends StatelessWidget {
                   RecentMessageCard(
                     message: card,
                     maxLines: 2,
+                    letter: true,
                     onTap: () => showHeardMessageSheet(
                       context,
                       message: card,

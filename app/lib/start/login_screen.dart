@@ -36,16 +36,24 @@ class LoginScreen extends StatelessWidget {
                 style: AppTextStyles.display40,
               ),
               const SizedBox(height: AppSpacing.s20),
-              Text(
-                '필요한 순간에 닿는\n가장 익숙한 목소리',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.body18,
+
+              /// 두 줄이 차례로 떠오른다
+              RiseIn(
+                delay: const Duration(milliseconds: 150),
+                child: Text(
+                  '필요한 순간에 닿는\n가장 익숙한 목소리',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body18,
+                ),
               ),
               const SizedBox(height: AppSpacing.s20),
-              Text(
-                '부모의 마음을 남기고, 아이의 오늘을 안아주세요.',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.body14.copyWith(color: secondary),
+              RiseIn(
+                delay: const Duration(milliseconds: 450),
+                child: Text(
+                  '부모의 마음을 남기고, 아이의 오늘을 안아주세요.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.body14.copyWith(color: secondary),
+                ),
               ),
               const Spacer(flex: 3),
               OngiButton(

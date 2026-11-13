@@ -56,15 +56,21 @@ class ChildEmpathyScreen extends StatelessWidget {
 }
 
 /// 5-5 부모 메시지 재생.
+/// 끝까지 들어야 재생 기록(온기기록)이 남으므로, 실수로 멈추지 않게 X는 숨기고
+/// '그만 들을래'와 뒤로 가기는 확인 창을 거친다(확인 창은 [ChildScreen]이 띄운다).
 class ChildPlayingScreen extends StatelessWidget {
   const ChildPlayingScreen({
     super.key,
     required this.signal,
     this.parentPhoto,
     required this.onStop,
+    this.childNickname,
   });
 
   final PlayingSignal signal;
+
+  /// 편지 머리에 쓰는 아이 이름("민준이"). 없으면 머리를 뺀다.
+  final String? childNickname;
 
   /// 메시지를 남긴 부모의 사진
   final String? parentPhoto;
@@ -78,19 +84,52 @@ class ChildPlayingScreen extends StatelessWidget {
     final text = (signal.text?.trim().isEmpty ?? true) ? null : signal.text;
     return _ResponseLayout(
       navTitle: '$title의 메시지',
-      picture: ProfileAvatar(size: 96, imagePath: parentPhoto),
+
+      /// 온기 로고가 있던 자리에 부모 사진이 커지며 나타난다(목소리 주인이 바뀌는 순간)
+      picture: PopIn(
+        from: 0.85,
+        curve: AppMotion.enterCurve,
+        child: ProfileAvatar(size: 96, imagePath: parentPhoto),
+      ),
       name: title,
+
+      /// 재생 중에는 X를 숨긴다. '그만 들을래'는 한 번 더 묻는다([onStop]이 확인 창을 띄움).
+      showClose: false,
       onStop: onStop,
       children: [
-        const SizedBox(height: AppSpacing.s16),
-        _Caption(situationNames[signal.situationId] ?? ''),
+        const SizedBox(height: AppSpacing.s12),
+
+        /// 상황 이름은 우표처럼
+        StampChip(situationNames[signal.situationId] ?? ''),
         const SizedBox(height: 10),
         const Waveform.small(),
         if (text != null) ...[
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-            child: _LetterText(text: text, seconds: signal.seconds),
+          const SizedBox(height: AppSpacing.s16),
+
+          /// 편지지: "민준이에게" → 글(한 글자씩) → "아빠가"
+          LetterPaper(
+            lineHeight: _LetterText.lineHeight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (childNickname != null)
+                  SizedBox(
+                    height: _LetterText.lineHeight,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: LetterTo('$childNickname에게'),
+                    ),
+                  ),
+                _LetterText(text: text, seconds: signal.seconds),
+                SizedBox(
+                  height: _LetterText.lineHeight,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: LetterFrom('$title가'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ],
@@ -149,7 +188,7 @@ class _Caption extends StatelessWidget {
   }
 }
 
-/// 5-5 메시지 글. 한 글자씩 타이핑되듯 나타난다.
+/// 5-5 메시지 글(편지지 안). 왼쪽 정렬로 한 글자씩 타이핑되듯 나타난다.
 /// 재생 길이([seconds])를 알면 소리에 맞춰 글자가 나오고 아래 얇은 진행 막대가 찬다.
 /// 길이를 모르면 보드 TTS 속도(1초에 약 10자)에 맞춰 95ms로 나온다. 아직 안 나온 글자는 투명하게 자리를 차지해 줄바꿈이 흔들리지 않는다.
 class _LetterText extends StatelessWidget {
@@ -158,14 +197,24 @@ class _LetterText extends StatelessWidget {
   final String text;
   final double? seconds;
 
+  /// 편지 글 한 줄 높이(18 × 1.5). 편지지 가로줄 간격과 같다.
+  static const lineHeight = 27.0;
+
+  static final _style = AppTextStyles.body18.copyWith(
+    color: AppColors.textPrimary,
+  );
+
   @override
   Widget build(BuildContext context) {
-    final style = AppTextStyles.body18.copyWith(color: AppColors.textSecondary);
+    final style = _style;
+    final strut = LetterPaper.strut(style);
     final sec = seconds;
     if (sec == null || sec <= 0) {
       return TypingText(
         text,
         style: style,
+        textAlign: TextAlign.start,
+        strutStyle: strut,
         delay: childTypingDelay,
         perChar: const Duration(milliseconds: 95),
         maxDuration: const Duration(seconds: 30),
@@ -175,7 +224,12 @@ class _LetterText extends StatelessWidget {
     final chars = full.characters;
     final length = chars.length;
     if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
-      return Text(full, textAlign: TextAlign.center, style: style);
+      return Text(
+        full,
+        textAlign: TextAlign.start,
+        style: style,
+        strutStyle: strut,
+      );
     }
     return TweenAnimationBuilder<double>(
       key: ValueKey(text),
@@ -185,6 +239,7 @@ class _LetterText extends StatelessWidget {
         /// 소리보다 조금 앞서(0.9 지점에서) 글이 다 나오게 한다.
         final shown = ((p / 0.9).clamp(0.0, 1.0) * length).round();
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text.rich(
               TextSpan(
@@ -196,19 +251,26 @@ class _LetterText extends StatelessWidget {
                   ),
                 ],
               ),
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.start,
               style: style,
+              strutStyle: strut,
             ),
-            const SizedBox(height: AppSpacing.s16),
+
+            /// 진행 막대도 편지지 한 줄 높이를 차지해 가로줄이 어긋나지 않는다
             SizedBox(
-              width: 160,
-              height: 3,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: LinearProgressIndicator(
-                  value: p,
-                  backgroundColor: AppColors.line,
-                  color: AppColors.accent,
+              height: lineHeight,
+              child: Center(
+                child: SizedBox(
+                  width: 160,
+                  height: 3,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: p,
+                      backgroundColor: AppColors.line,
+                      color: AppColors.accent,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -259,7 +321,11 @@ class _ResponseLayout extends StatelessWidget {
     required this.name,
     required this.onStop,
     required this.children,
+    this.showClose = true,
   });
+
+  /// 위쪽 X. 재생 중(5-5)에는 숨긴다.
+  final bool showClose;
 
   final String navTitle;
   final Widget picture;
@@ -281,7 +347,7 @@ class _ResponseLayout extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TopNavBar(title: navTitle, onClose: onStop),
+              TopNavBar(title: navTitle, onClose: showClose ? onStop : null),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.only(

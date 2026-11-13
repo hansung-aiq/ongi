@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../api/board_client.dart';
@@ -5,7 +7,11 @@ import '../api/board_signal.dart';
 
 /// 자녀 화면의 상태. 보드 신호대로 화면을 바꾼다.
 class ChildSession extends ChangeNotifier {
-  ChildSession({required Uri boardUrl, BoardConnector? connector}) {
+  ChildSession({
+    required Uri boardUrl,
+    BoardConnector? connector,
+    this.minThinking = const Duration(milliseconds: 800),
+  }) {
     _board = BoardClient(
       url: boardUrl,
       connector: connector,
@@ -16,6 +22,13 @@ class ChildSession extends ChangeNotifier {
   }
 
   late final BoardClient _board;
+
+  /// 5-3 생각하는 중을 적어도 이만큼 보여 준다. 판단이 빨라도 받아쓴 내 말을 읽을 시간.
+  final Duration minThinking;
+
+  /// 생각하는 중을 붙잡아 두는 동안 온 신호. 시간이 지나면 온 순서대로 반영한다.
+  Timer? _hold;
+  final _waiting = <BoardSignal>[];
 
   BoardConnection connection = BoardConnection.connecting;
 
@@ -35,11 +48,38 @@ class ChildSession extends ChangeNotifier {
 
   void _onConnection(BoardConnection value) {
     connection = value;
-    if (value != BoardConnection.connected) signal = const IdleSignal();
+    if (value != BoardConnection.connected) {
+      _release();
+      signal = const IdleSignal();
+    }
     notifyListeners();
   }
 
   void _onSignal(BoardSignal value) {
+    if (_hold != null) {
+      _waiting.add(value);
+      return;
+    }
+    _apply(value);
+    if (value is ThinkingSignal && minThinking > Duration.zero) {
+      _hold = Timer(minThinking, () {
+        _hold = null;
+        final waiting = List.of(_waiting);
+        _waiting.clear();
+        for (final s in waiting) {
+          _onSignal(s);
+        }
+      });
+    }
+  }
+
+  void _release() {
+    _hold?.cancel();
+    _hold = null;
+    _waiting.clear();
+  }
+
+  void _apply(BoardSignal value) {
     if (value is ErrorSignal) {
       notice = _noticeFor(value.code);
       signal = const IdleSignal();
@@ -55,6 +95,7 @@ class ChildSession extends ChangeNotifier {
 
   @override
   void dispose() {
+    _release();
     _board.dispose();
     super.dispose();
   }

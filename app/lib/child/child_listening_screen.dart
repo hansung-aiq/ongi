@@ -20,7 +20,8 @@ class ChildListeningScreen extends StatelessWidget {
     return _SpeakingLayout(
       onStop: onStop,
       center: [
-        const MicHalo(),
+        /// 숨 쉬듯 커졌다 작아지고 주황 원이 퍼진다
+        const MicHalo(breathe: true),
         const SizedBox(height: AppSpacing.s24),
         Text('듣고 있어', style: AppTextStyles.title28),
         const SizedBox(height: AppSpacing.s24),

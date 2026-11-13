@@ -34,7 +34,9 @@ class FirstMessageDoneScreen extends StatelessWidget {
         ],
         children: [
           const SizedBox(height: 58),
-          const Center(child: OngiLogo(size: 96)),
+
+          /// 로고가 살짝 튕기며 나타나고 뒤에서 따뜻한 원이 한 번 퍼진다
+          const Center(child: PopIn(ring: true, child: OngiLogo(size: 96))),
           const SizedBox(height: AppSpacing.s28),
           PageHeading(
             title: '첫 메시지를 남겼어요',
@@ -44,7 +46,12 @@ class FirstMessageDoneScreen extends StatelessWidget {
             centered: true,
           ),
           const SizedBox(height: AppSpacing.s28),
-          ProgressCard(progress: session.store.progress),
+          ProgressCard(
+            progress: session.store.progress,
+            from: session.store.progress > 0
+                ? session.store.progress - 1
+                : null,
+          ),
           const SizedBox(height: AppSpacing.s28),
           Text(
             '좋은 시작이에요. 하나씩 채워가세요.',

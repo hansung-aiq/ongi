@@ -14,6 +14,25 @@ class AppMotion {
   /// 나가는 쪽은 조금 더 빨리
   static const exit = Duration(milliseconds: 200);
 
+  /// 버튼 눌림
+  static const press = Duration(milliseconds: 120);
+
+  /// 저장 완료처럼 튕기며 등장
+  static const pop = Duration(milliseconds: 450);
+  static const popCurve = Curves.easeOutBack;
+
+  /// 퍼지는 원 한 번
+  static const ring = Duration(milliseconds: 900);
+
+  /// 듣는 중 마이크 숨쉬기 한 번(커졌다 작아지기 절반)
+  static const breath = Duration(milliseconds: 1800);
+
+  /// 진행 숫자·막대가 차오르는 시간
+  static const count = Duration(milliseconds: 700);
+
+  /// 5-3 생각하는 중을 적어도 이만큼은 보여 준다(받아쓴 말을 읽을 시간)
+  static const minThinking = Duration(milliseconds: 800);
+
   static const enterCurve = Curves.easeOutCubic;
   static const exitCurve = Curves.easeInCubic;
 

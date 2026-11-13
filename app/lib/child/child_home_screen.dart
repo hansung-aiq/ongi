@@ -123,22 +123,26 @@ class ChildHomeScreen extends StatelessWidget {
     return Column(
       children: [
         for (final card in cards) ...[
-          RecentMessageCard(
-            message: card,
-            maxLines: 2,
-            onTap: () => showHeardMessageSheet(
-              context,
+          /// 새로 들은 메시지 카드는 아래에서 떠오르며 들어온다
+          RiseIn(
+            key: ValueKey(card.messageId),
+            child: RecentMessageCard(
               message: card,
-              playback: playback,
-              audioUrl: heard.client.audioUrl(card.messageId!),
+              maxLines: 2,
+              onTap: () => showHeardMessageSheet(
+                context,
+                message: card,
+                playback: playback,
+                audioUrl: heard.client.audioUrl(card.messageId!),
+              ),
+              playing: playback.isPlaying(card.messageId!),
+              onPlay: card.isVoice
+                  ? () => playback.toggle(
+                      card.messageId!,
+                      heard.client.audioUrl(card.messageId!),
+                    )
+                  : null,
             ),
-            playing: playback.isPlaying(card.messageId!),
-            onPlay: card.isVoice
-                ? () => playback.toggle(
-                    card.messageId!,
-                    heard.client.audioUrl(card.messageId!),
-                  )
-                : null,
           ),
           const SizedBox(height: 14),
         ],
