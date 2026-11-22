@@ -292,7 +292,8 @@ class OngiFlow(
     /** 공감 한마디와 부모 메시지 사이 연결 문장 */
     private fun bridge(m: com.aiq.ongi.device.store.ParentMessage): String {
         val parent = if (m.author == "dad") "아빠" else "엄마"
-        val t = if (m.kind == "voice") Config.BRIDGE_VOICE else Config.BRIDGE_TEXT
+        // 11/22: 부모 목소리 파일이 있는 글 메시지도 '들려줄게'
+        val t = if (m.kind == "voice" || m.audioPath != null) Config.BRIDGE_VOICE else Config.BRIDGE_TEXT
         // 11/11: 받침 없는 이름은 '이'를 붙이지 않는다 (민준이한테 / 서아한테)
         return t.replace("{부모}", parent).replace("{이름}이", Config.childNameI()).replace("{이름}", Config.CHILD_NAME)
     }
@@ -384,6 +385,9 @@ class OngiFlow(
         when {
             m.kind == "voice" && m.audioPath != null && File(m.audioPath).exists() -> AudioPrep.decode(File(m.audioPath))
             m.kind == "voice" -> { log("부모 메시지 ${m.id}: 녹음 파일 없음(시연 메시지) → 소리 없이 진행"); null }
+            // 11/22: 글 메시지 + 부모 목소리 파일(서버 작업기가 만든 wav) → 그 파일로
+            m.kind == "text" && m.audioPath != null && File(m.audioPath).exists() ->
+                AudioPrep.fromWav(File(m.audioPath).readBytes()).also { log("부모 메시지 ${m.id}: 부모 목소리 파일로 재생") }
             !m.text.isNullOrBlank() -> ai.tts(m.text).takeIf { it.size > 44 }?.let { AudioPrep.fromWav(it) }
             else -> null
         }

@@ -183,6 +183,72 @@ class ServerClient {
     await _send(() => _client.delete(_uri('/families/$familyId/history')));
   }
 
+  /// 11/22 목소리 만들기에서 읽을 문장 5개
+  Future<List<String>> voiceSentences() async {
+    final json = await _send(() => _client.get(_uri('/voice-script')));
+    return _parse(() => [for (final s in json['sentences'] as List) s as String]);
+  }
+
+  /// 11/22 API-20 목소리 캐릭터 만들기. [audioPaths]는 문장 5개를 차례로 읽은 녹음(API-05 결과).
+  Future<VoiceCreated> createVoiceCharacter({
+    required int familyId,
+    required String author,
+    required String name,
+    required List<String> audioPaths,
+  }) async {
+    final json = await _send(
+      () => _client.post(
+        _uri('/voice-profiles'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'family_id': familyId,
+          'author': author,
+          'name': name,
+          'audio_paths': audioPaths,
+        }),
+      ),
+    );
+    return _parse(() => VoiceCreated.fromJson(json));
+  }
+
+  /// 11/22 이 작성자의 목소리 캐릭터. 없으면 null
+  Future<VoiceCharacter?> voiceCharacter(int familyId, String author) async {
+    final json = await _send(
+      () => _client.get(_uri('/voice-profiles', {'family_id': '$familyId'})),
+    );
+    return _parse(() {
+      for (final item in json['items'] as List) {
+        final c = VoiceCharacter.fromJson(item as Map<String, dynamic>);
+        if (c.author == author) return c;
+      }
+      return null;
+    });
+  }
+
+  /// 11/22 미리 듣기 만들기. 작업기가 만들면 [previewStatus]가 'ready'가 된다.
+  Future<int> createPreview({
+    required int familyId,
+    required String author,
+    required String text,
+  }) async {
+    final json = await _send(
+      () => _client.post(
+        _uri('/tts/previews'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({'family_id': familyId, 'author': author, 'text': text}),
+      ),
+    );
+    return json['id'] as int;
+  }
+
+  /// pending / ready / failed
+  Future<String> previewStatus(int previewId) async {
+    final json = await _send(() => _client.get(_uri('/tts/previews/$previewId')));
+    return json['status'] as String? ?? 'failed';
+  }
+
+  Uri previewAudioUrl(int previewId) => _uri('/tts/previews/$previewId/audio');
+
   /// 녹음 메시지의 소리 파일 주소 (API-12). 앱에서 다시 들을 때 쓴다.
   Uri audioUrl(int messageId) => _uri('/device/audio/$messageId');
 

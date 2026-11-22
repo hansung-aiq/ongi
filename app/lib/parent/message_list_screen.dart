@@ -213,7 +213,13 @@ class _MessageListScreenState extends State<MessageListScreen> {
       title: s?.name ?? '상황 ${m.situationId}',
       category: full && s != null ? categoryLabel(s.category) : null,
       body: m.text,
-      typeLabel: m.isVoice ? '음성' : '텍스트',
+      typeLabel: m.isVoice
+          ? '음성'
+          : switch (m.ttsStatus) {
+              'ready' => '텍스트 · 내 목소리',
+              'pending' => '텍스트 · 목소리 만드는 중',
+              _ => '텍스트',
+            },
       typeIcon: m.isVoice ? LucideIcons.mic : LucideIcons.type,
       statusLabel: m.delivered ? '전달됨' : '전달 대기',
       statusMuted: !m.delivered,

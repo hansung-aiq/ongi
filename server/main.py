@@ -3,6 +3,8 @@
 실행: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 확인: http://localhost:8000/docs
 """
+import json
+import os
 import re
 import uuid
 from datetime import datetime
@@ -10,7 +12,7 @@ from pathlib import Path
 from typing import Literal
 
 import pymysql
-from fastapi import Depends, FastAPI, File, Response, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -148,7 +150,7 @@ def update_family(family_id: int, body: FamilyUpdate, conn=Depends(get_db)):
 # 메시지 응답에 들어가는 칸. active_flag 는 DB 내부용이라 내보내지 않는다.
 MESSAGE_COLUMNS = (
     "id, family_id, situation_id, author, kind, text, audio_path, "
-    "delivered, created_at, updated_at, deleted"
+    "delivered, created_at, updated_at, deleted, tts_status"
 )
 
 
@@ -256,9 +258,10 @@ def create_message(body: MessageCreate, conn=Depends(get_db)):
         try:
             # created_at·updated_at·delivered(false)·deleted(false)는 DB 기본값으로 들어간다.
             cur.execute(
-                "INSERT INTO message (family_id, situation_id, author, kind, text, audio_path) "
-                "VALUES (%s, %s, %s, %s, %s, %s)",
-                (body.family_id, body.situation_id, body.author, body.kind, body.text, body.audio_path),
+                "INSERT INTO message (family_id, situation_id, author, kind, text, audio_path, tts_status) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (body.family_id, body.situation_id, body.author, body.kind, body.text, body.audio_path,
+                 tts_status_for(cur, body.family_id, body.author, body.kind)),
             )
         except pymysql.err.IntegrityError as e:
             # 1062 = UNIQUE 위반: 이 가족·상황에 삭제 안 된 메시지가 이미 있음
@@ -356,10 +359,12 @@ def update_message(message_id: int, body: MessageUpdate, conn=Depends(get_db)):
         text, audio_path = final("text"), final("audio_path")
         check_content(kind, text, audio_path)
 
+        # 11/22: 내용이 바뀌면 부모 목소리 파일도 다시 만든다(예전 파일은 버림)
         cur.execute(
             "UPDATE message SET author = %s, kind = %s, text = %s, audio_path = %s, "
+            "tts_status = %s, tts_audio_path = NULL, "
             f"delivered = FALSE, updated_at = {NEXT_UPDATED_AT} WHERE id = %s",
-            (author, kind, text, audio_path, message_id),
+            (author, kind, text, audio_path, tts_status_for(cur, cur_row["family_id"], author, kind), message_id),
         )
         row = fetch_message(cur, message_id)
     conn.commit()
@@ -438,7 +443,7 @@ def list_changes(since: str | None = None, conn=Depends(get_db)):
         cur.execute("UPDATE family SET device_last_seen_at = %s", (server_time,))
         cur.execute("SELECT child_name, mom_title, dad_title FROM family ORDER BY id LIMIT 1")
         family = cur.fetchone()
-        sql = "SELECT id, situation_id, author, kind, text, deleted, updated_at FROM message"
+        sql = "SELECT id, situation_id, author, kind, text, deleted, updated_at, tts_status FROM message"
         params = []
         if since_at is not None:
             sql += " WHERE updated_at >= %s"
@@ -446,7 +451,12 @@ def list_changes(since: str | None = None, conn=Depends(get_db)):
         cur.execute(sql + " ORDER BY updated_at, id", params)
         rows = cur.fetchall()
     conn.commit()
-    messages = [{**r, "deleted": bool(r["deleted"]), "updated_at": to_iso(r["updated_at"])} for r in rows]
+    # 11/22: tts_ready=true면 글 메시지를 부모 목소리 파일(API-22)로 재생한다. 없으면 보드 기본 TTS
+    messages = [
+        {**{k: v for k, v in r.items() if k != "tts_status"}, "deleted": bool(r["deleted"]),
+         "updated_at": to_iso(r["updated_at"]), "tts_ready": r["tts_status"] == "ready"}
+        for r in rows
+    ]
     return {"server_time": to_iso(server_time), "family": family, "messages": messages}
 
 
@@ -590,3 +600,319 @@ def delete_history(family_id: int, conn=Depends(get_db)):
         needs = cur.rowcount
     conn.commit()
     return {"deleted_play_logs": plays, "deleted_needs": needs}
+
+
+# ---------------------------------------------------------------- 부모 목소리 캐릭터 TTS (11/22 확장)
+#  흐름: 앱 '목소리 만들기'에서 이름을 정하고 문장 5개를 읽어 녹음(/audio로 하나씩) → POST /voice-profiles
+#        → 그 부모의 글 메시지 tts_status=pending + 첫 인사 미리 듣기 1개
+#        → 작업기(GPU, Qwen3-TTS 제로샷 복제)가 GET /tts/jobs(미리 듣기 먼저) → 견본 5개를 이어 붙여 생성 → 올림
+#        → 메시지: ready, 보드가 변경분(API-11)의 tts_ready를 보고 /device/tts-audio로 받아 재생
+#        → 미리 듣기: 앱이 /tts/previews/{id}를 확인하다가 ready면 /audio로 재생
+#  모델은 학습하지 않는다. 견본 녹음과 그 문장을 매번 같이 넣어 목소리를 흉내 낸다.
+#  캐릭터는 가족·작성자마다 1개(다시 만들면 덮어씀).
+
+# 목소리 만들기에서 읽는 문장 5개. 받침·억양이 고루 들어가게 골랐다. 견본의 대본이 된다.
+VOICE_SENTENCES = [
+    "안녕, 오늘 하루는 어땠어? 학교에서 재미있는 일 있었니?",
+    "힘든 일이 있으면 언제든 이야기해 줘. 다 들어 줄게.",
+    "네가 웃으면 나도 덩달아 행복해져. 정말 고마워.",
+    "밥 잘 챙겨 먹고, 일찍 자고, 감기 조심해야 해.",
+    "무슨 일이 있어도 늘 네 편이야. 사랑해.",
+]
+VOICE_SCRIPT = " ".join(VOICE_SENTENCES)
+PREVIEW_MAX_CHARS = 200
+TTS_MAX_BYTES = 10_000_000
+# 작업기 열쇠: .env에 TTS_WORKER_TOKEN을 넣으면 작업기 API에 X-Worker-Token 헤더가 필요하다.
+# 서버를 터널로 밖에 열 때(Colab 작업기) 꼭 넣는다.
+WORKER_TOKEN = os.environ.get("TTS_WORKER_TOKEN")
+
+
+def tts_status_for(cur, family_id: int, author: str, kind: str) -> str:
+    """글 메시지이고 그 작성자의 목소리가 등록돼 있으면 pending, 아니면 none"""
+    if kind != "text":
+        return "none"
+    cur.execute("SELECT 1 FROM voice_profile WHERE family_id = %s AND author = %s", (family_id, author))
+    return "pending" if cur.fetchone() else "none"
+
+
+def check_worker(token: str | None) -> None:
+    if WORKER_TOKEN and token != WORKER_TOKEN:
+        raise ApiError("E-403", "작업기 열쇠가 맞지 않아요")
+
+
+def check_audio_key(audio_path: str) -> None:
+    if not AUDIO_KEY_PATTERN.match(audio_path) or not (FILES_DIR / audio_path).is_file():
+        raise ApiError("E-400", "업로드된 녹음 파일이 아니에요. 먼저 /audio로 올려 주세요")
+
+
+def profile_samples(row: dict) -> list[dict]:
+    """[{audio_path, text}] — 예전 행(견본 1개)도 같은 모양으로"""
+    if row.get("samples"):
+        return json.loads(row["samples"])
+    return [{"audio_path": row["sample_path"], "text": row["ref_text"]}]
+
+
+def greeting_for(name: str) -> str:
+    """캐릭터 첫 인사. '아빠 지현이' → '나는 아빠 지현이야', '엄마' 받침 없음 → '야', 받침 있으면 '이야'"""
+    last = name.strip()[-1:] or "가"
+    code = ord(last) - 0xAC00
+    has_final = 0 <= code < 11172 and code % 28 != 0
+    return f"안녕, 나는 {name}{'이야' if has_final else '야'}. 이제 내가 남긴 글은 이 목소리로 들려줄게."
+
+
+def new_preview(cur, family_id: int, author: str, text: str) -> int:
+    cur.execute("INSERT INTO tts_preview (family_id, author, text) VALUES (%s, %s, %s)", (family_id, author, text))
+    return cur.lastrowid
+
+
+@app.get("/voice-script", tags=["앱"])
+def get_voice_script():
+    return {"sentences": VOICE_SENTENCES, "text": VOICE_SCRIPT}
+
+
+# API-20 목소리 캐릭터 만들기. audio_paths = 문장 5개를 차례로 읽은 녹음(/audio로 올린 m4a).
+# (시험용) audio_path + ref_text 하나로도 만들 수 있다.
+class VoiceProfileCreate(BaseModel):
+    family_id: int
+    author: Literal["mom", "dad"]
+    name: str | None = Field(default=None, max_length=100)
+    audio_paths: list[str] | None = None
+    audio_path: str | None = Field(default=None, max_length=512)
+    ref_text: str | None = Field(default=None, max_length=1000)
+
+
+@app.post("/voice-profiles", tags=["앱"], status_code=201)
+def create_voice_profile(body: VoiceProfileCreate, conn=Depends(get_db)):
+    if body.audio_paths is not None:
+        if len(body.audio_paths) != len(VOICE_SENTENCES):
+            raise ApiError("E-400", f"문장 {len(VOICE_SENTENCES)}개를 모두 녹음해 주세요")
+        for a in body.audio_paths:
+            check_audio_key(a)
+        samples = [{"audio_path": a, "text": t} for a, t in zip(body.audio_paths, VOICE_SENTENCES)]
+    elif body.audio_path is not None:
+        check_audio_key(body.audio_path)
+        samples = [{"audio_path": body.audio_path, "text": (body.ref_text or "").strip() or VOICE_SCRIPT}]
+    else:
+        raise ApiError("E-400", "녹음이 필요해요")
+    name = (body.name or "").strip() or ("엄마" if body.author == "mom" else "아빠")
+    with conn.cursor() as cur:
+        ensure_family(cur, body.family_id)
+        cur.execute(
+            "INSERT INTO voice_profile (family_id, author, sample_path, ref_text, name, samples) "
+            "VALUES (%s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE sample_path = VALUES(sample_path), ref_text = VALUES(ref_text), "
+            "name = VALUES(name), samples = VALUES(samples), created_at = NOW(6)",
+            (body.family_id, body.author, samples[0]["audio_path"], " ".join(x["text"] for x in samples),
+             name, json.dumps(samples, ensure_ascii=False)),
+        )
+        cur.execute(
+            "UPDATE message SET tts_status = 'pending', tts_audio_path = NULL "
+            "WHERE family_id = %s AND author = %s AND kind = 'text' AND deleted = FALSE",
+            (body.family_id, body.author),
+        )
+        queued = cur.rowcount
+        # 예전 캐릭터로 만들던 미리 듣기는 버린다
+        cur.execute("UPDATE tts_preview SET status = 'failed' WHERE family_id = %s AND author = %s AND status = 'pending'",
+                    (body.family_id, body.author))
+        greeting_id = new_preview(cur, body.family_id, body.author, greeting_for(name))
+        row = fetch_profile(cur, body.family_id, body.author)
+    conn.commit()
+    return {**profile_out(row), "queued_messages": queued, "greeting_preview_id": greeting_id}
+
+
+def fetch_profile(cur, family_id: int, author: str) -> dict | None:
+    cur.execute("SELECT id, family_id, author, name, sample_path, ref_text, samples, created_at "
+                "FROM voice_profile WHERE family_id = %s AND author = %s", (family_id, author))
+    return cur.fetchone()
+
+
+def profile_out(row: dict) -> dict:
+    return {"id": row["id"], "author": row["author"], "name": row["name"] or ("엄마" if row["author"] == "mom" else "아빠"),
+            "sample_count": len(profile_samples(row)), "created_at": to_iso(row["created_at"])}
+
+
+# 캐릭터 조회: 앱 설정 카드용
+@app.get("/voice-profiles", tags=["앱"])
+def list_voice_profiles(family_id: int, conn=Depends(get_db)):
+    with conn.cursor() as cur:
+        ensure_family(cur, family_id)
+        cur.execute("SELECT id, author, name, sample_path, ref_text, samples, created_at "
+                    "FROM voice_profile WHERE family_id = %s ORDER BY author", (family_id,))
+        rows = cur.fetchall()
+    return {"items": [profile_out(r) for r in rows]}
+
+
+# 미리 듣기: 앱에서 쓴 글을 캐릭터 목소리로 (저장 전에 들어 보기, '써 보기')
+class PreviewCreate(BaseModel):
+    family_id: int
+    author: Literal["mom", "dad"]
+    text: str = Field(min_length=1, max_length=PREVIEW_MAX_CHARS)
+
+
+@app.post("/tts/previews", tags=["앱"], status_code=201)
+def create_preview(body: PreviewCreate, conn=Depends(get_db)):
+    text = body.text.strip()
+    if not text:
+        raise ApiError("E-400", "들어 볼 글을 써 주세요")
+    with conn.cursor() as cur:
+        ensure_family(cur, body.family_id)
+        if fetch_profile(cur, body.family_id, body.author) is None:
+            raise ApiError("E-404", "먼저 목소리를 만들어 주세요")
+        pid = new_preview(cur, body.family_id, body.author, text)
+    conn.commit()
+    return {"id": pid, "status": "pending"}
+
+
+@app.get("/tts/previews/{preview_id}", tags=["앱"])
+def get_preview(preview_id: int, conn=Depends(get_db)):
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, status FROM tts_preview WHERE id = %s", (preview_id,))
+        row = cur.fetchone()
+    if row is None:
+        raise ApiError("E-404", "미리 듣기를 찾을 수 없어요")
+    return row
+
+
+@app.get("/tts/previews/{preview_id}/audio", tags=["앱"])
+def get_preview_audio(preview_id: int, conn=Depends(get_db)):
+    with conn.cursor() as cur:
+        cur.execute("SELECT status, audio_path FROM tts_preview WHERE id = %s", (preview_id,))
+        row = cur.fetchone()
+    if row is None or row["status"] != "ready" or not row["audio_path"]:
+        raise ApiError("E-404", "아직 만들어지지 않았어요")
+    return FileResponse(FILES_DIR / row["audio_path"], media_type="audio/wav", filename=f"preview_{preview_id}.wav")
+
+
+# ---------------------------------------------------------------- 작업기 API
+
+def job_profile(row: dict) -> dict:
+    samples = profile_samples(row)
+    return {"profile_id": row["profile_id"], "profile_version": to_iso(row["profile_at"]),
+            "samples": [{"index": i, "text": x["text"]} for i, x in enumerate(samples)]}
+
+
+# API-21 작업기: 만들 것 목록. 미리 듣기(앱에서 기다리는 중)를 먼저, 그다음 메시지(오래된 것부터).
+@app.get("/tts/jobs", tags=["작업기"])
+def list_tts_jobs(limit: int = 5, x_worker_token: str | None = Header(default=None), conn=Depends(get_db)):
+    check_worker(x_worker_token)
+    limit = max(1, min(limit, 20))
+    cols = ("v.id AS profile_id, v.created_at AS profile_at, v.sample_path, v.ref_text, v.samples")
+    with conn.cursor() as cur:
+        cur.execute(
+            f"SELECT p.id, p.author, p.text, {cols} FROM tts_preview p "
+            "JOIN voice_profile v ON v.family_id = p.family_id AND v.author = p.author "
+            "WHERE p.status = 'pending' ORDER BY p.created_at LIMIT %s", (limit,))
+        previews = cur.fetchall()
+        cur.execute(
+            f"SELECT m.id, m.author, m.text, m.updated_at, {cols} FROM message m "
+            "JOIN voice_profile v ON v.family_id = m.family_id AND v.author = m.author "
+            "WHERE m.tts_status = 'pending' AND m.kind = 'text' AND m.deleted = FALSE "
+            "ORDER BY m.updated_at LIMIT %s", (limit,))
+        messages = cur.fetchall()
+    items = [{"type": "preview", "id": r["id"], "author": r["author"], "text": r["text"], **job_profile(r)} for r in previews]
+    items += [{"type": "message", "id": r["id"], "author": r["author"], "text": r["text"],
+               "updated_at": to_iso(r["updated_at"]), **job_profile(r)} for r in messages]
+    return {"items": items[:limit]}
+
+
+@app.get("/tts/profile-audio/{profile_id}", tags=["작업기"])
+def download_profile_audio(profile_id: int, index: int = 0, x_worker_token: str | None = Header(default=None),
+                           conn=Depends(get_db)):
+    check_worker(x_worker_token)
+    with conn.cursor() as cur:
+        cur.execute("SELECT sample_path, ref_text, samples FROM voice_profile WHERE id = %s", (profile_id,))
+        row = cur.fetchone()
+    if row is None:
+        raise ApiError("E-404", "목소리 견본을 찾을 수 없어요")
+    samples = profile_samples(row)
+    if not 0 <= index < len(samples):
+        raise ApiError("E-404", "견본 번호가 없어요")
+    path = FILES_DIR / samples[index]["audio_path"]
+    if not path.is_file():
+        raise ApiError("E-404", "견본 파일을 찾을 수 없어요")
+    return FileResponse(path, media_type=AUDIO_TYPES.get(path.suffix.lstrip("."), "application/octet-stream"))
+
+
+def read_wav(file: UploadFile) -> bytes:
+    data = file.file.read(TTS_MAX_BYTES + 1)
+    if len(data) > TTS_MAX_BYTES:
+        raise ApiError("E-413", "파일 크기는 10MB 이하여야 해요")
+    if data[:4] != b"RIFF" or data[8:12] != b"WAVE":
+        raise ApiError("E-400", "wav 파일이 아니에요")
+    return data
+
+
+def save_wav(data: bytes) -> str:
+    key = f"{uuid.uuid4().hex}.wav"
+    FILES_DIR.mkdir(exist_ok=True)
+    (FILES_DIR / key).write_bytes(data)
+    return key
+
+
+# 메시지 wav 올리기. updated_at(작업을 가져갈 때 값)이 지금과 다르면 그 사이 글이 바뀐 것이라 버린다(E-409).
+@app.post("/tts/jobs/{message_id}", tags=["작업기"])
+def upload_tts(message_id: int, updated_at: str = Form(...), file: UploadFile = File(...),
+               x_worker_token: str | None = Header(default=None), conn=Depends(get_db)):
+    check_worker(x_worker_token)
+    data = read_wav(file)
+    with conn.cursor() as cur:
+        cur.execute("SELECT kind, deleted, updated_at FROM message WHERE id = %s FOR UPDATE", (message_id,))
+        row = cur.fetchone()
+        if row is None or row["deleted"]:
+            raise ApiError("E-404", "메시지를 찾을 수 없어요")
+        if row["kind"] != "text" or to_iso(row["updated_at"]) != updated_at:
+            raise ApiError("E-409", "그 사이 메시지가 바뀌었어요")
+        # updated_at을 올려야 보드가 변경분으로 다시 받아 간다. delivered=FALSE → 보드가 받으면 다시 '전달됨'
+        cur.execute(
+            f"UPDATE message SET tts_status = 'ready', tts_audio_path = %s, delivered = FALSE, "
+            f"updated_at = {NEXT_UPDATED_AT} WHERE id = %s",
+            (save_wav(data), message_id),
+        )
+    conn.commit()
+    return {"message_id": message_id, "tts_status": "ready", "size_bytes": len(data)}
+
+
+@app.post("/tts/jobs/{message_id}/fail", tags=["작업기"])
+def fail_tts(message_id: int, x_worker_token: str | None = Header(default=None), conn=Depends(get_db)):
+    check_worker(x_worker_token)
+    with conn.cursor() as cur:
+        cur.execute("UPDATE message SET tts_status = 'failed' WHERE id = %s AND tts_status = 'pending'", (message_id,))
+    conn.commit()
+    return {"message_id": message_id, "tts_status": "failed"}
+
+
+@app.post("/tts/previews/{preview_id}/result", tags=["작업기"])
+def upload_preview(preview_id: int, file: UploadFile = File(...), x_worker_token: str | None = Header(default=None),
+                   conn=Depends(get_db)):
+    check_worker(x_worker_token)
+    data = read_wav(file)
+    with conn.cursor() as cur:
+        cur.execute("UPDATE tts_preview SET status = 'ready', audio_path = %s WHERE id = %s AND status = 'pending'",
+                    (save_wav(data), preview_id))
+        if cur.rowcount == 0:
+            raise ApiError("E-409", "이미 끝났거나 취소된 미리 듣기예요")
+    conn.commit()
+    return {"id": preview_id, "status": "ready"}
+
+
+@app.post("/tts/previews/{preview_id}/fail", tags=["작업기"])
+def fail_preview(preview_id: int, x_worker_token: str | None = Header(default=None), conn=Depends(get_db)):
+    check_worker(x_worker_token)
+    with conn.cursor() as cur:
+        cur.execute("UPDATE tts_preview SET status = 'failed' WHERE id = %s AND status = 'pending'", (preview_id,))
+    conn.commit()
+    return {"id": preview_id, "status": "failed"}
+
+
+# API-22 보드: 부모 목소리 파일 내려받기 (tts_ready=true인 글 메시지)
+@app.get("/device/tts-audio/{message_id}", tags=["보드"])
+def download_tts_audio(message_id: int, conn=Depends(get_db)):
+    with conn.cursor() as cur:
+        cur.execute("SELECT deleted, tts_status, tts_audio_path FROM message WHERE id = %s", (message_id,))
+        row = cur.fetchone()
+    if row is None or row["deleted"] or row["tts_status"] != "ready" or not row["tts_audio_path"]:
+        raise ApiError("E-404", "부모 목소리 파일이 없어요")
+    path = FILES_DIR / row["tts_audio_path"]
+    if not path.is_file():
+        raise ApiError("E-404", "부모 목소리 파일이 없어요")
+    return FileResponse(path, media_type="audio/wav", filename=f"{message_id}.wav")

@@ -14,7 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 log = logging.getLogger("ongi")
 
 # 오류 코드 → HTTP 상태 코드
-STATUS = {"E-400": 400, "E-404": 404, "E-409": 409, "E-413": 413, "E-500": 500}
+STATUS = {"E-400": 400, "E-403": 403, "E-404": 404, "E-409": 409, "E-413": 413, "E-500": 500}
 
 
 class ApiError(Exception):

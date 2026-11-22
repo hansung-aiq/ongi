@@ -27,6 +27,7 @@ class ParentMessage {
     required this.text,
     required this.delivered,
     required this.createdAt,
+    this.ttsStatus = 'none',
   });
 
   factory ParentMessage.fromJson(Map<String, dynamic> json) => ParentMessage(
@@ -37,6 +38,7 @@ class ParentMessage {
     text: json['text'] as String?,
     delivered: json['delivered'] as bool? ?? false,
     createdAt: DateTime.parse(json['created_at'] as String),
+    ttsStatus: json['tts_status'] as String? ?? 'none',
   );
 
   final int id;
@@ -54,6 +56,9 @@ class ParentMessage {
   /// 보드가 받아 갔는지 (API-13)
   final bool delivered;
   final DateTime createdAt;
+
+  /// 11/22 부모 목소리 파일: none / pending(만드는 중) / ready / failed
+  final String ttsStatus;
 
   bool get isVoice => kind == 'voice';
 }
@@ -136,4 +141,46 @@ class Need {
   /// 최근 14일 동안 찾은 횟수
   final int count;
   final DateTime lastNeededAt;
+}
+
+
+/// 11/22 부모 목소리 캐릭터 ('아빠 지현이'). 문장 5개 녹음으로 만든다. 작성자마다 1개.
+class VoiceCharacter {
+  const VoiceCharacter({
+    required this.id,
+    required this.author,
+    required this.name,
+    required this.createdAt,
+  });
+
+  factory VoiceCharacter.fromJson(Map<String, dynamic> json) => VoiceCharacter(
+    id: json['id'] as int,
+    author: json['author'] as String,
+    name: json['name'] as String,
+    createdAt: DateTime.parse(json['created_at'] as String),
+  );
+
+  final int id;
+  final String author;
+  final String name;
+  final DateTime createdAt;
+}
+
+/// 캐릭터를 만든 결과. 첫 인사 미리 듣기와 다시 만들 글 메시지 개수.
+class VoiceCreated {
+  const VoiceCreated({
+    required this.character,
+    required this.greetingPreviewId,
+    required this.queuedMessages,
+  });
+
+  factory VoiceCreated.fromJson(Map<String, dynamic> json) => VoiceCreated(
+    character: VoiceCharacter.fromJson(json),
+    greetingPreviewId: json['greeting_preview_id'] as int,
+    queuedMessages: json['queued_messages'] as int? ?? 0,
+  );
+
+  final VoiceCharacter character;
+  final int greetingPreviewId;
+  final int queuedMessages;
 }

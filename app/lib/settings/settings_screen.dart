@@ -24,8 +24,16 @@ class SettingsScreen extends StatelessWidget {
     this.onDeleteHistory,
     this.speakerFamily,
     this.speaker,
+    this.onVoice,
+    this.voiceName,
     this.pickPhoto = pickProfilePhoto,
   });
+
+  /// 11/22 '내 목소리'를 누르면 부른다. null이면 줄을 숨긴다 (자녀 앱).
+  final VoidCallback? onVoice;
+
+  /// 만든 목소리 캐릭터 이름('아빠 지현이'). 아직 없으면 null
+  final String? voiceName;
 
   final ParentProfile profile;
 
@@ -222,6 +230,22 @@ class SettingsScreen extends StatelessWidget {
                   trailing: _SpeakerStatus(
                     connected: speaker == BoardConnection.connected,
                   ),
+                ),
+              ],
+            ),
+          ],
+          if (onVoice != null) ...[
+            const SizedBox(height: AppSpacing.section),
+            _Section(
+              title: '목소리',
+              rows: [
+                _SettingRow(
+                  title: voiceName ?? '내 목소리 만들기',
+                  subtitle: voiceName != null
+                      ? '글 메시지를 이 목소리로 들려줘요 · 써 보기'
+                      : '문장 5개를 읽으면 글 메시지를 내 목소리로 들려줘요',
+                  value: voiceName != null ? '사용 중' : '만들기',
+                  onTap: onVoice,
                 ),
               ],
             ),

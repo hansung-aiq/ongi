@@ -87,7 +87,12 @@ class ServerSync(
                     continue
                 }
                 val kind = o.getString("kind")
-                val audio = if (kind == "voice") downloadAudio(id) else null
+                // 11/22: 글 메시지라도 부모 목소리 파일이 만들어졌으면(tts_ready) 받아서 그 소리로 재생. 못 받으면 기본 TTS
+                val audio = when {
+                    kind == "voice" -> downloadAudio(id)
+                    o.optBoolean("tts_ready", false) -> downloadTts(id)
+                    else -> null
+                }
                 store.upsert(
                     ParentMessage(
                         id = id,
@@ -100,7 +105,7 @@ class ServerSync(
                     ),
                 )
                 acked += id
-                log("동기화: 메시지 $id 받음 (상황 ${o.getInt("situation_id")}, ${o.getString("author")}, $kind${if (audio != null) ", 녹음 ${audio.length()}바이트" else ""})")
+                log("동기화: 메시지 $id 받음 (상황 ${o.getInt("situation_id")}, ${o.getString("author")}, $kind${if (audio != null) (if (kind == "voice") ", 녹음 " else ", 부모 목소리 ") + "${audio.length()}바이트" else ""})")
             }
             if (acked.isNotEmpty()) {
                 http("POST", "/device/ack", JSONObject().put("message_ids", JSONArray(acked)).toString())
@@ -167,6 +172,22 @@ class ServerSync(
             c.disconnect()
         }
         return f
+    }
+
+    /** API-22: 부모 목소리로 만든 글 메시지 wav. 실패하면 null(기본 TTS로 읽음) */
+    private fun downloadTts(id: Int): File? = try {
+        audioDir.mkdirs()
+        val f = File(audioDir, "$id.tts.wav")
+        val c = open("GET", "/device/tts-audio/$id")
+        try {
+            check(c.responseCode == 200) { "API-22 $id: HTTP ${c.responseCode}" }
+            c.inputStream.use { input -> f.outputStream().use { input.copyTo(it) } }
+        } finally {
+            c.disconnect()
+        }
+        f
+    } catch (e: Exception) {
+        log("부모 목소리 파일 못 받음(기본 TTS로 읽음): ${e.message}"); null
     }
 
     private fun http(method: String, path: String, body: String? = null): String {

@@ -12,6 +12,7 @@ import 'save_done_screen.dart';
 import 'situation_info.dart';
 import 'voice_record_panel.dart';
 import 'voice_recorder.dart';
+import 'voice/tts_preview.dart';
 
 /// 3-4 메시지 남기기. 글(200자까지) 또는 녹음(60초까지)을 저장한다.
 /// 저장하면 3-5를 띄우고, 3-5에서 고른 행동을 돌려준다.
@@ -62,6 +63,14 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
   bool _playing = false;
   final _meter = LevelMeter();
 
+  /// 11/22 부모 목소리 캐릭터가 있으면 글 탭에서 미리 듣기
+  VoiceCharacter? _voice;
+  late final TtsPreview _preview = TtsPreview(
+    client: widget.store.client,
+    familyId: widget.store.familyId,
+    author: widget.store.profile.author,
+  );
+
   VoiceRecorder get _recorder {
     final existing = _recorderInstance;
     if (existing != null) return existing;
@@ -82,12 +91,18 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
   @override
   void initState() {
     super.initState();
+    widget.store.client
+        .voiceCharacter(widget.store.familyId, widget.store.profile.author)
+        .then((v) {
+          if (mounted) setState(() => _voice = v);
+        }, onError: (_) {});
     _controller.addListener(() => setState(() {}));
     _focus.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
+    _preview.dispose();
     _controller.dispose();
     _focus.dispose();
     _ticker?.cancel();
@@ -299,10 +314,28 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
                             ),
                       const SizedBox(height: AppSpacing.s16),
                       _tab == 1
-                          ? const HintRow(
-                              icon: LucideIcons.type,
-                              text: '남겨주신 글은 따뜻한 목소리로 읽어드려요.',
-                            )
+                          ? _voice != null
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      HintRow(
+                                        icon: LucideIcons.audioLines,
+                                        text: '남겨주신 글은 ${_voice!.name} 목소리로 들려드려요.',
+                                      ),
+                                      const SizedBox(height: AppSpacing.s12),
+                                      TtsPreviewButton(
+                                        preview: _preview,
+                                        label: '${_voice!.name} 목소리로 미리 듣기',
+                                        onSpeak: _controller.text.trim().isEmpty
+                                            ? null
+                                            : () => _preview.speak(_controller.text.trim()),
+                                      ),
+                                    ],
+                                  )
+                                : const HintRow(
+                                    icon: LucideIcons.type,
+                                    text: '남겨주신 글은 따뜻한 목소리로 읽어드려요.',
+                                  )
                           : HintRow(
                               icon: LucideIcons.audioLines,
                               text:

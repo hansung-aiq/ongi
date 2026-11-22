@@ -20,6 +20,8 @@ import 'parent_profile.dart';
 import 'parent_store.dart';
 import 'save_done_screen.dart';
 import 'voice_recorder.dart';
+import 'voice/voice_character_screen.dart';
+import 'voice/voice_create_screen.dart';
 
 /// 부모 화면 전체. 하단 탭(홈·메시지·설정)과 서버 데이터를 가진다.
 class ParentShell extends StatefulWidget {
@@ -74,6 +76,39 @@ class _ParentShellState extends State<ParentShell> {
     familyId: AppConfig.familyId,
   )..load();
 
+  /// 11/22 이 부모의 목소리 캐릭터 (설정 '목소리' 줄)
+  VoiceCharacter? _voice;
+
+  Future<void> _loadVoice() async {
+    try {
+      final v = await _client.voiceCharacter(AppConfig.familyId, _store.profile.author);
+      if (mounted) setState(() => _voice = v);
+    } on ServerException {
+      // 예전 서버면 목소리 기능이 없다. 줄은 '만들기'로 둔다
+    }
+  }
+
+  Future<void> _openVoice() async {
+    final voice = _voice;
+    final page = voice == null
+        ? VoiceCreateScreen(
+            client: _client,
+            familyId: AppConfig.familyId,
+            author: _store.profile.author,
+            title: _store.profile.title,
+          )
+        : VoiceCharacterScreen(
+            client: _client,
+            familyId: AppConfig.familyId,
+            author: _store.profile.author,
+            title: _store.profile.title,
+            character: voice,
+          );
+    await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => page));
+    await _loadVoice();
+    _store.refresh();
+  }
+
   late final MessagePlayback _playback = MessagePlayback(
     player: widget.audioPlayer,
   )..addListener(_onPlayback);
@@ -90,6 +125,7 @@ class _ParentShellState extends State<ParentShell> {
       _store.refresh();
       if (_tab == 0) _heard.load();
     });
+    _loadVoice();
   }
 
   /// 메시지 탭에서 고른 분류. null이면 전체다.
@@ -263,6 +299,8 @@ class _ParentShellState extends State<ParentShell> {
         speakerFamily: _store.family,
         onResetDevice: _resetDevice,
         onEndpointsChanged: _restart,
+        onVoice: _openVoice,
+        voiceName: _voice?.name,
         onChangeMode: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => RoleSelectScreen(serverClient: widget.serverClient),
