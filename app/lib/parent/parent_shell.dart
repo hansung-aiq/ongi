@@ -328,6 +328,8 @@ class _ParentShellState extends State<ParentShell> {
             final s = _store.situation(id);
             if (s != null) _write(s);
           },
+          onVoice: _openVoice,
+          voiceName: _voice?.name,
         ),
       ),
       _ => MessageListScreen(

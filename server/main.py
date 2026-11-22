@@ -268,7 +268,10 @@ def create_message(body: MessageCreate, conn=Depends(get_db)):
             if e.args[0] == 1062:
                 raise ApiError("E-409", "이 상황에는 이미 메시지가 있어요")
             raise
-        row = fetch_message(cur, cur.lastrowid)
+        new_id = cur.lastrowid
+        if body.kind == "text":
+            reuse_preview(cur, new_id, body.family_id, body.author, body.text)
+        row = fetch_message(cur, new_id)
     conn.commit()
     return message_out(row)
 
@@ -366,6 +369,8 @@ def update_message(message_id: int, body: MessageUpdate, conn=Depends(get_db)):
             f"delivered = FALSE, updated_at = {NEXT_UPDATED_AT} WHERE id = %s",
             (author, kind, text, audio_path, tts_status_for(cur, cur_row["family_id"], author, kind), message_id),
         )
+        if kind == "text":
+            reuse_preview(cur, message_id, cur_row["family_id"], author, text)
         row = fetch_message(cur, message_id)
     conn.commit()
     return message_out(row)
@@ -660,6 +665,23 @@ def greeting_for(name: str) -> str:
     return f"안녕, 나는 {name}{'이야' if has_final else '야'}. 이제 내가 남긴 글은 이 목소리로 들려줄게."
 
 
+def reuse_preview(cur, message_id: int, family_id: int, author: str, text: str | None) -> None:
+    """글 메시지를 저장할 때, 같은 글을 지금 목소리로 미리 만들어 둔 것이 있으면 바로 붙인다(다시 만들지 않음)."""
+    if not text:
+        return
+    cur.execute(
+        "SELECT p.audio_path FROM tts_preview p JOIN voice_profile v "
+        "ON v.family_id = p.family_id AND v.author = p.author "
+        "WHERE p.family_id = %s AND p.author = %s AND p.text = %s AND p.status = 'ready' "
+        "AND p.created_at >= v.created_at ORDER BY p.id DESC LIMIT 1",
+        (family_id, author, text.strip()),
+    )
+    row = cur.fetchone()
+    if row and row["audio_path"]:
+        cur.execute("UPDATE message SET tts_status = 'ready', tts_audio_path = %s WHERE id = %s",
+                    (row["audio_path"], message_id))
+
+
 def new_preview(cur, family_id: int, author: str, text: str) -> int:
     cur.execute("INSERT INTO tts_preview (family_id, author, text) VALUES (%s, %s, %s)", (family_id, author, text))
     return cur.lastrowid
@@ -758,6 +780,21 @@ def create_preview(body: PreviewCreate, conn=Depends(get_db)):
         ensure_family(cur, body.family_id)
         if fetch_profile(cur, body.family_id, body.author) is None:
             raise ApiError("E-404", "먼저 목소리를 만들어 주세요")
+        # 같은 글을 지금 목소리로 이미 만들었거나 만드는 중이면 그것을 돌려준다(앱이 쓰는 동안 미리 만들기)
+        cur.execute(
+            "SELECT p.id, p.status FROM tts_preview p JOIN voice_profile v "
+            "ON v.family_id = p.family_id AND v.author = p.author "
+            "WHERE p.family_id = %s AND p.author = %s AND p.text = %s AND p.status IN ('ready', 'pending') "
+            "AND p.created_at >= v.created_at ORDER BY p.status = 'ready' DESC, p.id DESC LIMIT 1",
+            (body.family_id, body.author, text),
+        )
+        same = cur.fetchone()
+        if same:
+            conn.commit()
+            return {"id": same["id"], "status": same["status"]}
+        # 글이 바뀌었으면 예전 글의 대기 중인 미리 듣기는 버린다(작업기가 쓸데없이 만들지 않게)
+        cur.execute("UPDATE tts_preview SET status = 'failed' WHERE family_id = %s AND author = %s AND status = 'pending'",
+                    (body.family_id, body.author))
         pid = new_preview(cur, body.family_id, body.author, text)
     conn.commit()
     return {"id": pid, "status": "pending"}

@@ -128,7 +128,7 @@ class _VoiceCharacterScreenState extends State<VoiceCharacterScreen> {
                             Text(c.name, style: AppTextStyles.title28, textAlign: TextAlign.center),
                             const SizedBox(height: AppSpacing.s4),
                             Text(
-                              '문장 5개로 만든 목소리 · $made',
+                              '${c.sampleCount > 1 ? '문장 ${c.sampleCount}개' : '녹음'}로 만든 목소리 · $made',
                               style: AppTextStyles.body14.copyWith(color: AppColors.stampText),
                             ),
                             const SizedBox(height: AppSpacing.s16),
@@ -157,6 +157,8 @@ class _VoiceCharacterScreenState extends State<VoiceCharacterScreen> {
                         hintText: _sample,
                         maxLength: 200,
                         maxLines: 4,
+                        // 쓰다가 멈추면 미리 만들어 두어 '들어보기'를 누를 때 기다림을 줄인다
+                        onChanged: _tryIt.prepare,
                       ),
                       const SizedBox(height: AppSpacing.s12),
                       TtsPreviewButton(preview: _tryIt, onSpeak: _speak),

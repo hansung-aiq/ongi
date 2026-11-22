@@ -48,8 +48,45 @@ class TtsPreview extends ChangeNotifier {
   /// 이만큼 기다려도 안 되면 실패로 본다(작업기가 꺼져 있을 때)
   static const timeout = Duration(minutes: 3);
 
+  Timer? _prepTimer;
+  String? _prepared;
+
+  /// 쓰는 동안 미리 만들기: 글이 [delay] 동안 안 바뀌면 서버에 미리 듣기를 만들어 둔다.
+  /// 서버가 같은 글을 다시 만들지 않으므로, 나중에 [speak]를 누르면 만들어진 것을 바로 재생한다.
+  void prepare(String text, {Duration delay = const Duration(milliseconds: 1500)}) {
+    _prepTimer?.cancel();
+    final t = text.trim();
+    if (t.isEmpty || t == _prepared) return;
+    _prepTimer = Timer(delay, () {
+      _prepared = t;
+      client.createPreview(familyId: familyId, author: author, text: t).ignore();
+    });
+  }
+
+  /// 마지막으로 들은 글과 그 미리 듣기. 같은 글이면 다시 만들지 않고 바로 다시 들려준다.
+  String? _lastText;
+  int? _lastId;
+  String? _waitingText;
+
   /// 글을 캐릭터 목소리로 만들어 재생
   Future<void> speak(String text) async {
+    _prepTimer?.cancel();
+    final t = text.trim();
+    _prepared = t;
+    final lastId = _lastId;
+    if (t == _lastText && lastId != null) {
+      await _player.stop();
+      _ticker?.cancel();
+      error = null;
+      try {
+        await _player.play(UrlSource(client.previewAudioUrl(lastId).toString()));
+        _set(PreviewState.playing);
+      } on Exception {
+        _fail('소리를 재생하지 못했어요');
+      }
+      return;
+    }
+    _waitingText = t;
     final token = await _begin();
     try {
       final id = await client.createPreview(familyId: familyId, author: author, text: text);
@@ -61,6 +98,7 @@ class TtsPreview extends ChangeNotifier {
 
   /// 이미 만들어 둔 미리 듣기(캐릭터 첫 인사)를 기다렸다가 재생
   Future<void> playExisting(int previewId) async {
+    _waitingText = null;
     final token = await _begin();
     await _waitAndPlay(previewId, token);
   }
@@ -98,6 +136,8 @@ class TtsPreview extends ChangeNotifier {
       if (token != _token) return;
       if (status == 'ready') {
         _ticker?.cancel();
+        _lastId = id;
+        _lastText = _waitingText;
         try {
           await _player.play(UrlSource(client.previewAudioUrl(id).toString()));
           _set(PreviewState.playing);
@@ -133,6 +173,7 @@ class TtsPreview extends ChangeNotifier {
   void dispose() {
     _token++;
     _ticker?.cancel();
+    _prepTimer?.cancel();
     _done?.cancel();
     _player.dispose();
     super.dispose();

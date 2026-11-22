@@ -151,6 +151,7 @@ class VoiceCharacter {
     required this.author,
     required this.name,
     required this.createdAt,
+    this.sampleCount = 5,
   });
 
   factory VoiceCharacter.fromJson(Map<String, dynamic> json) => VoiceCharacter(
@@ -158,12 +159,16 @@ class VoiceCharacter {
     author: json['author'] as String,
     name: json['name'] as String,
     createdAt: DateTime.parse(json['created_at'] as String),
+    sampleCount: json['sample_count'] as int? ?? 5,
   );
 
   final int id;
   final String author;
   final String name;
   final DateTime createdAt;
+
+  /// 견본 녹음 개수 (문장 5개로 만들면 5)
+  final int sampleCount;
 }
 
 /// 캐릭터를 만든 결과. 첫 인사 미리 듣기와 다시 만들 글 메시지 개수.

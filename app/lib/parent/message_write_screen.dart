@@ -96,7 +96,11 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
         .then((v) {
           if (mounted) setState(() => _voice = v);
         }, onError: (_) {});
-    _controller.addListener(() => setState(() {}));
+    _controller.addListener(() {
+      setState(() {});
+      // 11/22 목소리가 있으면 쓰다가 멈출 때 미리 만들어 둔다(저장하면 이 결과를 그대로 씀)
+      if (_voice != null && _tab == 1) _preview.prepare(_controller.text);
+    });
     _focus.addListener(() => setState(() {}));
   }
 
