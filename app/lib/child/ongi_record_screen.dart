@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/message_playback.dart';
 import '../common/common.dart';
@@ -56,11 +57,14 @@ class OngiRecordScreen extends StatelessWidget {
                   ),
                 )
               else if (cards.isNotEmpty) ...[
+                /// 11/23 모은 편지 수를 왼쪽 위 우표색 칩으로(오른쪽에 혼자 떠 있지 않게)
                 Align(
-                  alignment: Alignment.centerRight,
+                  alignment: Alignment.centerLeft,
                   child: OngiChip(
                     label: '들은 메시지 ${cards.length}',
-                    selected: true,
+                    icon: LucideIcons.mail,
+                    background: AppColors.stampBg,
+                    foreground: AppColors.stampText,
                   ),
                 ),
                 for (final card in cards) ...[

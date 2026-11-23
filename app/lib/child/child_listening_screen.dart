@@ -20,18 +20,16 @@ class ChildListeningScreen extends StatelessWidget {
     return _SpeakingLayout(
       onStop: onStop,
       center: [
-        /// 숨 쉬듯 커졌다 작아지고 주황 원이 퍼진다
-        const MicHalo(breathe: true),
-        const SizedBox(height: AppSpacing.s24),
+        /// 11/23 온기 빛 구슬: 빛 물결이 바깥으로 퍼지며 듣는다
+        const OngiOrb(size: 240, mood: OrbMood.listening),
+        const SizedBox(height: AppSpacing.s16),
         Text('듣고 있어', style: AppTextStyles.title28),
-        const SizedBox(height: AppSpacing.s24),
+        const SizedBox(height: AppSpacing.s12),
         Text(
           '${profile.called}, 무슨 일이 있었어?',
           textAlign: TextAlign.center,
           style: AppTextStyles.body16.copyWith(color: AppColors.textSecondary),
         ),
-        const SizedBox(height: AppSpacing.s24),
-        const Waveform.large(),
       ],
       bottom: [
         Text(
@@ -63,29 +61,42 @@ class ChildThinkingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return _SpeakingLayout(
       onStop: onStop,
-      centerOpacity: 0.8,
       center: [
-        const MicHalo(color: AppColors.micThinking),
-        const SizedBox(height: AppSpacing.s24),
+        /// 11/23 작은 빛이 구슬 둘레를 돌며 생각한다
+        const OngiOrb(size: 240, mood: OrbMood.thinking),
+        const SizedBox(height: AppSpacing.s16),
         Text('생각하는 중...', style: AppTextStyles.title28),
-        const SizedBox(height: AppSpacing.s24),
+        const SizedBox(height: AppSpacing.s12),
         Text(
           '네 이야기에 맞는 메시지를 찾고 있어.',
           textAlign: TextAlign.center,
           style: AppTextStyles.body16.copyWith(color: AppColors.textSecondary),
         ),
-        const SizedBox(height: AppSpacing.s24),
-        const Waveform.large(animate: false, opacity: 0.3),
-        const SizedBox(height: 10),
+        if (heardText.trim().isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s24),
 
-        /// 온기가 받아쓴 내 말이 한 글자씩 나타난다 (짧게, 1.2초 안에)
-        TypingText(
-          '“$heardText”',
-          style: AppTextStyles.body16.copyWith(color: AppColors.textSecondary),
-          perChar: const Duration(milliseconds: 45),
-          maxDuration: const Duration(milliseconds: 1200),
-          delay: const Duration(milliseconds: 200),
-        ),
+          /// 온기가 받아쓴 내 말: 말풍선 안에 가운데로 한 글자씩 (짧게, 1.2초 안에)
+          Container(
+            constraints: const BoxConstraints(maxWidth: 300),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s20,
+              vertical: AppSpacing.s12,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(color: AppColors.line),
+            ),
+            child: TypingText(
+              heardText.trim(),
+              style: AppTextStyles.body16.copyWith(color: AppColors.textPrimary),
+              textAlign: TextAlign.center,
+              perChar: const Duration(milliseconds: 45),
+              maxDuration: const Duration(milliseconds: 1200),
+              delay: const Duration(milliseconds: 200),
+            ),
+          ),
+        ],
       ],
       bottom: [
         Text(

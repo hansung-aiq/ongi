@@ -214,13 +214,20 @@ class _MessageListScreenState extends State<MessageListScreen> {
       category: full && s != null ? categoryLabel(s.category) : null,
       body: m.text,
       typeLabel: m.isVoice
-          ? '음성'
+          ? '녹음'
           : switch (m.ttsStatus) {
-              'ready' => '텍스트 · 내 목소리',
-              'pending' => '텍스트 · 목소리 만드는 중',
+              'ready' => '내 목소리',
+              'pending' => '목소리 만드는 중',
               _ => '텍스트',
             },
-      typeIcon: m.isVoice ? LucideIcons.mic : LucideIcons.type,
+      /// 11/23 녹음은 음파, 내 목소리(TTS)는 우표색으로 구분
+      typeIcon: m.isVoice
+          ? LucideIcons.audioWaveform
+          : m.ttsStatus == 'ready' || m.ttsStatus == 'pending'
+          ? LucideIcons.audioLines
+          : LucideIcons.type,
+      typeBackground: !m.isVoice && m.ttsStatus == 'ready' ? AppColors.stampBg : null,
+      typeForeground: !m.isVoice && m.ttsStatus == 'ready' ? AppColors.stampText : null,
       statusLabel: m.delivered ? '전달됨' : '전달 대기',
       statusMuted: !m.delivered,
       date: _date(m.createdAt),

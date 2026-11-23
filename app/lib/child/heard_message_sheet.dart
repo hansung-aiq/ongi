@@ -74,7 +74,7 @@ class _HeardMessageSheet extends StatelessWidget {
                   const SizedBox(height: AppSpacing.s20),
                   Row(
                     children: [
-                      ProfileAvatar(size: 52, imagePath: message.photo),
+                      ParentStamp(title: message.author, size: 52, imagePath: message.photo),
                       const SizedBox(width: AppSpacing.s12),
                       Expanded(
                         child: Column(

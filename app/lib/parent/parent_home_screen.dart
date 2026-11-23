@@ -53,11 +53,15 @@ class ParentHomeScreen extends StatelessWidget {
         children: [
           _greeting(),
           const SizedBox(height: AppSpacing.section),
-          ProgressCard(progress: store.progress),
+
+          /// 11/23 새 기능인 목소리 카드를 맨 위에. 추천을 다 채웠으면 진행 카드는 한 줄로 줄인다
           if (onVoice != null) ...[
-            const SizedBox(height: AppSpacing.s12),
             _voiceCard(),
+            const SizedBox(height: AppSpacing.s12),
           ],
+          store.progress >= ParentStore.goal
+              ? _goalDone()
+              : ProgressCard(progress: store.progress),
           const SizedBox(height: AppSpacing.section),
           _needed(),
           if (heard case final heard?)
@@ -190,37 +194,82 @@ class ParentHomeScreen extends StatelessWidget {
     );
   }
 
-  /// 11/22 내 목소리 카드: 만든 목소리가 있으면 이름과 '써 보기', 없으면 만들기 안내
-  Widget _voiceCard() {
-    final name = voiceName;
-    return OngiCard(
-      onTap: onVoice,
-      color: AppColors.stampBg,
-      borderColor: AppColors.stampBg,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 14),
+  /// 11/23 추천을 다 채웠을 때: 큰 진행 카드 대신 한 줄
+  Widget _goalDone() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.okSoft,
+        borderRadius: BorderRadius.circular(AppRadius.input),
+      ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
-            child: const Icon(LucideIcons.audioLines, size: 20, color: AppColors.accent),
+          const Icon(LucideIcons.check, size: 18, color: AppColors.ok),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Text(
+              '추천 ${ParentStore.goal}개를 모두 채웠어요',
+              style: AppTextStyles.label14.copyWith(color: AppColors.ok),
+            ),
           ),
-          const SizedBox(width: AppSpacing.s12),
+          Text(
+            '${store.progress}/${ParentStore.goal}',
+            style: AppTextStyles.label14.copyWith(
+              color: AppColors.ok,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 11/22 내 목소리 카드: 만든 목소리가 있으면 이름과 '써 보기', 없으면 만들기 안내
+  /// 11/23 진한 카드로 바꿔 홈에서 가장 먼저 보이게(새 기능)
+  Widget _voiceCard() {
+    final name = voiceName;
+    final title = name ?? store.profile.title;
+    return OngiCard(
+      onTap: onVoice,
+      color: AppColors.textPrimary,
+      borderColor: AppColors.textPrimary,
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s20, AppSpacing.s20, AppSpacing.s16, AppSpacing.s20),
+      child: Row(
+        children: [
+          ParentStamp(title: title, size: 52),
+          const SizedBox(width: AppSpacing.s16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name == null ? '내 목소리 만들기' : '$name 목소리', style: AppTextStyles.label16),
-                const SizedBox(height: 2),
                 Text(
-                  name == null ? '문장 5개를 읽으면 남긴 글을 내 목소리로 들려줘요' : '남긴 글을 이 목소리로 들려줘요 · 써 보기',
-                  style: AppTextStyles.caption12.copyWith(color: AppColors.stampText),
+                  name == null ? '내 목소리 만들기' : '$name 목소리',
+                  style: AppTextStyles.subtitle18.copyWith(color: AppColors.bgBase),
                 ),
+                const SizedBox(height: AppSpacing.s4),
+                Text(
+                  name == null
+                      ? '문장 5개만 읽으면, 남긴 글을 내 목소리로 들려줘요'
+                      : '남긴 글은 이 목소리로 ${store.profile.nickname}에게 들려줘요',
+                  style: AppTextStyles.caption12.copyWith(color: AppColors.textOnDarkSecondary),
+                ),
+                const SizedBox(height: AppSpacing.s12),
+                Waveform.mini(animate: name != null),
               ],
             ),
           ),
-          const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.stampText),
+          const SizedBox(width: AppSpacing.s8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.accent,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: Text(
+              name == null ? '만들기' : '써 보기',
+              style: AppTextStyles.label13.copyWith(color: AppColors.textPrimary),
+            ),
+          ),
         ],
       ),
     );

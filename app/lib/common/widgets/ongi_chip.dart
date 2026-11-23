@@ -13,7 +13,13 @@ class OngiChip extends StatelessWidget {
     this.icon,
     this.dotColor,
     this.onTap,
+    this.background,
+    this.foreground,
   });
+
+  /// 11/23 상태별 색(전달됨=초록 등). 없으면 기본 칩 색
+  final Color? background;
+  final Color? foreground;
 
   final String label;
   final bool selected;
@@ -25,12 +31,13 @@ class OngiChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? AppColors.bgBase : AppColors.textSecondary;
+    final foreground =
+        this.foreground ?? (selected ? AppColors.bgBase : AppColors.textSecondary);
     final chip = Container(
       height: AppSizes.chipHeight,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
       decoration: BoxDecoration(
-        color: selected ? AppColors.textPrimary : AppColors.bgSoft,
+        color: background ?? (selected ? AppColors.textPrimary : AppColors.bgSoft),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(

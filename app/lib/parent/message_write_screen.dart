@@ -319,22 +319,11 @@ class _MessageWriteScreenState extends State<MessageWriteScreen> {
                       const SizedBox(height: AppSpacing.s16),
                       _tab == 1
                           ? _voice != null
-                                ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      HintRow(
-                                        icon: LucideIcons.audioLines,
-                                        text: '남겨주신 글은 ${_voice!.name} 목소리로 들려드려요.',
-                                      ),
-                                      const SizedBox(height: AppSpacing.s12),
-                                      TtsPreviewButton(
-                                        preview: _preview,
-                                        label: '${_voice!.name} 목소리로 미리 듣기',
-                                        onSpeak: _controller.text.trim().isEmpty
-                                            ? null
-                                            : () => _preview.speak(_controller.text.trim()),
-                                      ),
-                                    ],
+                                /// 11/23 미리 듣기 버튼은 없앴다. 쓰다가 멈추면 뒤에서 미리 만들고,
+                                /// 저장하면 그 소리를 바로 붙인다(아직이면 서버가 이어서 만든다).
+                                ? HintRow(
+                                    icon: LucideIcons.audioLines,
+                                    text: '남겨주신 글은 ${_voice!.name} 목소리로 들려드려요.',
                                   )
                                 : const HintRow(
                                     icon: LucideIcons.type,

@@ -86,7 +86,7 @@ class RecentMessageCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              ProfileAvatar(size: 44, imagePath: message.photo),
+              ParentStamp(title: message.author, size: 44, imagePath: message.photo),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(

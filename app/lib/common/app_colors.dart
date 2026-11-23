@@ -38,4 +38,18 @@ class AppColors {
 
   /// 주 버튼을 눌렀을 때의 배경
   static const primaryPressed = Color(0xFF3D332D);
+
+  /// 11/23 온기 빛 구슬: 가운데 밝은 빛 → 주황 → 바깥 짙은 호박색
+  static const orbLight = Color(0xFFFFE6AE);
+  static const orbDeep = Color(0xFFDB7F14);
+
+  /// 11/23 부모 글자 도장: 아빠는 진갈색, 엄마는 코랄
+  static const dadTone = Color(0xFF7A4E2D);
+  static const dadSoft = Color(0xFFF3E6DA);
+  static const momTone = Color(0xFFD0613F);
+  static const momSoft = Color(0xFFFBE7DF);
+
+  /// 11/23 연결됨·전달됨 (주황은 '진행 중'으로만 쓴다)
+  static const ok = Color(0xFF3E8E5E);
+  static const okSoft = Color(0xFFE6F2EA);
 }

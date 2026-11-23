@@ -30,7 +30,8 @@ class ChildEmpathyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return _ResponseLayout(
       navTitle: '온기의 메시지',
-      picture: const OngiLogo(),
+      /// 11/23 온기가 말할 때 빛 구슬이 맥박 친다
+      picture: const OngiOrb(size: 150, mood: OrbMood.speaking),
       name: '온기',
       onStop: onStop,
       children: [
@@ -89,7 +90,7 @@ class ChildPlayingScreen extends StatelessWidget {
       picture: PopIn(
         from: 0.85,
         curve: AppMotion.enterCurve,
-        child: ProfileAvatar(size: 96, imagePath: parentPhoto),
+        child: ParentStamp(title: title, size: 96, imagePath: parentPhoto),
       ),
       name: title,
 
@@ -154,7 +155,8 @@ class ChildNoMessageScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return _ResponseLayout(
       navTitle: '온기의 메시지',
-      picture: const OngiLogo(),
+      /// 11/23 온기가 말할 때 빛 구슬이 맥박 친다
+      picture: const OngiOrb(size: 150, mood: OrbMood.speaking),
       name: '온기',
       onStop: onStop,
       children: [
@@ -298,7 +300,7 @@ class _NextVoiceChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ProfileAvatar(size: 28, imagePath: photo),
+          ParentStamp(title: title, size: 28, imagePath: photo),
           const SizedBox(width: 10),
           Flexible(
             child: Text(
@@ -348,20 +350,28 @@ class _ResponseLayout extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TopNavBar(title: navTitle, onClose: showClose ? onStop : null),
+              /// 11/23 내용이 짧으면 화면 가운데, 길면(편지) 위에서부터 스크롤
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(
-                    top: 50,
-                    bottom: AppSpacing.s16,
-                  ),
-                  child: Column(
-                    children: [
-                      picture,
-                      const SizedBox(height: AppSpacing.s12),
-                      Text(name, style: AppTextStyles.title28),
-                      const SizedBox(height: AppSpacing.s12),
-                      ...children,
-                    ],
+                child: LayoutBuilder(
+                  builder: (context, box) => SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.s16,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: (box.maxHeight - AppSpacing.s32).clamp(0.0, double.infinity),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          picture,
+                          const SizedBox(height: AppSpacing.s8),
+                          Text(name, style: AppTextStyles.title28),
+                          const SizedBox(height: AppSpacing.s12),
+                          ...children,
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),

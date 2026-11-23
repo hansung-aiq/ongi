@@ -19,6 +19,8 @@ class MessageCard extends StatelessWidget {
     this.bodyMaxLines = 1,
     required this.typeLabel,
     required this.typeIcon,
+    this.typeBackground,
+    this.typeForeground,
     this.statusLabel,
     this.statusMuted = false,
     required this.date,
@@ -41,6 +43,10 @@ class MessageCard extends StatelessWidget {
   final int bodyMaxLines;
   final String typeLabel;
   final IconData typeIcon;
+
+  /// 11/23 종류 칩 색('내 목소리'는 우표색). 없으면 기본
+  final Color? typeBackground;
+  final Color? typeForeground;
 
   /// 전달 상태 칩 ('전달됨', '전달 대기'). 없으면 숨긴다.
   final String? statusLabel;
@@ -125,7 +131,12 @@ class MessageCard extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    OngiChip(label: typeLabel, icon: typeIcon),
+                    OngiChip(
+                      label: typeLabel,
+                      icon: typeIcon,
+                      background: typeBackground,
+                      foreground: typeForeground,
+                    ),
                     if (statusLabel != null) ...[
                       const SizedBox(width: AppSpacing.s8),
 
@@ -146,7 +157,13 @@ class MessageCard extends StatelessWidget {
                         child: Opacity(
                           key: ValueKey(statusLabel),
                           opacity: statusMuted ? AppSizes.disabledOpacity : 1,
-                          child: OngiChip(label: statusLabel!),
+                          child: OngiChip(
+                            label: statusLabel!,
+                            /// 11/23 전달됨은 초록 체크, 대기는 기본 칩
+                            icon: statusMuted ? LucideIcons.clock : LucideIcons.check,
+                            background: statusMuted ? null : AppColors.okSoft,
+                            foreground: statusMuted ? null : AppColors.ok,
+                          ),
                         ),
                       ),
                     ],

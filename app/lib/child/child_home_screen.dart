@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../api/board_client.dart';
 import '../api/message_playback.dart';
@@ -81,7 +80,7 @@ class ChildHomeScreen extends StatelessWidget {
               : '온기 스피커 연결됨',
           dotColor: _connecting || _offline
               ? AppColors.dotOffline
-              : AppColors.accent,
+              : AppColors.ok,
         ),
         const SizedBox(height: 14),
         Row(
@@ -161,14 +160,26 @@ class ChildHomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '오늘 마음은\n어땠어?',
-            style: AppTextStyles.title28.copyWith(
-              color: AppColors.bgBase,
-              fontWeight: FontWeight.w600,
-            ),
+          /// 11/23 글 오른쪽에 온기 빛 구슬. 연결이 안 되면 흐려진다
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  '오늘 마음은\n어땠어?',
+                  style: AppTextStyles.title28.copyWith(
+                    color: AppColors.bgBase,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              OngiOrb(
+                size: 104,
+                dim: connection != BoardConnection.connected,
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppSpacing.s12),
           Text(
             _connecting
                 ? '온기 스피커와 연결하고 있어.\n잠깐만 기다려줘.'
@@ -182,7 +193,6 @@ class ChildHomeScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.s16),
           OngiButton.onDark(
             label: '온기에게 말하기',
-            icon: LucideIcons.mic,
             onPressed: connection == BoardConnection.connected ? onStart : null,
           ),
         ],
