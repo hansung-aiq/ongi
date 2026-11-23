@@ -45,6 +45,7 @@ def load_m4a(data: bytes) -> np.ndarray:
 
 def trim(wav: np.ndarray, thr=0.01) -> np.ndarray:
     """앞뒤 무음 자르기(녹음 버튼 누른 소리·빈 시간)"""
+    thr = max(thr, 0.1 * float(np.abs(wav).max()))  # 방 소음보다 크게: 녹음 크기의 10%
     idx = np.where(np.abs(wav) > thr)[0]
     if len(idx) == 0:
         return wav
