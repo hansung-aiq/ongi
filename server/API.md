@@ -220,3 +220,28 @@
 
 ### 시험 (11/11, MariaDB)
 API-15·16·17·18·19와 API-11 family·마지막 연결, 기존 API-03·07 함께 확인. `migrate_1111.sql`을 예전 모양 DB에 적용해 확인.
+
+## 6. 11/22 부모 목소리 API (voice-tts)
+**이미 쓰던 DB는** `migrate_1122.sql`, `migrate_1122b.sql`을 차례로 한 번 실행한다(데이터 그대로). `.env`에 `TTS_WORKER_TOKEN`을 넣는다.
+
+- 표 추가: `voice_profile`(가족·작성자마다 1개, 다시 만들면 덮어씀), `tts_preview`(첫 인사·써 보기)
+- `message`에 `tts_status`(none/pending/ready/failed), `tts_audio_path` 추가
+
+### 앱
+- `GET /voice-script` — 목소리 만들기 문장 5개
+- **API-20** `GET·POST /voice-profiles` — 목소리 조회·만들기(`audio_paths` 5개, `name`). 만들면 그 부모의 글 메시지를 pending으로 바꾸고 첫 인사 미리 듣기를 만든다
+- `POST /tts/previews`, `GET /tts/previews/{id}`, `GET /tts/previews/{id}/audio` — 미리 듣기 요청·상태·소리. 같은 글은 다시 만들지 않는다
+- API-03 응답의 메시지마다 `tts_status`가 붙는다. 글 메시지를 저장할 때 같은 글의 미리 듣기가 있으면 그 파일을 바로 붙인다
+
+### 작업기 (모든 요청에 `X-Worker-Token`, 틀리면 E-403)
+- **API-21** `GET /tts/jobs` — 할 일 목록(미리 듣기 먼저, 그다음 메시지를 오래된 것부터)
+- `GET /tts/profile-audio/{id}?index=` — 견본 녹음 내려받기
+- `POST /tts/jobs/{id}`, `POST /tts/jobs/{id}/fail` — 메시지 wav 올리기·실패. 그사이 메시지가 바뀌었으면(`updated_at`) 409로 버린다
+- `POST /tts/previews/{id}/result`, `POST /tts/previews/{id}/fail` — 미리 듣기 wav 올리기·실패
+
+### 보드
+- API-11 응답의 메시지마다 `tts_ready`가 붙는다
+- **API-22** `GET /device/tts-audio/{id}` — 부모 목소리 wav 내려받기. 아직 없으면 E-404
+
+### 시험 (11/23)
+부모 앱 글 저장 → 서버 → 작업기(Kaggle T4) → 보드 수신(1.0~1.3MB) → 아이 발화 → 부모 목소리 재생 → 온기기록. 첫 인사 27자 생성 18.8초, 132자 73.9초.
