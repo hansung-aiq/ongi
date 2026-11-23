@@ -22,6 +22,10 @@ MAX_REF_SEC = float(os.environ.get("ONGI_MAX_REF_SEC", "12"))
 XVEC = os.environ.get("ONGI_XVEC") == "1"
 #  ONGI_RETRY=1         : 소리가 글자 수에 비해 너무 짧으면(끝 잘림) 다시 만드는 횟수
 RETRY = int(os.environ.get("ONGI_RETRY", "1"))
+#  ONGI_TARGET_RMS=0.1  : 보드 기본 TTS(공감 한마디)와 같은 크기로 맞춤. 0이면 그대로
+#  ONGI_PAD_SEC=1.5     : 끝에 무음. 보드 tinyplay가 마지막 소리를 자르는 것 방지
+TARGET_RMS = float(os.environ.get("ONGI_TARGET_RMS", "0"))
+PAD_SEC = float(os.environ.get("ONGI_PAD_SEC", "1.5"))
 
 dev = "cuda:0" if torch.cuda.is_available() else "cpu"
 # T4·GTX 등은 float16에서 확률값이 깨져 CUDA assert → float32
@@ -87,6 +91,20 @@ def prompt_for(job):
     return _prompt_cache[key]
 
 
+def loudness(w: np.ndarray, sr: int) -> np.ndarray:
+    """말하는 부분의 크기를 TARGET_RMS로. 너무 큰 소리는 0.9 위에서 부드럽게 눌러 깨지지 않게"""
+    if TARGET_RMS <= 0:
+        return w
+    win = int(sr * 0.02); n = len(w) // win
+    e = (w[:n * win].reshape(n, win) ** 2).mean(1); e = e[e > 1e-4]
+    if not len(e):
+        return w
+    y = (w * min(TARGET_RMS / float(np.sqrt(e.mean())), 4.0)).astype(np.float32)
+    a = np.abs(y); o = a > 0.9
+    y[o] = np.sign(y[o]) * (0.9 + 0.1 * np.tanh((a[o] - 0.9) / 0.1))
+    return y
+
+
 def make(job):
     prompt = prompt_for(job)
     text = job["text"]
@@ -107,7 +125,8 @@ def make(job):
             best = (w, sec)
         if sec >= min_sec:
             break
-    wav = best[0]
+    wav = loudness(np.asarray(best[0], dtype=np.float32), sr)
+    wav = np.concatenate([wav, np.zeros(int(PAD_SEC * sr), dtype=np.float32)])
     buf = io.BytesIO()
     sf.write(buf, wav, sr, format="WAV", subtype="PCM_16")  # 보드 Wav.read는 16bit PCM
     return buf.getvalue(), len(wav) / sr
