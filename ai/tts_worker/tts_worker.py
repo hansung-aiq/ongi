@@ -20,8 +20,8 @@ TMP = tempfile.gettempdir()  # 윈도우에는 /tmp가 없다
 DTYPE = getattr(torch, os.environ.get("ONGI_DTYPE", "float32"))
 MAX_REF_SEC = float(os.environ.get("ONGI_MAX_REF_SEC", "12"))
 XVEC = os.environ.get("ONGI_XVEC") == "1"
-#  ONGI_RETRY=1         : 소리가 글자 수에 비해 너무 짧으면(끝 잘림) 다시 만드는 횟수
-RETRY = int(os.environ.get("ONGI_RETRY", "1"))
+#  ONGI_RETRY=2         : 소리가 글자 수에 비해 너무 짧거나(끝 잘림) 너무 길면(끝을 못 찾고 이상한 소리) 다시 만드는 횟수
+RETRY = int(os.environ.get("ONGI_RETRY", "2"))
 #  ONGI_TARGET_RMS=0.1  : 보드 기본 TTS(공감 한마디)와 같은 크기로 맞춤. 0이면 그대로
 #  ONGI_PAD_SEC=1.5     : 끝에 무음. 보드 tinyplay가 마지막 소리를 자르는 것 방지
 TARGET_RMS = float(os.environ.get("ONGI_TARGET_RMS", "0"))
@@ -112,6 +112,9 @@ def make(job):
     # 끝을 일찍 선언해 뒷부분이 잘리는 경우가 있어, 글자 수에 비해 너무 짧으면 다시 만든다
     chars = len([c for c in text if not c.isspace() and c not in ".,!?~…"])
     min_sec = chars * 0.12
+    # 11/23: 끝난 뒤에도 10초쯤 이상한 소리를 더 만드는 경우(94자 → 41초)가 있어 위쪽도 본다.
+    #        보통 한국어는 1초에 4~5자(96자 → 25초). 0.33초/자 + 3초를 넘으면 너무 긴 것
+    max_sec = chars * 0.33 + 3
     best = None
     for attempt in range(1 + RETRY):
         t = time.time()
@@ -120,10 +123,12 @@ def make(job):
         w = wavs[0] if isinstance(wavs, (list, tuple)) else wavs
         sec = len(w) / sr
         print(f"  생성{'' if attempt == 0 else f'(다시 {attempt})'}: {time.time() - t:.1f}초 → 음성 {sec:.1f}초 "
-              f"(글자 {chars}개, 최소 {min_sec:.1f}초)", flush=True)
-        if best is None or sec > best[1]:
-            best = (w, sec)
-        if sec >= min_sec:
+              f"(글자 {chars}개, {min_sec:.1f}~{max_sec:.1f}초)", flush=True)
+        # 범위 안이면 바로 씀. 아니면 범위에서 덜 벗어난 것을 남겨 두고 다시
+        miss = max(0.0, min_sec - sec, sec - max_sec)
+        if best is None or miss < best[2]:
+            best = (w, sec, miss)
+        if miss == 0:
             break
     wav = loudness(np.asarray(best[0], dtype=np.float32), sr)
     wav = np.concatenate([wav, np.zeros(int(PAD_SEC * sr), dtype=np.float32)])

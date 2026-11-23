@@ -314,12 +314,25 @@ class OngiFlow(
         // 11/9: voice의 text는 받아쓴 글이라 소리와 상관없음 → 키에서 뺌(받아쓴 뒤 소리를 다시 만들지 않게)
         "m${m.id}|${m.updatedAt}|${m.kind}|${m.audioPath}|${if (m.kind == "text") m.text?.hashCode() else ""}"
 
+    /**
+     * 11/23: 미리 준비는 스레드 하나에서 차례로만 돈다. 동기화로 바뀐 것이 몰려 와도(메시지 여러 개를 한꺼번에 넣음)
+     * 미리 준비가 여러 개 겹쳐 돌지 않고, 도는 중에 또 부르면 끝난 뒤 한 번만 더 돈다.
+     * (11/23 메시지 8개를 한꺼번에 받았을 때 기본 TTS 안에서 앱이 튕긴 일 → 겹쳐 돌기·옛 소리 쌓임을 막음)
+     */
+    private val prewarmExec = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "ongi-prewarm") }
+    private val prewarmPending = java.util.concurrent.atomic.AtomicBoolean(false)
+
     /** 앱이 켜질 때(TTS 준비 후)와 동기화로 메시지가 바뀔 때 부른다. 뒤에서 돈다 */
     fun prewarm() {
-        Thread({
+        if (!prewarmPending.compareAndSet(false, true)) return  // 이미 줄 서 있음 → 그 한 번이 최신 상태로 돈다
+        prewarmExec.execute {
+            prewarmPending.set(false)
             try {
                 val t0 = System.currentTimeMillis()
                 val all = store.all()
+                // 지금 메시지에 없는 옛 소리(수정 전 시각·지운 메시지)는 버린다
+                val keep = all.map { keyOf(it) }.toSet()
+                soundCache.keys.removeAll { it.startsWith("m") && it !in keep }
                 var n = 0
                 for (m in all) {
                     if (messageSound(m) != null) n++
@@ -327,10 +340,10 @@ class OngiFlow(
                 }
                 log("미리 준비: 부모 메시지 ${n}/${all.size}개 소리 + 연결 문장 (${System.currentTimeMillis() - t0}ms)")
                 if (Config.TRANSCRIBE_VOICE) for (m in all) if (m.kind == "voice" && m.text.isNullOrBlank()) transcribe(m)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 log("미리 준비 실패: ${e.message}")
             }
-        }, "ongi-prewarm").start()
+        }
     }
 
     /**
